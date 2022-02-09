@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Course Recommender with SVD based similarity | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Course Recommender with SVD based similarity" />
+<meta name="author" content="<a href='https://github.com/Tsmith5151/user-recommender'>Trace Smith</a>" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Applying SVD on education course dataset, storing in sqlite and wrapping in Flask REST api" />
+<meta property="og:description" content="Applying SVD on education course dataset, storing in sqlite and wrapping in Flask REST api" />
+<link rel="canonical" href="https://nb.recohut.com/flask/sqlite/education/svd/2021/07/07/course-recommender-svd-flask.html" />
+<meta property="og:url" content="https://nb.recohut.com/flask/sqlite/education/svd/2021/07/07/course-recommender-svd-flask.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-07T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Course Recommender with SVD based similarity" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"<a href='https://github.com/Tsmith5151/user-recommender'>Trace Smith</a>"},"dateModified":"2021-07-07T00:00:00-05:00","datePublished":"2021-07-07T00:00:00-05:00","description":"Applying SVD on education course dataset, storing in sqlite and wrapping in Flask REST api","headline":"Course Recommender with SVD based similarity","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/flask/sqlite/education/svd/2021/07/07/course-recommender-svd-flask.html"},"url":"https://nb.recohut.com/flask/sqlite/education/svd/2021/07/07/course-recommender-svd-flask.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Course Recommender with SVD based similarity</h1><p class="page-description">Applying SVD on education course dataset, storing in sqlite and wrapping in Flask REST api</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-07T00:00:00-05:00" itemprop="datePublished">
+        Jul 7, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name"><a href='https://github.com/Tsmith5151/user-recommender'>Trace Smith</a></span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      11 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#Flask">Flask</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#SQLite">SQLite</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Education">Education</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#SVD">SVD</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-07-course-recommender-svd-flask.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-07-course-recommender-svd-flask.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-07-course-recommender-svd-flask.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-07-course-recommender-svd-flask.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Setup">Setup </a></li>
+<li class="toc-entry toc-h2"><a href="#Data-ingestion">Data ingestion </a></li>
+<li class="toc-entry toc-h2"><a href="#Load-data-from-SQlite">Load data from SQlite </a></li>
+<li class="toc-entry toc-h2"><a href="#Summarize">Summarize </a></li>
+<li class="toc-entry toc-h2"><a href="#Preprocessing">Preprocessing </a></li>
+<li class="toc-entry toc-h2"><a href="#Calculating-similarities-and-ranking">Calculating similarities and ranking </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Similarity">Similarity </a></li>
+<li class="toc-entry toc-h3"><a href="#Weighted-averaging">Weighted averaging </a></li>
+<li class="toc-entry toc-h3"><a href="#Ranking">Ranking </a></li>
+<li class="toc-entry toc-h3"><a href="#Save-the-similarity-matrix-into-database">Save the similarity matrix into database </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Adding-Test-sample">Adding Test sample </a></li>
+<li class="toc-entry toc-h2"><a href="#Manual-evaluation">Manual evaluation </a></li>
+<li class="toc-entry toc-h2"><a href="#Deploy-and-Inference">Deploy and Inference </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Build-the-API">Build the API </a></li>
+<li class="toc-entry toc-h3"><a href="#Run-the-server-API">Run the server API </a></li>
+<li class="toc-entry toc-h3"><a href="#Make-post-request">Make post request </a></li>
+<li class="toc-entry toc-h3"><a href="#Make-post-request-using-CURL-from-command-line">Make post request using CURL from command line </a></li>
+</ul>
+</li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-07-course-recommender-svd-flask.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">
+<a class="anchor" href="#Setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setup<a class="anchor-link" href="#Setup"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">request</span>
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">TruncatedSVD</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">pairwise_distances</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">()</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <span class="s2">"."</span>
+
+<span class="c1"># SQlite</span>
+<span class="n">env</span> <span class="o">=</span> <span class="s2">"dev"</span>
+<span class="n">database</span> <span class="o">=</span> <span class="s2">"recommender_dev.db"</span>
+<span class="n">username</span> <span class="o">=</span> <span class="s2">"admin"</span>
+<span class="n">pwd</span> <span class="o">=</span> <span class="s2">""</span>
+<span class="n">hostname</span> <span class="o">=</span> <span class="s2">"0.0.0.0"</span>
+<span class="n">port</span> <span class="o">=</span> <span class="mi">8081</span>
+
+<span class="n">similarity_metric</span> <span class="o">=</span> <span class="s2">"cosine"</span> <span class="c1"># Similarity metric for pairwise distance measurement</span>
+<span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'0.50'</span><span class="p">,</span><span class="s1">'0.30'</span><span class="p">,</span><span class="s1">'0.20'</span><span class="p">]</span> <span class="c1"># Weights for similarity matrix: interest,assessment,tags</span>
+<span class="n">results_table</span> <span class="o">=</span> <span class="s2">"rank_matrix"</span>  <span class="c1"># SQLite3 table containing user similarity metrics</span>
+<span class="n">user_id</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># unique user id for scoring similarities</span>
+
+<span class="c1"># Flask server</span>
+<span class="n">hostname</span> <span class="o">=</span> <span class="s2">"0.0.0.0"</span> <span class="c1"># hostname for serving Flask application</span>
+<span class="n">port</span> <span class="o">=</span> <span class="mi">5000</span> <span class="c1"># port for serving Flask application</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data-ingestion">
+<a class="anchor" href="#Data-ingestion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data ingestion<a class="anchor-link" href="#Data-ingestion"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">user</span><span class="o">-</span><span class="n">recommender</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">course_tags</span><span class="o">.</span><span class="n">csv</span>
+<span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">user</span><span class="o">-</span><span class="n">recommender</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">user_interests</span><span class="o">.</span><span class="n">csv</span>
+<span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">user</span><span class="o">-</span><span class="n">recommender</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">user_course_views</span><span class="o">.</span><span class="n">csv</span>
+<span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">user</span><span class="o">-</span><span class="n">recommender</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">user_assessment_scores</span><span class="o">.</span><span class="n">csv</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">ingest_raw_data</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data"</span><span class="p">):</span>
+    <span class="sd">"""Write .csv raw files to SQLite Database"""</span>
+    <span class="n">csv_files</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span> <span class="k">if</span> <span class="s2">".csv"</span> <span class="ow">in</span> <span class="n">i</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">csv_files</span><span class="p">:</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">con</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">ingest_raw_data</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Load-data-from-SQlite">
+<a class="anchor" href="#Load-data-from-SQlite" aria-hidden="true"><span class="octicon octicon-link"></span></a>Load data from SQlite<a class="anchor-link" href="#Load-data-from-SQlite"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">read_table</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">"""Query Table from SQLite Database"""</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">column</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">cur</span><span class="o">.</span><span class="n">description</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">"""Load Users and Content Data from SQLite"""</span>
+
+    <span class="n">df_course</span> <span class="o">=</span> <span class="n">read_table</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"select * from user_course_views"</span><span class="p">)</span>
+    <span class="n">df_asmt</span> <span class="o">=</span> <span class="n">read_table</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"select * from user_assessment_scores"</span><span class="p">)</span>
+    <span class="n">df_interest</span> <span class="o">=</span> <span class="n">read_table</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"select * from user_interests"</span><span class="p">)</span>
+    <span class="n">df_tags</span> <span class="o">=</span> <span class="n">read_table</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"select * from course_tags"</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">"course"</span><span class="p">:</span> <span class="n">df_course</span><span class="p">,</span>
+        <span class="s2">"assessment"</span><span class="p">:</span> <span class="n">df_asmt</span><span class="p">,</span>
+        <span class="s2">"interest"</span><span class="p">:</span> <span class="n">df_interest</span><span class="p">,</span>
+        <span class="s2">"tags"</span><span class="p">:</span> <span class="n">df_tags</span><span class="p">,</span>
+    <span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data_raw</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Summarize">
+<a class="anchor" href="#Summarize" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summarize<a class="anchor-link" href="#Summarize"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">data_summary</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">"""Print Summary Metrics of Data"""</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Dataframe: </span><span class="si">{</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> -- Shape: </span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">unique</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+            <span class="n">is_null</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="si">}</span><span class="s2"> -- Unique: </span><span class="si">{</span><span class="n">unique</span><span class="si">}</span><span class="s2"> -- Null: </span><span class="si">{</span><span class="n">is_null</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data_summary</span><span class="p">(</span><span class="n">data_raw</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>INFO:root:
+Dataframe: COURSE -- Shape: (249238, 6)
+INFO:root:user_handle -- Unique: 8760 -- Null: 0
+INFO:root:view_date -- Unique: 212 -- Null: 0
+INFO:root:course_id -- Unique: 5942 -- Null: 0
+INFO:root:author_handle -- Unique: 1412 -- Null: 0
+INFO:root:level -- Unique: 3 -- Null: 0
+INFO:root:view_time_seconds -- Unique: 11631 -- Null: 0
+INFO:root:
+Dataframe: ASSESSMENT -- Shape: (6571, 4)
+INFO:root:user_handle -- Unique: 3114 -- Null: 0
+INFO:root:assessment_tag -- Unique: 54 -- Null: 0
+INFO:root:user_assessment_date -- Unique: 6570 -- Null: 0
+INFO:root:user_assessment_score -- Unique: 282 -- Null: 0
+INFO:root:
+Dataframe: INTEREST -- Shape: (297526, 3)
+INFO:root:user_handle -- Unique: 10000 -- Null: 0
+INFO:root:interest_tag -- Unique: 748 -- Null: 0
+INFO:root:date_followed -- Unique: 12869 -- Null: 0
+INFO:root:
+Dataframe: TAGS -- Shape: (11337, 2)
+INFO:root:course_id -- Unique: 5942 -- Null: 0
+INFO:root:course_tags -- Unique: 999 -- Null: 112
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Preprocessing">
+<a class="anchor" href="#Preprocessing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Preprocessing<a class="anchor-link" href="#Preprocessing"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">"""Preprocess input DataFrames"""</span>
+    <span class="n">prep</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># drop null values</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"all"</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># course tags table</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># rename columns in dataframe</span>
+        <span class="n">rename</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"interest_tag"</span><span class="p">:</span> <span class="s2">"tag"</span><span class="p">,</span>
+            <span class="s2">"assessment_tag"</span><span class="p">:</span> <span class="s2">"tag"</span><span class="p">,</span>
+            <span class="s2">"course_tags"</span><span class="p">:</span> <span class="s2">"tag"</span><span class="p">,</span>
+            <span class="s2">"user_assessment_score"</span><span class="p">:</span> <span class="s2">"score"</span><span class="p">,</span>
+            <span class="s2">"view_time_seconds"</span><span class="p">:</span> <span class="s2">"view"</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">rename</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">rename</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">else</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+
+        <span class="c1"># discretize user assessment scores quantile buckets</span>
+        <span class="c1"># if "score" in df.columns:</span>
+        <span class="c1">#     df = df.replace({"score": {0:"low", 1:"medium", 2:"high"}})</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s2">"score"</span> <span class="ow">in</span> <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">"score"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">qcut</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"score"</span><span class="p">],</span> <span class="n">q</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"high"</span><span class="p">,</span> <span class="s2">"medium"</span><span class="p">,</span> <span class="s2">"low"</span><span class="p">])</span>
+
+        <span class="c1"># discretize user viewing time into quantile buckets</span>
+        <span class="c1"># if "view" in df.columns:</span>
+        <span class="c1">#     df = df.replace({"view": {0:"low",1:"high"}})</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="s2">"view"</span> <span class="ow">in</span> <span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="n">df</span><span class="p">[</span><span class="s2">"view"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">qcut</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">"view"</span><span class="p">],</span> <span class="n">q</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="s2">"high"</span><span class="p">,</span> <span class="s2">"medium"</span><span class="p">,</span> <span class="s2">"low"</span><span class="p">,</span> <span class="s2">"very low"</span><span class="p">])</span>
+
+        <span class="c1"># encode categorical columns</span>
+        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"tag"</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">,</span> <span class="s2">"view"</span><span class="p">,</span> <span class="s2">"level"</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">:</span>
+                <span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">col</span><span class="p">])</span><span class="o">.</span><span class="n">codes</span>
+
+        <span class="c1"># save prep dataframe</span>
+        <span class="n">prep</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span>
+
+    <span class="c1"># add key for max users -&gt; used for initializing user-item matrix</span>
+    <span class="n">prep</span><span class="p">[</span><span class="s2">"max_users"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
+        <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s2">"user_handle"</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">prep</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="s2">"user_handle"</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="c1"># add key containing dataframe for merged course/tags</span>
+    <span class="n">prep</span><span class="p">[</span><span class="s2">"course_tags"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span>
+        <span class="n">prep</span><span class="p">[</span><span class="s2">"course"</span><span class="p">],</span> <span class="n">prep</span><span class="p">[</span><span class="s2">"tags"</span><span class="p">],</span> <span class="n">on</span><span class="o">=</span><span class="s2">"course_id"</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s2">"left"</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">prep</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">data_raw</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Calculating-similarities-and-ranking">
+<a class="anchor" href="#Calculating-similarities-and-ranking" aria-hidden="true"><span class="octicon octicon-link"></span></a>Calculating similarities and ranking<a class="anchor-link" href="#Calculating-similarities-and-ranking"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Similarity">
+<a class="anchor" href="#Similarity" aria-hidden="true"><span class="octicon octicon-link"></span></a>Similarity<a class="anchor-link" href="#Similarity"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">UserSimilarityMatrix</span><span class="p">:</span>
+    <span class="sd">"""Class for building and computing similar users"""</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"Dimensions of User-Items Matrix: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="k">def</span> <span class="nf">build_user_item_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_users</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">"""Build User/Item Interaction Matrix"""</span>
+        <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">max_users</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">item</span><span class="p">])))</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">matrix</span><span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="s2">"user_handle"</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">row</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">matrix</span>
+
+    <span class="k">def</span> <span class="nf">get_user_item_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_users</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+        <span class="sd">"""Concatenate Features into One User-Items Matrix"""</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build_user_item_matrix</span><span class="p">(</span><span class="n">max_users</span><span class="p">,</span> <span class="n">item</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+      
+    <span class="k">def</span> <span class="nf">_truncatedSVD</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">"""Apply Truncated SVD to Explain 'n'% of total variance"""</span>
+        <span class="n">n_components</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># minimum components to begin</span>
+        <span class="n">ex_var</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">ex_var</span> <span class="o">&lt;</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="n">pc</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="n">n_components</span><span class="p">)</span>
+            <span class="n">pc</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
+            <span class="n">ex_var</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">pc</span><span class="o">.</span><span class="n">explained_variance_ratio_</span><span class="p">)</span>
+            <span class="n">n_components</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Total components </span><span class="si">{</span><span class="n">pc</span><span class="o">.</span><span class="n">n_components</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">ex_var</span><span class="si">:</span><span class="s2">0.2f</span><span class="si">}</span><span class="s2"> variance explained"</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matrix</span> <span class="o">=</span> <span class="n">pc</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute_similarity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cosine"</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">"""Compute Similarity"""</span>
+        <span class="k">return</span> <span class="n">pairwise_distances</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matrix</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">apply_similarity_calculation</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+  <span class="sd">"""Compute User-Items Similarity Matrix</span>
+<span class="sd">  Steps:</span>
+<span class="sd">      - Construct User-Item Binary Vector for each input dataset</span>
+<span class="sd">      - Apply truncatedSVD to determine 'n' components to explain m% of total variance</span>
+<span class="sd">      - Compute cosine similarity</span>
+<span class="sd">  """</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Computing USER-</span><span class="si">{</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> Similarity Matrix..."</span><span class="p">)</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Input Features: </span><span class="si">{</span><span class="n">features</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+  <span class="n">SM</span> <span class="o">=</span> <span class="n">UserSimilarityMatrix</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+  <span class="n">SM</span><span class="o">.</span><span class="n">get_user_item_matrix</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"max_users"</span><span class="p">],</span> <span class="n">features</span><span class="p">)</span>
+
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Applying Truncated SVD: Input Shape: </span><span class="si">{</span><span class="n">SM</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
+  <span class="n">SM</span><span class="o">.</span><span class="n">_truncatedSVD</span><span class="p">()</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Reduced User-Item Matrix Shape: </span><span class="si">{</span><span class="n">SM</span><span class="o">.</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+  <span class="c1"># Compute pairwise user-similarity</span>
+  <span class="k">return</span> <span class="n">SM</span><span class="o">.</span><span class="n">compute_similarity</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_interest</span> <span class="o">=</span> <span class="n">apply_similarity_calculation</span><span class="p">(</span><span class="s2">"interest"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"tag"</span><span class="p">],</span> <span class="n">similarity_metric</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>INFO:root:==================================================
+INFO:root:Computing USER-INTEREST Similarity Matrix...
+INFO:root:Input Features: ['tag']
+INFO:root:Applying Truncated SVD: Input Shape: (10000, 747)...
+INFO:root:Total components 164 with 0.90 variance explained
+INFO:root:Reduced User-Item Matrix Shape: (10000, 164)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_assessment</span> <span class="o">=</span> <span class="n">apply_similarity_calculation</span><span class="p">(</span><span class="s2">"assessment"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"tag"</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">],</span> <span class="n">similarity_metric</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>INFO:root:==================================================
+INFO:root:Computing USER-ASSESSMENT Similarity Matrix...
+INFO:root:Input Features: ['tag', 'score']
+INFO:root:Applying Truncated SVD: Input Shape: (10000, 55)...
+INFO:root:Total components 20 with 0.91 variance explained
+INFO:root:Reduced User-Item Matrix Shape: (10000, 20)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">time</span>
+<span class="n">user_courses</span> <span class="o">=</span> <span class="n">apply_similarity_calculation</span><span class="p">(</span><span class="s2">"course_tags"</span><span class="p">,</span> <span class="p">[</span><span class="s2">"tag"</span><span class="p">,</span> <span class="s2">"view"</span><span class="p">],</span> <span class="n">similarity_metric</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>INFO:root:==================================================
+INFO:root:Computing USER-COURSE_TAGS Similarity Matrix...
+INFO:root:Input Features: ['tag', 'view']
+INFO:root:Applying Truncated SVD: Input Shape: (10000, 1000)...
+INFO:root:Total components 264 with 0.90 variance explained
+INFO:root:Reduced User-Item Matrix Shape: (10000, 264)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>CPU times: user 12min 2s, sys: 5min 52s, total: 17min 55s
+Wall time: 9min 43s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Weighted-averaging">
+<a class="anchor" href="#Weighted-averaging" aria-hidden="true"><span class="octicon octicon-link"></span></a>Weighted averaging<a class="anchor-link" href="#Weighted-averaging"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">compute_weighted_matrix</span><span class="p">(</span>
+    <span class="n">users</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">assessments</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">course</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">"""Compute Weighted Similarity Matrix where: weight_1 + weight_2 + weight_3 = 1"""</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">users</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">assessments</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">course</span> <span class="o">*</span> <span class="nb">float</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+    <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">apply_weighted_similarity</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">weights</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+  <span class="sd">"""Compute Interest/Assessment/Courses Weighted Matrix"""</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Computing Weighted Similarity Matrix..."</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">compute_weighted_matrix</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">weighted_matrix</span> <span class="o">=</span> <span class="n">apply_weighted_similarity</span><span class="p">(</span><span class="n">user_interest</span><span class="p">,</span> <span class="n">user_assessment</span><span class="p">,</span> <span class="n">user_courses</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>INFO:root:==================================================
+INFO:root:Computing Weighted Similarity Matrix...
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Ranking">
+<a class="anchor" href="#Ranking" aria-hidden="true"><span class="octicon octicon-link"></span></a>Ranking<a class="anchor-link" href="#Ranking"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">rank_similar_users</span><span class="p">(</span><span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">top_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">"""Apply Custom Pandas Function to Rank Top 'n' Users"""</span>
+
+    <span class="k">def</span> <span class="nf">custom_udf</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Custom Pandas function for using index/score to</span>
+<span class="sd">        generate output results dataframe.</span>
+<span class="sd">        """</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span> <span class="p">:</span> <span class="n">top_n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="nb">str</span><span class="p">({</span><span class="s2">"user"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"score"</span><span class="p">:</span> <span class="n">X</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]})</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span>
+        <span class="p">]</span>
+
+    <span class="c1"># dimensions: users x top_n</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">ranking</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">custom_udf</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">ranking</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">ranking</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+    <span class="n">ranking</span><span class="p">[</span><span class="s2">"user_handle"</span><span class="p">]</span> <span class="o">=</span> <span class="n">ranking</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"User Ranking Dataframe Shape: </span><span class="si">{</span><span class="n">ranking</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ranking</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">apply_user_ranking</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+  <span class="sd">"""Rank Users based on Similarity Metric"""</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Computing Weighted Similarity Matrix..."</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">rank_similar_users</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">time</span>
+<span class="n">rank_matrix</span> <span class="o">=</span> <span class="n">apply_user_ranking</span><span class="p">(</span><span class="n">weighted_matrix</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>INFO:root:==================================================
+INFO:root:Computing Weighted Similarity Matrix...
+INFO:root:User Ranking Dataframe Shape: (10000, 6)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>CPU times: user 17.2 s, sys: 28.8 ms, total: 17.3 s
+Wall time: 17.2 s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Save-the-similarity-matrix-into-database">
+<a class="anchor" href="#Save-the-similarity-matrix-into-database" aria-hidden="true"><span class="octicon octicon-link"></span></a>Save the similarity matrix into database<a class="anchor-link" href="#Save-the-similarity-matrix-into-database"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">write_table</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">table</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+  <span class="sd">"""Write Table from SQLite Database"""</span>
+  <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+  <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+  <span class="n">df</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">table</span><span class="p">,</span> <span class="n">con</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s2">"replace"</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">results</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+  <span class="sd">"""Write Output Data to Table in SQLite Database"""</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+  <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Updating similarity matrix in SQLite Database..."</span><span class="p">)</span>
+  <span class="n">write_table</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">results_table</span><span class="p">,</span> <span class="n">results</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">save</span><span class="p">(</span><span class="n">rank_matrix</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>INFO:root:==================================================
+INFO:root:Updating similarity matrix in SQLite Database...
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Adding-Test-sample">
+<a class="anchor" href="#Adding-Test-sample" aria-hidden="true"><span class="octicon octicon-link"></span></a>Adding Test sample<a class="anchor-link" href="#Adding-Test-sample"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">read_table</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+  <span class="sd">"""Query Table from SQLite Database"""</span>
+  <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+  <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+  <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+  <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+      <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">column</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">cur</span><span class="o">.</span><span class="n">description</span><span class="p">]</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df_check_tags</span> <span class="o">=</span> <span class="n">read_table</span><span class="p">(</span><span class="s1">'dev'</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"select * from course_tags"</span><span class="p">)</span>
+<span class="n">df_check_tags</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>course_id</th>
+      <th>course_tags</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>12-principles-animation-toon-boom-harmony-1475</td>
+      <td>2d-animation</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2d-racing-game-series-unity-5-1312</td>
+      <td>game-design</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2d-racing-games-unity-volume-2-1286</td>
+      <td>game-art</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2d-racing-games-unity-volume-2-1286</td>
+      <td>digital-painting</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2d-racing-games-unity-volume-2-1286</td>
+      <td>image-editing</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df_test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">'user_handle'</span><span class="p">:[</span><span class="s1">'110'</span><span class="p">,</span><span class="s1">'110'</span><span class="p">,</span><span class="s1">'111'</span><span class="p">,</span><span class="s1">'111'</span><span class="p">],</span>
+                        <span class="s1">'user_match'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'112'</span><span class="p">,</span><span class="s1">'113'</span><span class="p">,</span><span class="s1">'157'</span><span class="p">,</span><span class="s1">'145'</span><span class="p">],</span>
+                        <span class="s1">'similarity'</span><span class="p">:</span> <span class="p">[</span><span class="s1">'80.2'</span><span class="p">,</span><span class="s1">'20.8'</span><span class="p">,</span><span class="s1">'52.0'</span><span class="p">,</span><span class="s1">'48.0'</span><span class="p">]})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">write_table</span><span class="p">(</span><span class="s1">'dev'</span><span class="p">,</span><span class="s1">'test_table'</span><span class="p">,</span><span class="n">df_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">users</span> <span class="o">=</span> <span class="s1">'110'</span>
+<span class="n">read_table</span><span class="p">(</span><span class="s1">'dev'</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"select * from test_table where user_handle = </span><span class="si">{</span><span class="n">users</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_handle</th>
+      <th>user_match</th>
+      <th>similarity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>110</td>
+      <td>112</td>
+      <td>80.2</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>110</td>
+      <td>113</td>
+      <td>20.8</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">database</span><span class="p">)</span>
+<span class="n">sql_table</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"""CREATE UNIQUE INDEX user_handle_index ON </span><span class="si">{</span><span class="n">results_table</span><span class="si">}</span><span class="s2"> (user_handle)"""</span>
+<span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+<span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql_table</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;sqlite3.Cursor at 0x7f5c0ad68570&gt;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Manual-evaluation">
+<a class="anchor" href="#Manual-evaluation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Manual evaluation<a class="anchor-link" href="#Manual-evaluation"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_assesments</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'user_assessment_scores.csv'</span><span class="p">)</span>
+<span class="n">user_interest</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'user_interests.csv'</span><span class="p">)</span>
+<span class="n">user_course_views</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'user_course_views.csv'</span><span class="p">)</span>
+<span class="n">course_tags</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'course_tags.csv'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">input_user</span>  <span class="o">=</span> <span class="mi">9</span>
+<span class="n">read_table</span><span class="p">(</span><span class="s1">'dev'</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"select * from </span><span class="si">{</span><span class="n">results_table</span><span class="si">}</span><span class="s2"> where user_handle = </span><span class="si">{</span><span class="n">input_user</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>1</th>
+      <th>2</th>
+      <th>3</th>
+      <th>4</th>
+      <th>5</th>
+      <th>user_handle</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>{'user': 9776, 'score': 1.0047}</td>
+      <td>{'user': 1171, 'score': 1.0034}</td>
+      <td>{'user': 225, 'score': 1.003}</td>
+      <td>{'user': 2211, 'score': 1.0027}</td>
+      <td>{'user': 3712, 'score': 1.0026}</td>
+      <td>9</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_interest</span><span class="p">[</span><span class="n">user_interest</span><span class="p">[</span><span class="s1">'user_handle'</span><span class="p">]</span> <span class="o">==</span> <span class="n">input_user</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_handle</th>
+      <th>interest_tag</th>
+      <th>date_followed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>297</th>
+      <td>9</td>
+      <td>cloud-computing</td>
+      <td>2017-11-06 16:55:35</td>
+    </tr>
+    <tr>
+      <th>298</th>
+      <td>9</td>
+      <td>devops</td>
+      <td>2017-11-06 16:55:35</td>
+    </tr>
+    <tr>
+      <th>299</th>
+      <td>9</td>
+      <td>microsoft-azure</td>
+      <td>2017-11-06 16:55:35</td>
+    </tr>
+    <tr>
+      <th>300</th>
+      <td>9</td>
+      <td>windows-azure</td>
+      <td>2017-11-06 16:55:35</td>
+    </tr>
+    <tr>
+      <th>301</th>
+      <td>9</td>
+      <td>azure-deployment</td>
+      <td>2017-11-06 16:55:35</td>
+    </tr>
+    <tr>
+      <th>302</th>
+      <td>9</td>
+      <td>azure</td>
+      <td>2017-11-06 16:55:35</td>
+    </tr>
+    <tr>
+      <th>303</th>
+      <td>9</td>
+      <td>cloud-computing</td>
+      <td>2017-11-06 16:55:35</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_interest</span><span class="p">[</span><span class="n">user_interest</span><span class="p">[</span><span class="s1">'user_handle'</span><span class="p">]</span> <span class="o">==</span> <span class="mi">9776</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_handle</th>
+      <th>interest_tag</th>
+      <th>date_followed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>292147</th>
+      <td>9776</td>
+      <td>c#</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292148</th>
+      <td>9776</td>
+      <td>data-analysis</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292149</th>
+      <td>9776</td>
+      <td>python</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292150</th>
+      <td>9776</td>
+      <td>vmware-vcloud</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292151</th>
+      <td>9776</td>
+      <td>security-auditing</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292152</th>
+      <td>9776</td>
+      <td>troubleshooting</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292153</th>
+      <td>9776</td>
+      <td>sql-server</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292154</th>
+      <td>9776</td>
+      <td>vmware-vsphere</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292155</th>
+      <td>9776</td>
+      <td>vsphere</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292156</th>
+      <td>9776</td>
+      <td>devops</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_assesments</span><span class="p">[</span><span class="n">user_assesments</span><span class="p">[</span><span class="s1">'user_handle'</span><span class="p">]</span> <span class="o">==</span> <span class="n">input_user</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_handle</th>
+      <th>assessment_tag</th>
+      <th>user_assessment_date</th>
+      <th>user_assessment_score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>3752</th>
+      <td>9</td>
+      <td>azure-infrastructure-as-a-service</td>
+      <td>2017-11-06 17:06:03</td>
+      <td>141</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_interest</span><span class="p">[</span><span class="n">user_interest</span><span class="p">[</span><span class="s1">'user_handle'</span><span class="p">]</span> <span class="o">==</span> <span class="mi">9776</span><span class="p">]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_handle</th>
+      <th>interest_tag</th>
+      <th>date_followed</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>292147</th>
+      <td>9776</td>
+      <td>c#</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292148</th>
+      <td>9776</td>
+      <td>data-analysis</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292149</th>
+      <td>9776</td>
+      <td>python</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292150</th>
+      <td>9776</td>
+      <td>vmware-vcloud</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292151</th>
+      <td>9776</td>
+      <td>security-auditing</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292152</th>
+      <td>9776</td>
+      <td>troubleshooting</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292153</th>
+      <td>9776</td>
+      <td>sql-server</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292154</th>
+      <td>9776</td>
+      <td>vmware-vsphere</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292155</th>
+      <td>9776</td>
+      <td>vsphere</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+    <tr>
+      <th>292156</th>
+      <td>9776</td>
+      <td>devops</td>
+      <td>2017-06-21 07:36:34</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_course_views</span><span class="p">[</span><span class="n">user_course_views</span><span class="p">[</span><span class="s1">'user_handle'</span><span class="p">]</span> <span class="o">==</span> <span class="n">input_user</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_handle</th>
+      <th>view_date</th>
+      <th>course_id</th>
+      <th>author_handle</th>
+      <th>level</th>
+      <th>view_time_seconds</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>233</th>
+      <td>9</td>
+      <td>2017-10-02</td>
+      <td>azure-adding-search-abilities-apps</td>
+      <td>140</td>
+      <td>Intermediate</td>
+      <td>2548</td>
+    </tr>
+    <tr>
+      <th>234</th>
+      <td>9</td>
+      <td>2017-10-03</td>
+      <td>azure-adding-search-abilities-apps</td>
+      <td>140</td>
+      <td>Intermediate</td>
+      <td>160</td>
+    </tr>
+    <tr>
+      <th>235</th>
+      <td>9</td>
+      <td>2017-10-05</td>
+      <td>terraform-getting-started</td>
+      <td>278</td>
+      <td>Beginner</td>
+      <td>998</td>
+    </tr>
+    <tr>
+      <th>236</th>
+      <td>9</td>
+      <td>2017-10-11</td>
+      <td>elasticsearch-analyzing-data</td>
+      <td>381</td>
+      <td>Intermediate</td>
+      <td>110</td>
+    </tr>
+    <tr>
+      <th>237</th>
+      <td>9</td>
+      <td>2017-10-11</td>
+      <td>elasticsearch-for-dotnet-developers</td>
+      <td>377</td>
+      <td>Beginner</td>
+      <td>3214</td>
+    </tr>
+    <tr>
+      <th>238</th>
+      <td>9</td>
+      <td>2017-10-16</td>
+      <td>terraform-getting-started</td>
+      <td>278</td>
+      <td>Beginner</td>
+      <td>678</td>
+    </tr>
+    <tr>
+      <th>239</th>
+      <td>9</td>
+      <td>2017-10-19</td>
+      <td>enterprise-search-using-apache-solr</td>
+      <td>936</td>
+      <td>Intermediate</td>
+      <td>2840</td>
+    </tr>
+    <tr>
+      <th>240</th>
+      <td>9</td>
+      <td>2017-10-20</td>
+      <td>enterprise-search-using-apache-solr</td>
+      <td>936</td>
+      <td>Intermediate</td>
+      <td>574</td>
+    </tr>
+    <tr>
+      <th>241</th>
+      <td>9</td>
+      <td>2017-10-27</td>
+      <td>intro-desktop-virtualization</td>
+      <td>221</td>
+      <td>Intermediate</td>
+      <td>2461</td>
+    </tr>
+    <tr>
+      <th>242</th>
+      <td>9</td>
+      <td>2017-11-04</td>
+      <td>getting-started-kubernetes</td>
+      <td>681</td>
+      <td>Beginner</td>
+      <td>2892</td>
+    </tr>
+    <tr>
+      <th>243</th>
+      <td>9</td>
+      <td>2017-11-05</td>
+      <td>getting-started-kubernetes</td>
+      <td>681</td>
+      <td>Beginner</td>
+      <td>1584</td>
+    </tr>
+    <tr>
+      <th>244</th>
+      <td>9</td>
+      <td>2017-11-06</td>
+      <td>azure-adding-search-abilities-apps</td>
+      <td>140</td>
+      <td>Intermediate</td>
+      <td>160</td>
+    </tr>
+    <tr>
+      <th>245</th>
+      <td>9</td>
+      <td>2017-11-06</td>
+      <td>getting-started-kubernetes</td>
+      <td>681</td>
+      <td>Beginner</td>
+      <td>2622</td>
+    </tr>
+    <tr>
+      <th>246</th>
+      <td>9</td>
+      <td>2017-11-08</td>
+      <td>azure-advanced-storage</td>
+      <td>457</td>
+      <td>Intermediate</td>
+      <td>1724</td>
+    </tr>
+    <tr>
+      <th>247</th>
+      <td>9</td>
+      <td>2017-11-08</td>
+      <td>preparing-pass-microsoft-azure-70-533-exam</td>
+      <td>896</td>
+      <td>Intermediate</td>
+      <td>674</td>
+    </tr>
+    <tr>
+      <th>248</th>
+      <td>9</td>
+      <td>2017-11-15</td>
+      <td>azure-functions-fundamentals</td>
+      <td>592</td>
+      <td>Intermediate</td>
+      <td>1915</td>
+    </tr>
+    <tr>
+      <th>249</th>
+      <td>9</td>
+      <td>2017-11-15</td>
+      <td>azure-serverless-applications</td>
+      <td>592</td>
+      <td>Beginner</td>
+      <td>605</td>
+    </tr>
+    <tr>
+      <th>250</th>
+      <td>9</td>
+      <td>2017-11-15</td>
+      <td>windows-server2012-remote-desktop-infrastructure</td>
+      <td>825</td>
+      <td>Intermediate</td>
+      <td>2553</td>
+    </tr>
+    <tr>
+      <th>251</th>
+      <td>9</td>
+      <td>2017-11-16</td>
+      <td>azure-functions-fundamentals</td>
+      <td>592</td>
+      <td>Intermediate</td>
+      <td>625</td>
+    </tr>
+    <tr>
+      <th>252</th>
+      <td>9</td>
+      <td>2017-11-17</td>
+      <td>azure-functions-fundamentals</td>
+      <td>592</td>
+      <td>Intermediate</td>
+      <td>910</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Deploy-and-Inference">
+<a class="anchor" href="#Deploy-and-Inference" aria-hidden="true"><span class="octicon octicon-link"></span></a>Deploy and Inference<a class="anchor-link" href="#Deploy-and-Inference"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Build-the-API">
+<a class="anchor" href="#Build-the-API" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build the API<a class="anchor-link" href="#Build-the-API"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">writefile</span> <span class="n">app</span><span class="o">.</span><span class="n">py</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">flask</span> <span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">jsonify</span>
+
+<span class="n">DATABASE_ENV</span> <span class="o">=</span> <span class="s2">"dev"</span>
+<span class="n">DATABASE_NAME</span> <span class="o">=</span> <span class="s2">"recommender_dev.db"</span>
+<span class="n">TABLE</span> <span class="o">=</span> <span class="s2">"rank_matrix"</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">read_table</span><span class="p">(</span><span class="n">env</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+  <span class="sd">"""Query Table from SQLite Database"""</span>
+  <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DATABASE_NAME</span><span class="p">)</span>
+  <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+  <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+  <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+      <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">(),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">column</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">cur</span><span class="o">.</span><span class="n">description</span><span class="p">]</span>
+  <span class="p">)</span>
+  <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">class</span> <span class="nc">SimilarUsers</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">user</span>
+
+    <span class="k">def</span> <span class="nf">fetch_user_from_db</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""Fetch User Record from SQLite Database"""</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"select * from </span><span class="si">{</span><span class="n">TABLE</span><span class="si">}</span><span class="s2"> where user_handle = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="si">}</span><span class="s2">"</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Table"</span><span class="p">,</span> <span class="n">TABLE</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">read_table</span><span class="p">(</span><span class="n">DATABASE_ENV</span><span class="p">,</span> <span class="n">query</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">"""Return JSON Payload containing Input User and Top</span>
+<span class="sd">        Similar Users with associated similarity scores"""</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_user_from_db</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">user_id</span><span class="p">:</span> <span class="s2">"No records found!"</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user</span><span class="p">):</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])}</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/api/similarity/"</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"POST"</span><span class="p">,</span> <span class="s2">"GET"</span><span class="p">])</span>
+<span class="k">def</span> <span class="nf">get_user_similarity</span><span class="p">():</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">get_data</span><span class="p">())[</span><span class="s2">"user_handle"</span><span class="p">]</span>
+    <span class="n">SU</span> <span class="o">=</span> <span class="n">SimilarUsers</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">SU</span><span class="o">.</span><span class="n">get_payload</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">results</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+  <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Overwriting app.py
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Run-the-server-API">
+<a class="anchor" href="#Run-the-server-API" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run the server API<a class="anchor-link" href="#Run-the-server-API"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">chmod</span> <span class="o">+</span><span class="n">x</span> <span class="n">app</span><span class="o">.</span><span class="n">py</span>
+<span class="err">!</span><span class="n">nohup</span> <span class="n">python3</span> <span class="n">app</span><span class="o">.</span><span class="n">py</span> <span class="o">&gt;</span> <span class="n">output</span><span class="o">.</span><span class="n">log</span> <span class="o">&amp;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>nohup: redirecting stderr to stdout
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">cat</span> <span class="n">output</span><span class="o">.</span><span class="n">log</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre> * Serving Flask app "app" (lazy loading)
+ * Environment: production
+   WARNING: This is a development server. Do not use it in a production deployment.
+   Use a production WSGI server instead.
+ * Debug mode: on
+ * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 504-461-721
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Make-post-request">
+<a class="anchor" href="#Make-post-request" aria-hidden="true"><span class="octicon octicon-link"></span></a>Make post request<a class="anchor-link" href="#Make-post-request"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">similarity</span><span class="p">(</span><span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"0.0.0.0"</span><span class="p">,</span> <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">json</span><span class="p">:</span>
+
+    <span class="sd">"""API call to flask app running on localhost</span>
+<span class="sd">    and fetch top similar customers to the input customer(s)</span>
+<span class="sd">    """</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"http://</span><span class="si">{</span><span class="n">host</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">port</span><span class="si">}</span><span class="s2">/api/similarity/"</span>
+    <span class="n">to_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"user_handle"</span><span class="p">:</span> <span class="n">user_id</span><span class="p">})</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"content-type"</span><span class="p">:</span> <span class="s2">"application/json"</span><span class="p">,</span> <span class="s2">"Accept-Charset"</span><span class="p">:</span> <span class="s2">"UTF-8"</span><span class="p">}</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">to_json</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">similarity</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s1">'110'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "110": [
+    "{'user': 7785, 'score': 1.0065}", 
+    "{'user': 5318, 'score': 1.0064}", 
+    "{'user': 8165, 'score': 1.0055}", 
+    "{'user': 6607, 'score': 1.0049}", 
+    "{'user': 6586, 'score': 1.0046}"
+  ]
+}
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Make-post-request-using-CURL-from-command-line">
+<a class="anchor" href="#Make-post-request-using-CURL-from-command-line" aria-hidden="true"><span class="octicon octicon-link"></span></a>Make post request using CURL from command line<a class="anchor-link" href="#Make-post-request-using-CURL-from-command-line"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">curl</span> <span class="o">-</span><span class="n">X</span> <span class="n">GET</span> <span class="o">-</span><span class="n">H</span> <span class="s2">"Content-type: application/json"</span> <span class="o">-</span><span class="n">d</span> <span class="s2">"{</span><span class="se">\"</span><span class="s2">user_handle</span><span class="se">\"</span><span class="s2">:</span><span class="se">\"</span><span class="s2">110</span><span class="se">\"</span><span class="s2">}"</span> <span class="s2">"http://0.0.0.0:5000/api/similarity/"</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "110": [
+    "{'user': 7785, 'score': 1.0065}", 
+    "{'user': 5318, 'score': 1.0064}", 
+    "{'user': 8165, 'score': 1.0055}", 
+    "{'user': 6607, 'score': 1.0049}", 
+    "{'user': 6586, 'score': 1.0046}"
+  ]
+}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/flask/sqlite/education/svd/2021/07/07/course-recommender-svd-flask.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

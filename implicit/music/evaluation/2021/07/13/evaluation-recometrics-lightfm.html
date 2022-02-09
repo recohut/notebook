@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Evaluating Implicit Models on LastFM Music Data | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Evaluating Implicit Models on LastFM Music Data" />
+<meta name="author" content="<a href='https://github.com/david-cortes'>David Cortes</a>" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Comparing iALS, BPR, ItemPop, and Random baseline models on LastFM-250K music dataset" />
+<meta property="og:description" content="Comparing iALS, BPR, ItemPop, and Random baseline models on LastFM-250K music dataset" />
+<link rel="canonical" href="https://nb.recohut.com/implicit/music/evaluation/2021/07/13/evaluation-recometrics-lightfm.html" />
+<meta property="og:url" content="https://nb.recohut.com/implicit/music/evaluation/2021/07/13/evaluation-recometrics-lightfm.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-13T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Evaluating Implicit Models on LastFM Music Data" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"<a href='https://github.com/david-cortes'>David Cortes</a>"},"dateModified":"2021-07-13T00:00:00-05:00","datePublished":"2021-07-13T00:00:00-05:00","description":"Comparing iALS, BPR, ItemPop, and Random baseline models on LastFM-250K music dataset","headline":"Evaluating Implicit Models on LastFM Music Data","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/implicit/music/evaluation/2021/07/13/evaluation-recometrics-lightfm.html"},"url":"https://nb.recohut.com/implicit/music/evaluation/2021/07/13/evaluation-recometrics-lightfm.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Evaluating Implicit Models on LastFM Music Data</h1><p class="page-description">Comparing iALS, BPR, ItemPop, and Random baseline models on LastFM-250K music dataset</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-13T00:00:00-05:00" itemprop="datePublished">
+        Jul 13, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name"><a href='https://github.com/david-cortes'>David Cortes</a></span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      14 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#Implicit">Implicit</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Music">Music</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Evaluation">Evaluation</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-13-evaluation-recometrics-lightfm.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-13-evaluation-recometrics-lightfm.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-13-evaluation-recometrics-lightfm.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-13-evaluation-recometrics-lightfm.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Implicit-feedback-data">Implicit-feedback data </a></li>
+<li class="toc-entry toc-h2"><a href="#Matrix-factorization-models">Matrix factorization models </a></li>
+<li class="toc-entry toc-h2"><a href="#Evaluating-recommendation-models">Evaluating recommendation models </a></li>
+<li class="toc-entry toc-h2"><a href="#Loading-the-data">Loading the data </a></li>
+<li class="toc-entry toc-h2"><a href="#Creating-a-train-test-split">Creating a train-test split </a></li>
+<li class="toc-entry toc-h2"><a href="#Establishing-baselines">Establishing baselines </a></li>
+<li class="toc-entry toc-h2"><a href="#Fitting-models">Fitting models </a></li>
+<li class="toc-entry toc-h2"><a href="#Calculating-metrics">Calculating metrics </a></li>
+<li class="toc-entry toc-h2"><a href="#Comparing-models">Comparing models </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-13-evaluation-recometrics-lightfm.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This vignette is an introduction to the Python package
+<a href="https://www.github.com/david-cortes/recometrics">recometrics</a>
+for evaluating recommender systems built with implicit-feedback data, assuming
+that the recommendation models are based on low-rank matrix factorization
+(example such packages:
+<a href="https://github.com/benfred/implicit">implicit</a>,
+<a href="https://github.com/lyst/lightfm">lightfm</a>,
+<a href="https://github.com/david-cortes/cmfrec">cmfrec</a>,
+among many others), or assuming that it is possible to compute a user-item
+score as a dot product of user and item factors/components/attributes.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Implicit-feedback-data">
+<a class="anchor" href="#Implicit-feedback-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implicit-feedback data<a class="anchor-link" href="#Implicit-feedback-data"> </a>
+</h2>
+<p>Historically, many models for recommender systems were designed by approaching the
+problem as regression or rating prediction, by taking as input a matrix
+$\mathbf{X}_{ui}$ denoting user likes and dislikes of items in a scale
+(e.g. users giving a 1-to-5 star rating to different movies), and evaluating such
+models by seeing how well they predict these ratings on hold-out data.</p>
+<p>In many cases, it is impossible or very expensive to obtain such data, but one
+has instead so called "implicit-feedback" records: that is, observed logs of user
+interactions with items (e.g. number of times that a user played each
+song in a music service), which do not signal dislikes in the same way as a
+1-star rating would, but can still be used for building and evaluating
+recommender systems.</p>
+<p>In the latter case, the problem is approached more as ranking or classification
+instead of regression, with the models being evaluated not by how well they
+perform at predicting ratings, but by how good they are at scoring the observed
+interactions higher than the non-observed interactions for each user, using
+metrics more typical of information retrieval.</p>
+<p>Generating a ranked list of items for each user according to their predicted
+score and comparing such lists against hold-out data can nevertheless be very
+slow (might even be slower than fitting the model itself), and this is where
+<code>recometrics</code> comes in: it provides efficient routines for calculating many
+implicit-feedback recommendation quality metrics, which exploit multi-threading,
+SIMD instructions, and efficient sorted search procedures.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Matrix-factorization-models">
+<a class="anchor" href="#Matrix-factorization-models" aria-hidden="true"><span class="octicon octicon-link"></span></a>Matrix factorization models<a class="anchor-link" href="#Matrix-factorization-models"> </a>
+</h2>
+<p>The perhaps most common approach towards building a recommendation model is by
+trying to approximate the matrix $\mathbf{X}_{mn}$ as the product of two
+lower-dimensional matrices $\mathbf{A}_{mk}$ and $\mathbf{B}_{nk}$ (with
+$k \ll m$ and $k \ll n$), representing latent user and item factors/components,
+respectively (which are the model parameters to estimate) - i.e.
+$$
+\mathbf{X} \approx \mathbf{A} \mathbf{B}^T
+$$
+In the explicit-feedback setting (e.g. movie ratings), this is typically done by
+trying to minimize squared errors with respect to the <strong>observed</strong> entries in
+$\mathbf{X}$, while in implicit-feedback settings this is typically done by turning the
+$\mathbf{X}$ matrix into a binary matrix which has a one if the observation is observed
+and a zero if not, using the actual values (e.g. number of times that a song was played)
+instead as weights for the positive entries, thereby looking at <strong>all</strong> entries rather
+than just the observed (non-zero) values - e.g.:
+$$
+\min_{\mathbf{A}, \mathbf{B}} \sum_{u=1}^{m} \sum_{i=1}^{n} x_{ui} (I_{x_{ui}&gt;0} - \mathbf{a}_u \cdot \mathbf{b}_i)^2
+$$</p>
+<p>The recommendations for a given user are then produced by calculating the full products
+between that user vector $\mathbf{a}_u$ and the $\mathbf{B}$ matrix, sorting these
+predicted scores in descending order.</p>
+<p>For a better overview of implicit-feedback matrix factorization, see the paper
+<em>Hu, Yifan, Yehuda Koren, and Chris Volinsky. "Collaborative filtering for implicit feedback datasets." 2008 Eighth IEEE International Conference on Data Mining. Ieee, 2008.</em></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluating-recommendation-models">
+<a class="anchor" href="#Evaluating-recommendation-models" aria-hidden="true"><span class="octicon octicon-link"></span></a>Evaluating recommendation models<a class="anchor-link" href="#Evaluating-recommendation-models"> </a>
+</h2>
+<p>Such matrix factorization models are commonly evaluated by setting aside a small amount
+of users as hold-out for evaluation, fitting a model to all the remaining users and
+items. Then, from the evaluation users, a fraction of their interactions data is set as a
+hold-out test set, while their latent factors are computed using the rest of the data
+and the previously fitted model from the other users.</p>
+<p>Then, top-K recommendations for each user are produced, discarding the non-hold-out
+items with which their latent factors were just determined, and these top-K lists are
+compared against the hold-out test items, seeing how well they do at ranking them near
+the top vs. how they rank the remainder of the items.</p>
+<hr>
+<p>This package can be used to calculate many recommendation quality metrics given the
+user and item factors and the train-test data split that was used, including:</p>
+<ul>
+<li>
+<p><strong>P\@K</strong> ("precision-at-k"): this is the most intuitive metric. It calculates the
+proportion of the top-K recommendations that include items from the test set for
+a given user - i.e.
+$$
+P@K = \frac{1}{k} \sum_{i=1}^k
+\begin{cases}
+  1, &amp; r_i \in \mathcal{T}\\
+  0, &amp; \text{otherwise}
+\end{cases}
+$$
+Where $r_i$ is the item ranked at position $i$ by the model (sorting the predicted
+scores in descending order, after excluding the items in the training data for that 
+user), and $\mathcal{T}$ is the set of items that are in the test set for that user.</p>
+<p>Note that some papers and libraries define $P@K$ differently, see the second
+version below.</p>
+</li>
+<li>
+<p><strong>TP\@K</strong> (truncated $P@K$): same calculation as $P@K$, but will instead divide by
+the minimum between $k$ and the number of test items:
+$$
+TP@K = \frac{1}{\min\{k, |\mathcal{T}|\}} \sum_{i=1}^k
+\begin{cases}
+  1, &amp; r_i \in \mathcal{T}\\
+  0, &amp; \text{otherwise}
+\end{cases}
+$$</p>
+<p>The "truncated" prefix is a non-standard nomenclature introduced here to
+differentiate it from the other $P@K$ metric.</p>
+</li>
+<li>
+<p><strong>R\@K</strong> ("recall-at-k"): while $P@K$ offers an intuitive metric that captures what
+a recommender system aims at being good at, it does not capture the fact that,
+the more test items there are, the higher the chances that they will be included in the
+top-K recommendations. Recall instead looks at what proportion of the test
+items would have been retrieved with the top-K recommended list:
+$$
+R@K = \frac{1}{|\mathcal{T}|} \sum_{i=1}^k
+\begin{cases}
+  1, &amp; r_i \in \mathcal{T}\\
+  0, &amp; \text{otherwise}
+\end{cases}
+$$</p>
+</li>
+<li>
+<p><strong>AP\@K</strong> ("average precision-at-k"): precision and recall look at all the items
+in the top-K equally, whereas one might want to take into account also the ranking
+within this top-K list, for which this metric comes in handy.
+"Average Precision" tries to reflect the precisions that would be obtained at
+different recalls:
+$$
+AP@K = \frac{1}{|\mathcal{T}|} \sum_{i=1}^k
+\begin{cases}
+  P@i, &amp; r_i \in \mathcal{T}\\
+  0, &amp; \text{otherwise}
+\end{cases}
+$$
+$AP@K$ is a metric which to some degree considers precision, recall, and rank within
+top-K. Intuitively, it tries to approximate the are under a precision-recall tradeoff
+curve. Its average across users is typically called "MAP\@K" or "Mean Average Precision".</p>
+<p><strong>Important:</strong> many authors define $AP@K$ differently, such as dividing by the minimum
+between $k$ and $|\mathcal{T}|$ instead, or as the average for P\@1..P\@K (either as-is
+or stopping the calculation after already retrieving all test items).
+See below for the other version.</p>
+</li>
+<li>
+<p><strong>TAP\@K</strong> (truncated $AP@K$): a truncated version of the
+$AP@K$ metric, which will instead divide it by the minimum between $k$ and the
+number of test items. Just like for $TP@K$, the "truncated" prefix is a non-standard
+nomenclature used here to differentiate it from the other more typical $AP@K$.</p>
+</li>
+<li>
+<p><strong>NDCG\@K</strong> ("normalized discounted cumulative gain at k"): while the earlier metrics
+look at just the presence of an item in the test set, these items might not all be as
+good, with some of them having higher observed values than others. NDCG aims at
+judging these values, but discounted according to the rank in the top-K list. First
+it calculates the unstandardized discounted cumulative gain:
+$$
+DCG@K = \sum_{i=1}^{k} \frac{C_{r_i}}{log_2 (1+i)}
+$$
+Where $C_{r_i}$ indicates the observed interaction value in the test data for item
+$r_i$, and is zero if the item was not in the test data. The DCG\@K metric is then
+standardized by dividing it by the maximum achievable DCG\@K for the test data:
+$$
+NDCG@K = \frac{DCG@K}{\max DCG@K}
+$$</p>
+<p>Unlike the other metrics, NDCG can handle data which contains "dislikes" in the
+form of negative values. If there are no negative values in the test data, it will
+be bounded between zero and one.</p>
+</li>
+<li>
+<p><strong>Hit\@K</strong> (from which "Hit Rate" is calculated): this is a simpler yes/no metric
+that looks at whether any of the top-K recommended items were in the test set for
+a given user:
+$$
+Hit@K = \max_{i=1..K}
+\begin{cases}
+  1, &amp; r_i \in \mathcal{T}\\
+  0, &amp; \text{otherwise}
+\end{cases}
+$$
+The average of this metric across users is typically called "Hit Rate".</p>
+</li>
+<li>
+<p><strong>RR\@K</strong> ("reciprocal rank at k", from which "MRR" or "mean reciprocal rank"
+is calculated):
+this metric only looks at the rank of the first recommended item that is in the test set,
+and outputs its inverse:
+$$
+RR@K = \max_{i=1..K} \frac{1}{i} \:\:\:\text{s.t.}\:\:\: r_i \in \mathcal{T}
+$$
+The average of this metric across users is typically called "Mean Reciprocal Rank".</p>
+</li>
+<li>
+<p><strong>ROC AUC</strong> ("area under the receiver-operating characteristic curve"): see the
+<a href="https://en.wikipedia.org/wiki/Receiver_operating_characteristic">Wikipedia entry</a>
+for details. While the metrics above only looked at the top-K
+recommended items, this metric looks at the full ranking of items instead, and
+produces a standardized number between zero and one in which 0.5 denotes random
+predictions.</p>
+</li>
+<li>
+<p><strong>PR AUC</strong> ("area under the precision-recall curve"): while ROC AUC provides an
+overview of the overall ranking, one is typically only interested in how well it
+retrieves test items within top ranks, and for this the area under the
+precision-recall curve can do a better job at judging rankings, albeit the metric
+itself is not standardized and its minimum does not go as low as zero.</p>
+<p>The metric is calculated using the fast but not-so-precise rectangular method,
+whose formula corresponds to the AP\@K metric with K=N. Some papers and libraries
+call this the average of this metric the "MAP" or "Mean Average Precision" instead
+(without the "\@K").</p>
+</li>
+</ul>
+<p><em>(For more details about the metrics, see the <a href="https://recometrics.readthedocs.io">package documentation</a>)</em></p>
+<p><strong>NOT</strong> covered by this package:</p>
+<ul>
+<li>
+<p>Metrics that look at the rareness of the items recommended (to evaluate so-called
+"serendipity").</p>
+</li>
+<li>
+<p>Metrics that look at "discoverability".</p>
+</li>
+<li>
+<p>Metrics that take into account the diversity of the ranked lists.</p>
+</li>
+</ul>
+<hr>
+<p>Now a practical example with the <a href="http://ocelma.net/MusicRecommendationDataset/lastfm-360K.html">LastFM-360K</a> dataset, which contains the number of times that different users played different songs from the Last.FM service.</p>
+<p>The example will compare different models from two popular libraries for recommender systems: <a href="https://github.com/benfred/implicit">implicit</a> and <a href="https://github.com/lyst/lightfm">lightfm</a>. This library (<code>recosystem</code>) is able to work with any other library that would produce user and item embeddings, but for speed purposes the comparison will be limited to those two, as other popular libraries such as e.g. <code>spotlight</code> or <code>cornac</code> can be a few orders of magnitude slower in large datasets.</p>
+<p>For better results, one might want to apply transformations to these counts before fitting ALS models, such as taking logarithms and/or dividing the counts by some larger number, but for simplicity purposes, this notebook will use them as-is.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Loading-the-data">
+<a class="anchor" href="#Loading-the-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Loading the data<a class="anchor-link" href="#Loading-the-data"> </a>
+</h2>
+<p>Loading the data and converting the triplets to sparse matrices:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span><span class="o">,</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">coo_matrix</span>
+
+<span class="n">lfm</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="s1">'usersha1-artmbid-artname-plays.tsv'</span><span class="p">,</span>
+                    <span class="n">sep</span><span class="o">=</span><span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">'UserId'</span><span class="p">,</span><span class="s1">'ItemId'</span><span class="p">,</span> <span class="s1">'Artist'</span><span class="p">,</span><span class="s1">'Count'</span><span class="p">])</span>
+<span class="n">lfm</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>UserId</th>
+      <th>ItemId</th>
+      <th>Artist</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>00000c289a1829a808ac09c00daf10bc3c4e223b</td>
+      <td>3bd73256-3905-4f3a-97e2-8b341527f805</td>
+      <td>betty blowtorch</td>
+      <td>2137</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>00000c289a1829a808ac09c00daf10bc3c4e223b</td>
+      <td>f2fb0ff0-5679-42ec-a55c-15109ce6e320</td>
+      <td>die Ärzte</td>
+      <td>1099</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>00000c289a1829a808ac09c00daf10bc3c4e223b</td>
+      <td>b3ae82c2-e60b-4551-a76d-6620f1b456aa</td>
+      <td>melissa etheridge</td>
+      <td>897</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">lfm</span> <span class="o">=</span> <span class="n">lfm</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">'Artist'</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">lfm</span> <span class="o">=</span> <span class="n">lfm</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">lfm</span><span class="o">.</span><span class="n">Count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lfm</span><span class="o">.</span><span class="n">UserId</span><span class="o">.</span><span class="n">notnull</span><span class="p">())</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">lfm</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">notnull</span><span class="p">())]</span>
+<span class="n">lfm</span><span class="p">[</span><span class="s1">'UserId'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">lfm</span><span class="o">.</span><span class="n">UserId</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+<span class="n">lfm</span><span class="p">[</span><span class="s1">'ItemId'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">lfm</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+<span class="n">lfm</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>UserId</th>
+      <th>ItemId</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>37425</td>
+      <td>2137</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0</td>
+      <td>152039</td>
+      <td>1099</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0</td>
+      <td>112365</td>
+      <td>897</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">coo_matrix</span><span class="p">((</span><span class="n">lfm</span><span class="o">.</span><span class="n">Count</span><span class="p">,</span> <span class="p">(</span><span class="n">lfm</span><span class="o">.</span><span class="n">UserId</span><span class="p">,</span> <span class="n">lfm</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)))</span>
+<span class="n">X</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;358858x160112 sparse matrix of type '&lt;class 'numpy.int64'&gt;'
+	with 17309518 stored elements in COOrdinate format&gt;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Creating-a-train-test-split">
+<a class="anchor" href="#Creating-a-train-test-split" aria-hidden="true"><span class="octicon octicon-link"></span></a>Creating a train-test split<a class="anchor-link" href="#Creating-a-train-test-split"> </a>
+</h2>
+<p>Now leaving aside a random sample of 10,000 users for model evaluation, for whom 30%
+of the data will be left as a hold-out test set.</p>
+<p><strong>Important:</strong> <code>recometrics</code> can produce train-test splits that are intended to work in 2 possible ways:</p>
+<ol>
+<li>Selecting a sample of test users, then for each of those users selecting train and test items for each, while fitting the model <strong>to the remainder of the users</strong>, and then using that fitted model on the train data for these test users to produce new factors.</li>
+<li>Selecting a sample of test users, then for each of those users selecting train and test items for each, while fitting the model <strong>to the remainder of the users PLUS the training data of the test users</strong>, and using the obtained user factors directly.</li>
+</ol>
+<p>The first approach is more representative of real model usage and it is recommended to follow, but many popular Python libraries for recommender systems lack the functionality for calculating new user factors after the model is already fitted (for example, packages <code>implicit</code> and <code>cmfrec</code> have such functionality, but packages <code>cornac</code> and <code>lightfm</code> do not).</p>
+<p>As this notebook compares different libraries, it follows instead the second approach, despite not being ideal.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">recometrics</span>
+
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">users_test</span> <span class="o">=</span> \
+    <span class="n">recometrics</span><span class="o">.</span><span class="n">split_reco_train_test</span><span class="p">(</span>
+        <span class="n">X</span><span class="p">,</span> <span class="n">split_type</span><span class="o">=</span><span class="s2">"joined"</span><span class="p">,</span>
+        <span class="n">users_test_fraction</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_test_users</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">,</span>
+        <span class="n">items_test_fraction</span> <span class="o">=</span> <span class="mf">0.3</span>
+    <span class="p">)</span>
+<span class="n">X_test</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;10000x160112 sparse matrix of type '&lt;class 'numpy.float64'&gt;'
+	with 145025 stored elements in Compressed Sparse Row format&gt;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Establishing-baselines">
+<a class="anchor" href="#Establishing-baselines" aria-hidden="true"><span class="octicon octicon-link"></span></a>Establishing baselines<a class="anchor-link" href="#Establishing-baselines"> </a>
+</h2>
+<p>In order to determine if a personalized recommendation model is bringing value or not,
+it's logical to compare such model against the simplest possible ways of making
+recommendations, such as:</p>
+<ul>
+<li>Making random predictions.</li>
+<li>Always predicting the same score for each item regardless of the
+user (non-personalized).</li>
+</ul>
+<p>This section creates such baselines to compare against.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">cmfrec</span> <span class="kn">import</span> <span class="n">MostPopular</span>
+
+<span class="c1">### Random recommendations (random latent factors)</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">UserFactors_random</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">5</span><span class="p">))</span>
+<span class="n">ItemFactors_random</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="c1">### Non-personalized recommendations</span>
+<span class="n">model_baseline</span> <span class="o">=</span> <span class="n">MostPopular</span><span class="p">(</span><span class="n">implicit</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">user_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">tocoo</span><span class="p">())</span>
+<span class="n">item_biases</span> <span class="o">=</span> <span class="n">model_baseline</span><span class="o">.</span><span class="n">item_bias_</span>
+<span class="n">item_biases</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([0.00146918, 0.01384678, 0.00019502, ..., 0.07879574, 0.00048185,
+       0.00015602])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Fitting-models">
+<a class="anchor" href="#Fitting-models" aria-hidden="true"><span class="octicon octicon-link"></span></a>Fitting models<a class="anchor-link" href="#Fitting-models"> </a>
+</h2>
+<p>This section will fit two models from different software libraries that are based on different optimization criteria:</p>
+<ul>
+<li>The typical implicit-feedback matrix factorization model described at the beginning,
+which considers all the entries in the matrix as zero or one with weights, minimizing
+squared error across all of them. This is known as the "weighted regularized
+matrix factorization" (WRMF) model or the implicit-ALS ("iALS") model.</li>
+<li>The "Bayesian Personalized Ranking" model, which instead sub-samples negative items (user-item interactions that have not been observed) and minimizes an optimization objective that approximates the goodness of the relative ranking of positive/negative items.</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">implicit.als</span> <span class="kn">import</span> <span class="n">AlternatingLeastSquares</span>
+<span class="kn">from</span> <span class="nn">lightfm</span> <span class="kn">import</span> <span class="n">LightFM</span>
+
+<span class="c1">### Fitting WRMF model</span>
+<span class="n">wrmf</span> <span class="o">=</span> <span class="n">AlternatingLeastSquares</span><span class="p">(</span><span class="n">factors</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">regularization</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">123</span><span class="p">)</span>
+<span class="n">wrmf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+<span class="c1">### Fitting BPR model with WARP loss</span>
+<span class="n">bpr_warp</span> <span class="o">=</span> <span class="n">LightFM</span><span class="p">(</span><span class="n">no_components</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s2">"warp"</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">123</span><span class="p">)</span>
+<span class="n">bpr_warp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">tocoo</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>WARNING:root:Intel MKL BLAS detected. Its highly recommend to set the environment variable 'export MKL_NUM_THREADS=1' to disable its internal multithreading
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;lightfm.lightfm.LightFM at 0x7f2a02c68f90&gt;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Calculating-metrics">
+<a class="anchor" href="#Calculating-metrics" aria-hidden="true"><span class="octicon octicon-link"></span></a>Calculating metrics<a class="anchor-link" href="#Calculating-metrics"> </a>
+</h2>
+<p>Finally, calculating recommendation quality metrics for all these models:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">k</span> <span class="o">=</span> <span class="mi">5</span> <span class="c1">## Top-K recommendations to evaluate</span>
+
+<span class="n">metrics_random</span> <span class="o">=</span> <span class="n">recometrics</span><span class="o">.</span><span class="n">calc_reco_metrics</span><span class="p">(</span>
+    <span class="n">X_train</span><span class="p">[:</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">X_test</span><span class="p">,</span>
+    <span class="n">UserFactors_random</span><span class="p">,</span> <span class="n">ItemFactors_random</span><span class="p">,</span>
+    <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">all_metrics</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">metrics_baseline</span> <span class="o">=</span> <span class="n">recometrics</span><span class="o">.</span><span class="n">calc_reco_metrics</span><span class="p">(</span>
+    <span class="n">X_train</span><span class="p">[:</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">X_test</span><span class="p">,</span>
+    <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">item_biases</span><span class="o">=</span><span class="n">item_biases</span><span class="p">,</span>
+    <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">all_metrics</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">metrics_wrmf</span> <span class="o">=</span> <span class="n">recometrics</span><span class="o">.</span><span class="n">calc_reco_metrics</span><span class="p">(</span>
+    <span class="n">X_train</span><span class="p">[:</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">X_test</span><span class="p">,</span>
+    <span class="n">wrmf</span><span class="o">.</span><span class="n">user_factors</span><span class="p">[:</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">wrmf</span><span class="o">.</span><span class="n">item_factors</span><span class="p">,</span>
+    <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">all_metrics</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="n">metrics_bpr_warp</span> <span class="o">=</span> <span class="n">recometrics</span><span class="o">.</span><span class="n">calc_reco_metrics</span><span class="p">(</span>
+    <span class="n">X_train</span><span class="p">[:</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">X_test</span><span class="p">,</span>
+    <span class="n">bpr_warp</span><span class="o">.</span><span class="n">user_embeddings</span><span class="p">[:</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="n">bpr_warp</span><span class="o">.</span><span class="n">item_embeddings</span><span class="p">,</span>
+    <span class="n">item_biases</span><span class="o">=</span><span class="n">bpr_warp</span><span class="o">.</span><span class="n">item_biases</span><span class="p">,</span>
+    <span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">all_metrics</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>These metrics are by default returned as a data frame, with each user representing
+a row and each metric a column - example:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">metrics_baseline</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>P@5</th>
+      <th>TP@5</th>
+      <th>R@5</th>
+      <th>AP@5</th>
+      <th>TAP@5</th>
+      <th>NDCG@5</th>
+      <th>Hit@5</th>
+      <th>RR@5</th>
+      <th>ROC_AUC</th>
+      <th>PR_AUC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.973473</td>
+      <td>0.024638</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.982510</td>
+      <td>0.009758</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.4</td>
+      <td>0.4</td>
+      <td>0.117647</td>
+      <td>0.117647</td>
+      <td>0.4</td>
+      <td>0.531887</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>0.993460</td>
+      <td>0.132601</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.746431</td>
+      <td>0.000025</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.2</td>
+      <td>0.2</td>
+      <td>0.052632</td>
+      <td>0.052632</td>
+      <td>0.2</td>
+      <td>0.120256</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>0.972742</td>
+      <td>0.104456</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Comparing-models">
+<a class="anchor" href="#Comparing-models" aria-hidden="true"><span class="octicon octicon-link"></span></a>Comparing models<a class="anchor-link" href="#Comparing-models"> </a>
+</h2>
+<p>In order to compare models, one can instead summarize these metrics across users:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">all_metrics</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">metrics_random</span><span class="p">,</span>
+    <span class="n">metrics_baseline</span><span class="p">,</span>
+    <span class="n">metrics_wrmf</span><span class="p">,</span>
+    <span class="n">metrics_bpr_warp</span>
+<span class="p">]</span>
+<span class="n">all_metrics</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">all_metrics</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">all_metrics</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"Random"</span><span class="p">,</span>
+    <span class="s2">"Non-personalized"</span><span class="p">,</span>
+    <span class="s2">"WRMF (a.k.a. iALS)"</span><span class="p">,</span>
+    <span class="s2">"BPR-WARP"</span>
+<span class="p">]</span>
+<span class="n">all_metrics</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>P@5</th>
+      <th>TP@5</th>
+      <th>R@5</th>
+      <th>AP@5</th>
+      <th>TAP@5</th>
+      <th>NDCG@5</th>
+      <th>Hit@5</th>
+      <th>RR@5</th>
+      <th>ROC_AUC</th>
+      <th>PR_AUC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Random</th>
+      <td>0.000040</td>
+      <td>0.000040</td>
+      <td>0.000014</td>
+      <td>0.000009</td>
+      <td>0.000025</td>
+      <td>0.000009</td>
+      <td>0.0002</td>
+      <td>0.000125</td>
+      <td>0.500342</td>
+      <td>0.000158</td>
+    </tr>
+    <tr>
+      <th>Non-personalized</th>
+      <td>0.060460</td>
+      <td>0.060460</td>
+      <td>0.020657</td>
+      <td>0.012332</td>
+      <td>0.036260</td>
+      <td>0.044705</td>
+      <td>0.2427</td>
+      <td>0.141675</td>
+      <td>0.952542</td>
+      <td>0.029760</td>
+    </tr>
+    <tr>
+      <th>WRMF (a.k.a. iALS)</th>
+      <td>0.203315</td>
+      <td>0.203400</td>
+      <td>0.070627</td>
+      <td>0.046426</td>
+      <td>0.133956</td>
+      <td>0.157362</td>
+      <td>0.6253</td>
+      <td>0.393243</td>
+      <td>0.979968</td>
+      <td>0.121282</td>
+    </tr>
+    <tr>
+      <th>BPR-WARP</th>
+      <td>0.134119</td>
+      <td>0.134209</td>
+      <td>0.046116</td>
+      <td>0.028627</td>
+      <td>0.083706</td>
+      <td>0.100951</td>
+      <td>0.4784</td>
+      <td>0.288444</td>
+      <td>0.977534</td>
+      <td>0.072259</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>From these metrics, the better-performing model under every criteria seems to be the WRMF model (weighted regularized matrix factorization , a.k.a. implicit-ALS) from the package <code>implicit</code>, achieving significantly better results than non-personalized recommendations and than the BPR (Bayesian Personalized Ranking) model with WARP loss from the <code>lightfm</code> package.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/implicit/music/evaluation/2021/07/13/evaluation-recometrics-lightfm.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

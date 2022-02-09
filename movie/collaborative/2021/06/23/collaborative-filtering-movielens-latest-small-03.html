@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>CF Part 3 - Item-based method | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="CF Part 3 - Item-based method" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Collaborative Filtering on MovieLens Latest-small Part 3 - Finding recommendations using memory based item-item similarity method" />
+<meta property="og:description" content="Collaborative Filtering on MovieLens Latest-small Part 3 - Finding recommendations using memory based item-item similarity method" />
+<link rel="canonical" href="https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-03.html" />
+<meta property="og:url" content="https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-03.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-23T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="CF Part 3 - Item-based method" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-23T00:00:00-05:00","datePublished":"2021-06-23T00:00:00-05:00","description":"Collaborative Filtering on MovieLens Latest-small Part 3 - Finding recommendations using memory based item-item similarity method","headline":"CF Part 3 - Item-based method","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-03.html"},"url":"https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-03.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">CF Part 3 - Item-based method</h1><p class="page-description">Collaborative Filtering on MovieLens Latest-small Part 3 - Finding recommendations using memory based item-item similarity method</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-23T00:00:00-05:00" itemprop="datePublished">
+        Jun 23, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      19 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#movie">movie</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#collaborative">collaborative</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-03.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-23-collaborative-filtering-movielens-latest-small-03.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-03.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-23-collaborative-filtering-movielens-latest-small-03.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Idea">Idea </a></li>
+<li class="toc-entry toc-h2"><a href="#Advantages-over-user-based-CF">Advantages over user-based CF </a></li>
+<li class="toc-entry toc-h2"><a href="#Algorithm-:-item-to-item-collaborative-filtering">Algorithm : item-to-item collaborative filtering </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Import-useful-requirements">Import useful requirements </a></li>
+<li class="toc-entry toc-h3"><a href="#Import-requirements">Import requirements </a></li>
+<li class="toc-entry toc-h3"><a href="#Load-ratings">Load ratings </a></li>
+<li class="toc-entry toc-h3"><a href="#userids-and-itemids-encoding">userids and itemids encoding </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-1.-Find-similarities-for-each-of-the-items">Step 1. Find similarities for each of the items </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Similarities-computation">Similarities computation </a></li>
+<li class="toc-entry toc-h4"><a href="#Ajusted-Cosine-Similarity">Ajusted Cosine Similarity </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#Step-2.-Top-N-recommendation-for-a-given-user">Step 2. Top N recommendation for a given user </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#2.a--Finding-candidate-items">2.a- Finding candidate items </a></li>
+<li class="toc-entry toc-h4"><a href="#2.b--Find-similarity-between-each-candidate-item-and-the-set-$I_u$">2.b- Find similarity between each candidate item and the set $I_u$ </a></li>
+<li class="toc-entry toc-h4"><a href="#2.c--Rank-candidate-items-according-to-their-similarities-to-$I_u$">2.c- Rank candidate items according to their similarities to $I_u$ </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Putting-all-together">Putting all together </a></li>
+<li class="toc-entry toc-h2"><a href="#Top-N-recommendation-with-predictions">Top N recommendation with predictions </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Rating-prediction">Rating prediction </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Evaluation-with-Mean-Absolute-Error">Evaluation with Mean Absolute Error </a></li>
+<li class="toc-entry toc-h2"><a href="#Summary">Summary </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#ItemToItem-:-usage">ItemToItem : usage </a></li>
+<li class="toc-entry toc-h4"><a href="#Instanciate-the-ItemToItem-CF">Instanciate the ItemToItem CF </a></li>
+<li class="toc-entry toc-h4"><a href="#Evaluate-the-Item-based-CF-on-the-ML-1M-dataset">Evaluate the Item-based CF on the ML-1M dataset </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Model-based-CF">Model based CF </a></li>
+<li class="toc-entry toc-h2"><a href="#References">References </a></li>
+<li class="toc-entry toc-h2"><a href="#Author">Author </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-03.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Idea">
+<a class="anchor" href="#Idea" aria-hidden="true"><span class="octicon octicon-link"></span></a>Idea<a class="anchor-link" href="#Idea"> </a>
+</h2>
+<p>Let $u$ be the active user and $i$ the referenced item</p>
+<ol>
+<li>If $u$ liked items similar to $i$, he will probably like item $i$.</li>
+<li>If he hated or disliked items similar to $i$, he will also hate item $i$.</li>
+</ol>
+<p>The idea is therefore to look at how an active user $u$ rated items similar to $i$ to know how he would have rated item $i$</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Advantages-over-user-based-CF">
+<a class="anchor" href="#Advantages-over-user-based-CF" aria-hidden="true"><span class="octicon octicon-link"></span></a>Advantages over user-based CF<a class="anchor-link" href="#Advantages-over-user-based-CF"> </a>
+</h2>
+<ol>
+<li>
+<b> Stability </b> : Items ratings are more stable than users ratings. New ratings on items are unlikely to significantly change the similarity between two items, particularly when the items have many ratings <a href="https://dl.acm.org/doi/10.1561/1100000009">(Michael D. Ekstrand, <i>et al.</i> 2011)</a>. </li>
+<li>
+<b> Scalability </b> : with stable item's ratings, it is reasonable to pre-compute similarities between items in an item-item similarity matrix (similarity between items can be computed offline). This will reduce the scalability concern of the algorithm. <a href="https://dl.acm.org/doi/10.1145/371920.372071">(Sarwar <i>et al.</i> 2001)</a>, <a href="https://dl.acm.org/doi/10.1561/1100000009">(Michael D. Ekstrand, <i>et al.</i> 2011)</a>.</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Algorithm-:-item-to-item-collaborative-filtering">
+<a class="anchor" href="#Algorithm-:-item-to-item-collaborative-filtering" aria-hidden="true"><span class="octicon octicon-link"></span></a>Algorithm : item-to-item collaborative filtering<a class="anchor-link" href="#Algorithm-:-item-to-item-collaborative-filtering"> </a>
+</h2>
+<p>The algorithm that defines item-based CF is described as follow <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.449.1171&amp;rep=rep1&amp;type=pdf">(B. Sarwar et al. 2001)</a><a href="https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.554.1671&amp;rep=rep1&amp;type=pdf">(George Karypis 2001)</a> :</p>
+<ol>
+    <li>
+        First identify the $k$ most similar items for each item in the catalogue and record the corresponding similarities. To compute similarity between two items we can user the <i>Adjusted Cosine Similarity</i> that has proven to be more efficient than the basic <i>Cosine similarity measure</i> used for user-based collaborative as described in <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.449.1171&amp;rep=rep1&amp;type=pdf">(B. Sarwar et al. 2001)</a>. The Adjusted Cosine distance between two items $i$ and $j$ is computed as follow
+
+\begin{equation}
+ w_{i,j}= \frac{\sum_{u\in U}(r_{u,i}-\bar{r}_u)(r_{u,j}-\bar{r}_u)}{\sqrt{\sum_{u\in U} (r_{u,i}-\bar{r}_u)^2}\sqrt{\sum_{u\in U} (r_{u,j}-\bar{r}_u)^2}}
+\end{equation}
+
+$w_{i,j}$ is the degree of similarity between items $i$ and $j$. This term is computed for all users $u\in U$, where $U$ is the set of users that rated both items $i$ and $j$. Let's denote by $S^{(i)}$ the set of the $k$ most similar items to item $i$.
+    </li>    
+    <li> To produce top-N recommendations for a given user $u$ that has already purchased a set $I_u$ of items, do the following :
+<ul>
+    <li> Find the set $C$ of candidate items by taking the union of all $S^{(i)}, \forall i\in I_u$ and removing each of the items in the set $I_u$.
+\begin{equation}
+ C = \bigcup_{i\in I_u}\{S^{(i)}\}\smallsetminus I_u
+\end{equation}
+    </li>
+    <li>
+        $\forall c\in C$, compute similarity between c and the set $I_u$ as follows:
+\begin{equation}
+ w_{c,I_u} = \sum_{i\in I_u} w_{c,i}, \forall c \in C
+\end{equation}
+    </li>
+    <li>
+        Sort items in $C$ in decreasing order of $w_{c,I_u}, \forall c \in C$, and return the first $N$ items as the Top-N recommendation list.
+    </li>
+</ul>    
+    </li>
+</ol>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Before returning the first $N$ items as top-N recommendation list, we can make predictions about what user $u$ would have given to each items in the top-N recommendation list, rearrange the list in descending order of predicted ratings and return the rearranged list as the final recommendation list. Rating prediction for item-based CF is given by the following formular <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.449.1171&amp;rep=rep1&amp;type=pdf">(B. Sarwar et al. 2001)</a>:</p>
+\begin{equation}
+ \hat{r}_{u,i}=\frac{\sum_{i\in S^{(i)}}r_{u,j}\cdot w_{i,j}}{\sum_{j\in S^{(i)}}|w_{i,j}|}
+\end{equation}
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Import-useful-requirements">
+<a class="anchor" href="#Import-useful-requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Import useful requirements<a class="anchor-link" href="#Import-useful-requirements"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">"recsys.zip"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">"recsys"</span><span class="p">)):</span>
+    <span class="o">!</span>wget https://github.com/nzhinusoftcm/review-on-collaborative-filtering/raw/master/recsys.zip    
+    <span class="o">!</span>unzip recsys.zip
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Import-requirements">
+<a class="anchor" href="#Import-requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Import requirements<a class="anchor-link" href="#Import-requirements"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+
+<pre><code>matplotlib==3.2.2
+numpy==1.19.2
+pandas==1.0.5
+python==3.7
+scikit-learn==0.24.1
+scikit-surprise==1.1.1
+scipy==1.6.2</code></pre>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.neighbors</span> <span class="kn">import</span> <span class="n">NearestNeighbors</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">csr_matrix</span>
+
+<span class="kn">from</span> <span class="nn">recsys.datasets</span> <span class="kn">import</span> <span class="n">ml1m</span><span class="p">,</span> <span class="n">ml100k</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">ids_encoder</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Load-ratings">
+<a class="anchor" href="#Load-ratings" aria-hidden="true"><span class="octicon octicon-link"></span></a>Load ratings<a class="anchor-link" href="#Load-ratings"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ratings</span><span class="p">,</span> <span class="n">movies</span> <span class="o">=</span> <span class="n">ml100k</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="userids-and-itemids-encoding">
+<a class="anchor" href="#userids-and-itemids-encoding" aria-hidden="true"><span class="octicon octicon-link"></span></a>userids and itemids encoding<a class="anchor-link" href="#userids-and-itemids-encoding"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ratings</span><span class="p">,</span> <span class="n">uencoder</span><span class="p">,</span> <span class="n">iencoder</span> <span class="o">=</span> <span class="n">ids_encoder</span><span class="p">(</span><span class="n">ratings</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's implements the item-based collaborative filtering algorithm described above</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-1.-Find-similarities-for-each-of-the-items">
+<a class="anchor" href="#Step-1.-Find-similarities-for-each-of-the-items" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 1. Find similarities for each of the items<a class="anchor-link" href="#Step-1.-Find-similarities-for-each-of-the-items"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To compute similarity between two items $i$ and $j$, we need to :</p>
+<ol>
+<li>find all users who rated both of them,</li>
+<li>Normalize their ratings on items $i$ and $j$</li>
+<li>Apply the cosine metric to the normalized ratings to compute similarity between $i$ and $j$</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Function <code>normalize()</code> process the rating dataframe to normalize ratings of all users</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">normalize</span><span class="p">():</span>
+    <span class="c1"># compute mean rating for each user</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">'userid'</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">'rating'</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">norm_ratings</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">ratings</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s1">''</span><span class="p">,</span><span class="s1">'_mean'</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="s1">'userid'</span><span class="p">)</span>
+    
+    <span class="c1"># normalize each rating by substracting the mean rating of the corresponding user</span>
+    <span class="n">norm_ratings</span><span class="p">[</span><span class="s1">'norm_rating'</span><span class="p">]</span> <span class="o">=</span> <span class="n">norm_ratings</span><span class="p">[</span><span class="s1">'rating'</span><span class="p">]</span> <span class="o">-</span> <span class="n">norm_ratings</span><span class="p">[</span><span class="s1">'rating_mean'</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">mean</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">norm_ratings</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">mean</span><span class="p">,</span> <span class="n">norm_ratings</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">()</span>
+<span class="n">np_ratings</span> <span class="o">=</span> <span class="n">norm_ratings</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+<span class="n">norm_ratings</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>rating</th>
+      <th>rating_mean</th>
+      <th>norm_rating</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>0</td>
+      <td>5</td>
+      <td>3.610294</td>
+      <td>1.389706</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0</td>
+      <td>1</td>
+      <td>3</td>
+      <td>3.610294</td>
+      <td>-0.610294</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0</td>
+      <td>2</td>
+      <td>4</td>
+      <td>3.610294</td>
+      <td>0.389706</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0</td>
+      <td>3</td>
+      <td>3</td>
+      <td>3.610294</td>
+      <td>-0.610294</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0</td>
+      <td>4</td>
+      <td>3</td>
+      <td>3.610294</td>
+      <td>-0.610294</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>now that each rating has been normalized, we can represent each item by a vector of its normalized ratings</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">item_representation</span><span class="p">(</span><span class="n">ratings</span><span class="p">):</span>    
+    <span class="k">return</span> <span class="n">csr_matrix</span><span class="p">(</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">ratings</span><span class="o">.</span><span class="n">itemid</span><span class="p">,</span> <span class="n">ratings</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span> <span class="n">ratings</span><span class="o">.</span><span class="n">norm_rating</span><span class="p">,</span> <span class="n">aggfunc</span><span class="o">=</span><span class="nb">sum</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+    <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">R</span> <span class="o">=</span> <span class="n">item_representation</span><span class="p">(</span><span class="n">norm_ratings</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's build and fit our $k$-NN model using sklearn</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">create_model</span><span class="p">(</span><span class="n">rating_matrix</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">"cosine"</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    :param R : numpy array of item representations</span>
+<span class="sd">    :param k : number of nearest neighbors to return    </span>
+<span class="sd">    :return model : our knn model</span>
+<span class="sd">    """</span>    
+    <span class="n">model</span> <span class="o">=</span> <span class="n">NearestNeighbors</span><span class="p">(</span><span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="o">=</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s1">'brute'</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">rating_matrix</span><span class="p">)</span>    
+    <span class="k">return</span> <span class="n">model</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Similarities-computation">
+<a class="anchor" href="#Similarities-computation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Similarities computation<a class="anchor-link" href="#Similarities-computation"> </a>
+</h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Similarities between items can be measured with the <em>Cosine</em> or <em>Eucliedian</em> distance. The <strong><em>NearestNeighbors</em></strong> class from the sklearn library simplifies the computation of neighbors. We just need to specify the metric (e.g. cosine or euclidian) that will be used to compute similarities.</p>
+<p>The above method, <code>create_model</code>, creates the kNN model and the following <code>nearest_neighbors</code> method uses the created model to kNN items. It returns nearest neighbors as well as similarities measures for each items.</p>
+<p><code>nearest_neighbors</code> returns :</p>
+<ul>
+<li>
+<code>similarities</code> : numpy array of shape $(n,k)$</li>
+<li>
+<code>neighbors</code> : numpy array of shape $(n,k)$</li>
+</ul>
+<p>where $n$ is the total number of items and $k$ is the number of neighbors to return, specified when creating the kNN model.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">nearest_neighbors</span><span class="p">(</span><span class="n">rating_matrix</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    compute the top n similar items for each item.    </span>
+<span class="sd">    :param rating_matrix : items representations</span>
+<span class="sd">    :param model : nearest neighbors model    </span>
+<span class="sd">    :return similarities, neighbors</span>
+<span class="sd">    """</span>    
+    <span class="n">similarities</span><span class="p">,</span> <span class="n">neighbors</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">kneighbors</span><span class="p">(</span><span class="n">rating_matrix</span><span class="p">)</span>    
+    <span class="k">return</span> <span class="n">similarities</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:],</span> <span class="n">neighbors</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Ajusted-Cosine-Similarity">
+<a class="anchor" href="#Ajusted-Cosine-Similarity" aria-hidden="true"><span class="octicon octicon-link"></span></a>Ajusted Cosine Similarity<a class="anchor-link" href="#Ajusted-Cosine-Similarity"> </a>
+</h4>
+<p>In the context of item-based collaborative filtering, the adjusted cosine similarity has shown to be more efficient that the cosine or the euclidian distance. Here is the formular to compute the adjusted cosine weight between two items $i$ and $j$ :</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+\begin{equation}
+ w_{i,j}= \frac{\sum_{u\in U}(r_{u,i}-\bar{r}_u)(r_{u,j}-\bar{r}_u)}{\sqrt{\sum_{u\in U} (r_{u,i}-\bar{r}_u)^2}\sqrt{\sum_{u\in U} (r_{u,j}-\bar{r}_u)^2}}.
+\end{equation}
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This term is computed for all users $u\in U$, where $U$ is the set of users that rated both items $i$ and $j$. Since the <em>sklearn</em> library do not directly implement the adjusted cosine similarity metric, we will implement it with the method <code>adjusted_cosine</code>, with some helper function :</p>
+<ul>
+<li>
+<code>save_similarities</code> : since the computation of the adjusted cosine similarity is time consuming, around 5 mins for the ml100k dataset, we use this method to save the computed similarities for lated usage.</li>
+<li>
+<code>load_similarities</code> : load the saved similarities</li>
+<li>
+<code>cosine</code> : cosine distance between two vectors.</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">save_similarities</span><span class="p">(</span><span class="n">similarities</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">):</span>    
+    <span class="n">base_dir</span> <span class="o">=</span> <span class="s1">'recsys/weights/item2item'</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>    
+    <span class="n">similarities_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s1">'similarities.npy'</span><span class="p">)</span>
+    <span class="n">neighbors_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s1">'neighbors.npy'</span><span class="p">)</span>    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">similarities_file_name</span><span class="p">,</span> <span class="n">similarities</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">neighbors_file_name</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">)</span>        
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"An error occured when saving similarities, due to : </span><span class="se">\n</span><span class="s2"> ValueError : </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        
+<span class="k">def</span> <span class="nf">load_similarities</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+    <span class="n">base_dir</span> <span class="o">=</span> <span class="s1">'recsys/weights/item2item'</span>
+    <span class="n">save_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">)</span>    
+    <span class="n">similiraties_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s1">'similarities.npy'</span><span class="p">)</span>
+    <span class="n">neighbors_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_dir</span><span class="p">,</span> <span class="s1">'neighbors.npy'</span><span class="p">)</span>    
+    <span class="n">similarities</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">similiraties_file</span><span class="p">)</span>
+    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">neighbors_file</span><span class="p">)</span>    
+    <span class="k">return</span> <span class="n">similarities</span><span class="p">[:,:</span><span class="n">k</span><span class="p">],</span> <span class="n">neighbors</span><span class="p">[:,:</span><span class="n">k</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">cosine</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">adjusted_cosine</span><span class="p">(</span><span class="n">np_ratings</span><span class="p">,</span> <span class="n">nb_items</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">):</span>
+    <span class="n">similarities</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">nb_items</span><span class="p">,</span> <span class="n">nb_items</span><span class="p">))</span>
+    <span class="n">similarities</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">_progress</span><span class="p">(</span><span class="n">count</span><span class="p">):</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">'</span><span class="se">\r</span><span class="s1">Computing similarities. Progress status : </span><span class="si">%.1f%%</span><span class="s1">'</span> <span class="o">%</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">count</span> <span class="o">/</span> <span class="n">nb_items</span><span class="p">)</span><span class="o">*</span><span class="mf">100.0</span><span class="p">))</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        
+    <span class="n">items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ratings</span><span class="o">.</span><span class="n">itemid</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">items</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">items</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">:]:</span>            
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">np_ratings</span><span class="p">[(</span><span class="n">np_ratings</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">np_ratings</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">j</span><span class="p">),</span> <span class="p">:]</span>
+            <span class="n">vals</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">scores</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">return_counts</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">scores</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">vals</span><span class="p">[</span><span class="n">count</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]),:]</span>
+
+            <span class="k">if</span> <span class="n">scores</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">scores</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)</span> <span class="o">==</span> <span class="n">i</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">scores</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)</span> <span class="o">==</span> <span class="n">j</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+                <span class="n">w</span> <span class="o">=</span> <span class="n">cosine</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+                <span class="n">similarities</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span>
+                <span class="n">similarities</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">w</span>
+        <span class="n">_progress</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">_progress</span><span class="p">(</span><span class="n">nb_items</span><span class="p">)</span>
+    
+    <span class="c1"># get neighbors by their neighbors in decreasing order of similarities</span>
+    <span class="n">neighbors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">similarities</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># sort similarities in decreasing order</span>
+    <span class="n">similarities</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">similarities</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># save similarities to disk</span>
+    <span class="n">save_similarities</span><span class="p">(</span><span class="n">similarities</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">)</span> 
+    
+    <span class="k">return</span> <span class="n">similarities</span><span class="p">,</span> <span class="n">neighbors</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>now, we can call the <code>adjusted_cosine</code> function to compute and save items similarities and neighbors based on the adjusted cosine metric.</p>
+<p>uncomment the two lines of the following cell to compute the adjusted cosine between all items. As we have already run the next cell before, we will just load the precomputed similarities for further use.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># similarities, neighbors = adjusted_cosine(np_ratings, nb_items=nb_items, dataset_name='ml100k')</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Among the following similarity metrics, choose the one you wish to use for the item-based collaborative filtering :</p>
+<ul>
+<li>
+<strong>euclidian</strong> or <strong>cosine</strong> : choose <em>euclidian</em> or <em>cosine</em> to initialise the similarity model through the sklearn library.</li>
+<li>
+<strong>adjusted_cosine</strong> : choose the <em>adjusted_cosine</em> metric to load similarities computed and saved through the <code>adjusted_cosine</code> function.</li>
+</ul>
+<p>In this case, we will use the <em>adjusted_cosine</em> metric.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">metric</span> <span class="o">=</span> <span class="s1">'adjusted_cosine'</span>
+
+<span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s1">'adjusted_cosine'</span><span class="p">:</span>
+    <span class="n">similarities</span><span class="p">,</span> <span class="n">neighbors</span> <span class="o">=</span> <span class="n">load_similarities</span><span class="p">(</span><span class="s1">'ml100k'</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">create_model</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">21</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">metric</span><span class="p">)</span>
+    <span class="n">similarities</span><span class="p">,</span> <span class="n">neighbors</span> <span class="o">=</span> <span class="n">nearest_neighbors</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">'neighbors shape : '</span><span class="p">,</span> <span class="n">neighbors</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'similarities shape : '</span><span class="p">,</span> <span class="n">similarities</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>neighbors shape :  (1682, 20)
+similarities shape :  (1682, 20)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><code>neighbors</code> and <code>similarities</code> are numpy array, were each entries are list of 20 neighbors with their corresponding similarities</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-2.-Top-N-recommendation-for-a-given-user">
+<a class="anchor" href="#Step-2.-Top-N-recommendation-for-a-given-user" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 2. Top N recommendation for a given user<a class="anchor-link" href="#Step-2.-Top-N-recommendation-for-a-given-user"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Top-N recommendations are made for example for a user $u$ who has already rated a set of items $I_u$</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="2.a--Finding-candidate-items">
+<a class="anchor" href="#2.a--Finding-candidate-items" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.a- Finding candidate items<a class="anchor-link" href="#2.a--Finding-candidate-items"> </a>
+</h4>
+<p>To find candidate items for user $u$, we need to :</p>
+<ol>
+<li>Find the set $I_u$ of items already rated by user $u$,</li>
+<li>Take the union of similar items as $C$ for all items in $I_u$</li>
+<li>exclude from the set $C$ all items in $I_u$, to avoid recommend to a user items he has already purchased.</li>
+</ol>
+<p>These are done in function <code>candidate_items()</code></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">candidate_items</span><span class="p">(</span><span class="n">userid</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    :param userid : user id for which we wish to find candidate items    </span>
+<span class="sd">    :return : I_u, candidates</span>
+<span class="sd">    """</span>
+    
+    <span class="c1"># 1. Finding the set I_u of items already rated by user userid</span>
+    <span class="n">I_u</span> <span class="o">=</span> <span class="n">np_ratings</span><span class="p">[</span><span class="n">np_ratings</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">userid</span><span class="p">]</span>
+    <span class="n">I_u</span> <span class="o">=</span> <span class="n">I_u</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)</span>
+    
+    <span class="c1"># 2. Taking the union of similar items for all items in I_u to form the set of candidate items</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        
+    <span class="k">for</span> <span class="n">iid</span> <span class="ow">in</span> <span class="n">I_u</span><span class="p">:</span>    
+        <span class="c1"># add the neighbors of item iid in the set of candidate items</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">neighbors</span><span class="p">[</span><span class="n">iid</span><span class="p">])</span>
+        
+    <span class="n">c</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="c1"># 3. exclude from the set C all items in I_u.</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">I_u</span><span class="p">,</span> <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">I_u</span><span class="p">,</span> <span class="n">candidates</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">test_user</span> <span class="o">=</span> <span class="n">uencoder</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">i_u</span><span class="p">,</span> <span class="n">u_candidates</span> <span class="o">=</span> <span class="n">candidate_items</span><span class="p">(</span><span class="n">test_user</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">'number of items purchased by user 1 : '</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">i_u</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'number of candidate items for user 1 : '</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">u_candidates</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>number of items purchased by user 1 :  272
+number of candidate items for user 1 :  893
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="2.b--Find-similarity-between-each-candidate-item-and-the-set-$I_u$">
+<a class="anchor" href="#2.b--Find-similarity-between-each-candidate-item-and-the-set-%24I_u%24" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.b- Find similarity between each candidate item and the set $I_u$<a class="anchor-link" href="#2.b--Find-similarity-between-each-candidate-item-and-the-set-%24I_u%24"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">similarity_with_Iu</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">I_u</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    compute similarity between an item c and a set of items I_u. For each item i in I_u, get similarity between </span>
+<span class="sd">    i and c, if c exists in the set of items similar to itemid.    </span>
+<span class="sd">    :param c : itemid of a candidate item</span>
+<span class="sd">    :param I_u : set of items already purchased by a given user    </span>
+<span class="sd">    :return w : similarity between c and I_u</span>
+<span class="sd">    """</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="mi">0</span>    
+    <span class="k">for</span> <span class="n">iid</span> <span class="ow">in</span> <span class="n">I_u</span> <span class="p">:</span>        
+        <span class="c1"># get similarity between itemid and c, if c is one of the k nearest neighbors of itemid</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">neighbors</span><span class="p">[</span><span class="n">iid</span><span class="p">]</span> <span class="p">:</span>
+            <span class="n">w</span> <span class="o">=</span> <span class="n">w</span> <span class="o">+</span> <span class="n">similarities</span><span class="p">[</span><span class="n">iid</span><span class="p">,</span> <span class="n">neighbors</span><span class="p">[</span><span class="n">iid</span><span class="p">]</span> <span class="o">==</span> <span class="n">c</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>    
+    <span class="k">return</span> <span class="n">w</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="2.c--Rank-candidate-items-according-to-their-similarities-to-$I_u$">
+<a class="anchor" href="#2.c--Rank-candidate-items-according-to-their-similarities-to-%24I_u%24" aria-hidden="true"><span class="octicon octicon-link"></span></a>2.c- Rank candidate items according to their similarities to $I_u$<a class="anchor-link" href="#2.c--Rank-candidate-items-according-to-their-similarities-to-%24I_u%24"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">rank_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">I_u</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    rank candidate items according to their similarities with i_u    </span>
+<span class="sd">    :param candidates : list of candidate items</span>
+<span class="sd">    :param I_u : list of items purchased by the user    </span>
+<span class="sd">    :return ranked_candidates : dataframe of candidate items, ranked in descending order of similarities with I_u</span>
+<span class="sd">    """</span>
+    
+    <span class="c1"># list of candidate items mapped to their corresponding similarities to I_u</span>
+    <span class="n">sims</span> <span class="o">=</span> <span class="p">[</span><span class="n">similarity_with_Iu</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">I_u</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">]</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="n">iencoder</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>    
+    <span class="n">mapping</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">sims</span><span class="p">))</span>
+    
+    <span class="n">ranked_candidates</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">mapping</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">couple</span><span class="p">:</span><span class="n">couple</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>    
+    <span class="k">return</span> <span class="n">ranked_candidates</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Putting-all-together">
+<a class="anchor" href="#Putting-all-together" aria-hidden="true"><span class="octicon octicon-link"></span></a>Putting all together<a class="anchor-link" href="#Putting-all-together"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now that we defined all functions necessary to build our item to item top-N recommendation, let's define function <code>item2item_topN()</code> that makes top-$N$ recommendations for a given user</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">topn_recommendation</span><span class="p">(</span><span class="n">userid</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Produce top-N recommendation for a given user    </span>
+<span class="sd">    :param userid : user for which we produce top-N recommendation</span>
+<span class="sd">    :param n : length of the top-N recommendation list    </span>
+<span class="sd">    :return topn</span>
+<span class="sd">    """</span>
+    <span class="c1"># find candidate items</span>
+    <span class="n">I_u</span><span class="p">,</span> <span class="n">candidates</span> <span class="o">=</span> <span class="n">candidate_items</span><span class="p">(</span><span class="n">userid</span><span class="p">)</span>
+    
+    <span class="c1"># rank candidate items according to their similarities with I_u</span>
+    <span class="n">ranked_candidates</span> <span class="o">=</span> <span class="n">rank_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">I_u</span><span class="p">)</span>
+    
+    <span class="c1"># get the first N row of ranked_candidates to build the top N recommendation list</span>
+    <span class="n">topn</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ranked_candidates</span><span class="p">[:</span><span class="n">N</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">'itemid'</span><span class="p">,</span><span class="s1">'similarity_with_Iu'</span><span class="p">])</span>    
+    <span class="n">topn</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">topn</span><span class="p">,</span> <span class="n">movies</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">'itemid'</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">'inner'</span><span class="p">)</span>    
+    <span class="k">return</span> <span class="n">topn</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">topn_recommendation</span><span class="p">(</span><span class="n">test_user</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>itemid</th>
+      <th>similarity_with_Iu</th>
+      <th>title</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1356</td>
+      <td>52.867173</td>
+      <td>Ed's Next Move (1996)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1189</td>
+      <td>50.362199</td>
+      <td>Prefontaine (1997)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1516</td>
+      <td>31.133267</td>
+      <td>Wedding Gift, The (1994)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1550</td>
+      <td>31.031738</td>
+      <td>Destiny Turns on the Radio (1995)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1554</td>
+      <td>27.364494</td>
+      <td>Safe Passage (1994)</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>1600</td>
+      <td>27.287712</td>
+      <td>Guantanamera (1994)</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>1223</td>
+      <td>26.631850</td>
+      <td>King of the Hill (1993)</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>1388</td>
+      <td>26.624397</td>
+      <td>Gabbeh (1996)</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>766</td>
+      <td>26.590175</td>
+      <td>Man of the Year (1995)</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>691</td>
+      <td>26.461802</td>
+      <td>Dark City (1998)</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>1378</td>
+      <td>25.787842</td>
+      <td>Rhyme &amp; Reason (1997)</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>1664</td>
+      <td>25.327445</td>
+      <td>8 Heads in a Duffel Bag (1997)</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>1261</td>
+      <td>24.785660</td>
+      <td>Run of the Country, The (1995)</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>1123</td>
+      <td>24.524028</td>
+      <td>Last Time I Saw Paris, The (1954)</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>1538</td>
+      <td>24.492453</td>
+      <td>All Over Me (1997)</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>1485</td>
+      <td>24.345312</td>
+      <td>Colonel Chabert, Le (1994)</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>1450</td>
+      <td>24.262120</td>
+      <td>Golden Earrings (1947)</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>909</td>
+      <td>23.357301</td>
+      <td>Dangerous Beauty (1998)</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>359</td>
+      <td>22.973658</td>
+      <td>Assignment, The (1997)</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>1369</td>
+      <td>22.710078</td>
+      <td>Forbidden Christ, The (Cristo proibito, Il) (1...</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>1506</td>
+      <td>22.325504</td>
+      <td>Nelly &amp; Monsieur Arnaud (1995)</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>1537</td>
+      <td>22.061914</td>
+      <td>Cosi (1996)</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>1474</td>
+      <td>21.877034</td>
+      <td>Nina Takes a Lover (1994)</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>1467</td>
+      <td>21.861203</td>
+      <td>Saint of Fort Washington, The (1993)</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>1255</td>
+      <td>21.750924</td>
+      <td>Broken English (1996)</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>1499</td>
+      <td>21.529748</td>
+      <td>Grosse Fatigue (1994)</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>1466</td>
+      <td>21.063269</td>
+      <td>Margaret's Museum (1995)</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>1448</td>
+      <td>20.846909</td>
+      <td>My Favorite Season (1993)</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>927</td>
+      <td>20.730153</td>
+      <td>Flower of My Secret, The (Flor de mi secreto, ...</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>1375</td>
+      <td>20.627152</td>
+      <td>Cement Garden, The (1993)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This dataframe represents the top N recommendation list a user. These items are sorted in decreasing order of similarities with $I_u$.</p>
+<p><strong>Observation</strong> : The recommended items are the most similar to the set $I_u$ of items already purchased by the user.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Top-N-recommendation-with-predictions">
+<a class="anchor" href="#Top-N-recommendation-with-predictions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Top N recommendation with predictions<a class="anchor-link" href="#Top-N-recommendation-with-predictions"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Before recommending the previous list to the user, we can go further and predict the ratings the user would have given to each of these items, sort them in descending order of prediction and return the reordered list as the new top N recommendation list.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Rating-prediction">
+<a class="anchor" href="#Rating-prediction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rating prediction<a class="anchor-link" href="#Rating-prediction"> </a>
+</h3>
+<p>As stated earlier, the predicted rating $\hat{r}_{u,i}$ for a given user $u$ on an item $i$ is obtained by aggregating ratings given by $u$ on items similar to $i$ as follows:</p>
+\begin{equation}
+ \hat{r}_{u,i}=\frac{\sum_{j\in S^{(i)}}r_{u,j}\cdot w_{i,j}}{\sum_{j\in S^{(i)}}|w_{i,j}|}
+\end{equation}
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">userid</span><span class="p">,</span> <span class="n">itemid</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Make rating prediction for user userid on item itemid    </span>
+<span class="sd">    :param userid : id of the active user</span>
+<span class="sd">    :param itemid : id of the item for which we are making prediction        </span>
+<span class="sd">    :return r_hat : predicted rating</span>
+<span class="sd">    """</span>
+    
+    <span class="c1"># Get items similar to item itemid with their corresponding similarities</span>
+    <span class="n">item_neighbors</span> <span class="o">=</span> <span class="n">neighbors</span><span class="p">[</span><span class="n">itemid</span><span class="p">]</span>
+    <span class="n">item_similarities</span> <span class="o">=</span> <span class="n">similarities</span><span class="p">[</span><span class="n">itemid</span><span class="p">]</span>
+    
+    <span class="c1"># get ratings of user with id userid</span>
+    <span class="n">uratings</span> <span class="o">=</span> <span class="n">np_ratings</span><span class="p">[</span><span class="n">np_ratings</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)</span> <span class="o">==</span> <span class="n">userid</span><span class="p">]</span>
+    
+    <span class="c1"># similar items rated by item the user of i</span>
+    <span class="n">siru</span> <span class="o">=</span> <span class="n">uratings</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">uratings</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">item_neighbors</span><span class="p">)]</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">siru</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">item_neighbors</span> <span class="o">==</span> <span class="n">iid</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">iid</span> <span class="ow">in</span> <span class="n">siru</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)]</span>    
+    <span class="n">sims</span> <span class="o">=</span> <span class="n">item_similarities</span><span class="p">[</span><span class="n">indexes</span><span class="p">]</span>
+    
+    <span class="n">dot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">sims</span><span class="p">)</span>
+    <span class="n">som</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sims</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">dot</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">som</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mean</span><span class="p">[</span><span class="n">userid</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">dot</span> <span class="o">/</span> <span class="n">som</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now let's use our <code>predict()</code> function to predict what ratings the user would have given to the previous top-$N$ list and return the reorganised list (in decreasing order of predictions) as the new top-$N$ list</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">topn_prediction</span><span class="p">(</span><span class="n">userid</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    :param userid : id of the active user    </span>
+<span class="sd">    :return topn : initial topN recommendations returned by the function item2item_topN</span>
+<span class="sd">    :return topn_predict : topN recommendations reordered according to rating predictions</span>
+<span class="sd">    """</span>
+    <span class="c1"># make top N recommendation for the active user</span>
+    <span class="n">topn</span> <span class="o">=</span> <span class="n">topn_recommendation</span><span class="p">(</span><span class="n">userid</span><span class="p">)</span>
+    
+    <span class="c1"># get list of items of the top N list</span>
+    <span class="n">itemids</span> <span class="o">=</span> <span class="n">topn</span><span class="o">.</span><span class="n">itemid</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+    
+    <span class="n">predictions</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="c1"># make prediction for each item in the top N list</span>
+    <span class="k">for</span> <span class="n">itemid</span> <span class="ow">in</span> <span class="n">itemids</span><span class="p">:</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">userid</span><span class="p">,</span> <span class="n">itemid</span><span class="p">)</span>
+        
+        <span class="n">predictions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">itemid</span><span class="p">,</span><span class="n">r</span><span class="p">))</span>
+    
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">'itemid'</span><span class="p">,</span><span class="s1">'prediction'</span><span class="p">])</span>
+    
+    <span class="c1"># merge the predictions to topN_list and rearrange the list according to predictions</span>
+    <span class="n">topn_predict</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">topn</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">'itemid'</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">'inner'</span><span class="p">)</span>
+    <span class="n">topn_predict</span> <span class="o">=</span> <span class="n">topn_predict</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">'prediction'</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">topn</span><span class="p">,</span> <span class="n">topn_predict</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now, let's make recommendation for user 1 and compare the two list</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">topn</span><span class="p">,</span> <span class="n">topn_predict</span> <span class="o">=</span> <span class="n">topn_prediction</span><span class="p">(</span><span class="n">userid</span><span class="o">=</span><span class="n">test_user</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">topn_predict</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>itemid</th>
+      <th>similarity_with_Iu</th>
+      <th>title</th>
+      <th>prediction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>7</th>
+      <td>1388</td>
+      <td>26.624397</td>
+      <td>Gabbeh (1996)</td>
+      <td>4.666667</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>359</td>
+      <td>22.973658</td>
+      <td>Assignment, The (1997)</td>
+      <td>4.600000</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1554</td>
+      <td>27.364494</td>
+      <td>Safe Passage (1994)</td>
+      <td>4.500000</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>1538</td>
+      <td>24.492453</td>
+      <td>All Over Me (1997)</td>
+      <td>4.500000</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>1448</td>
+      <td>20.846909</td>
+      <td>My Favorite Season (1993)</td>
+      <td>4.490052</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>1375</td>
+      <td>20.627152</td>
+      <td>Cement Garden, The (1993)</td>
+      <td>4.333333</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>1466</td>
+      <td>21.063269</td>
+      <td>Margaret's Museum (1995)</td>
+      <td>4.271915</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1516</td>
+      <td>31.133267</td>
+      <td>Wedding Gift, The (1994)</td>
+      <td>4.000000</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>1467</td>
+      <td>21.861203</td>
+      <td>Saint of Fort Washington, The (1993)</td>
+      <td>4.000000</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>1537</td>
+      <td>22.061914</td>
+      <td>Cosi (1996)</td>
+      <td>4.000000</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>1378</td>
+      <td>25.787842</td>
+      <td>Rhyme &amp; Reason (1997)</td>
+      <td>4.000000</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>1369</td>
+      <td>22.710078</td>
+      <td>Forbidden Christ, The (Cristo proibito, Il) (1...</td>
+      <td>4.000000</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1550</td>
+      <td>31.031738</td>
+      <td>Destiny Turns on the Radio (1995)</td>
+      <td>3.777778</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1189</td>
+      <td>50.362199</td>
+      <td>Prefontaine (1997)</td>
+      <td>3.666528</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>1506</td>
+      <td>22.325504</td>
+      <td>Nelly &amp; Monsieur Arnaud (1995)</td>
+      <td>3.610294</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>1485</td>
+      <td>24.345312</td>
+      <td>Colonel Chabert, Le (1994)</td>
+      <td>3.610294</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>1664</td>
+      <td>25.327445</td>
+      <td>8 Heads in a Duffel Bag (1997)</td>
+      <td>3.610294</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>691</td>
+      <td>26.461802</td>
+      <td>Dark City (1998)</td>
+      <td>3.610294</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>1223</td>
+      <td>26.631850</td>
+      <td>King of the Hill (1993)</td>
+      <td>3.610294</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>1600</td>
+      <td>27.287712</td>
+      <td>Guantanamera (1994)</td>
+      <td>3.610294</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>909</td>
+      <td>23.357301</td>
+      <td>Dangerous Beauty (1998)</td>
+      <td>3.500000</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>1261</td>
+      <td>24.785660</td>
+      <td>Run of the Country, The (1995)</td>
+      <td>3.333333</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>1255</td>
+      <td>21.750924</td>
+      <td>Broken English (1996)</td>
+      <td>3.265749</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>1123</td>
+      <td>24.524028</td>
+      <td>Last Time I Saw Paris, The (1954)</td>
+      <td>3.200000</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>1450</td>
+      <td>24.262120</td>
+      <td>Golden Earrings (1947)</td>
+      <td>3.142978</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>1474</td>
+      <td>21.877034</td>
+      <td>Nina Takes a Lover (1994)</td>
+      <td>3.000000</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>766</td>
+      <td>26.590175</td>
+      <td>Man of the Year (1995)</td>
+      <td>3.000000</td>
+    </tr>
+    <tr>
+      <th>0</th>
+      <td>1356</td>
+      <td>52.867173</td>
+      <td>Ed's Next Move (1996)</td>
+      <td>2.280926</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>927</td>
+      <td>20.730153</td>
+      <td>Flower of My Secret, The (Flor de mi secreto, ...</td>
+      <td>1.665010</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>1499</td>
+      <td>21.529748</td>
+      <td>Grosse Fatigue (1994)</td>
+      <td>1.122032</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As you will have noticed, the two lists are sorted in different ways. The second list is organized according to the predictions made for the user.</p>
+<p><b>Note</b>: When making predictions for user $u$ on item $i$, user $u$ may not have rated any of the $k$ most similar items to i. In this case, we consider the mean rating of $u$ as the predicted value.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluation-with-Mean-Absolute-Error">
+<a class="anchor" href="#Evaluation-with-Mean-Absolute-Error" aria-hidden="true"><span class="octicon octicon-link"></span></a>Evaluation with Mean Absolute Error<a class="anchor-link" href="#Evaluation-with-Mean-Absolute-Error"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">get_examples</span>
+
+<span class="c1"># get examples as tuples of userids and itemids and labels from normalize ratings</span>
+<span class="n">raw_examples</span><span class="p">,</span> <span class="n">raw_labels</span> <span class="o">=</span> <span class="n">get_examples</span><span class="p">(</span><span class="n">ratings</span><span class="p">,</span> <span class="n">labels_column</span><span class="o">=</span><span class="s1">'rating'</span><span class="p">)</span>
+
+<span class="c1"># train test split</span>
+<span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span><span class="p">),</span> <span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">examples</span><span class="o">=</span><span class="n">raw_examples</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">raw_labels</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Evaluate the model on </span><span class="si">{}</span><span class="s1"> test data ...'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">preds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">predict</span><span class="p">(</span><span class="n">u</span><span class="p">,</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span><span class="n">i</span><span class="p">)</span> <span class="ow">in</span> <span class="n">x_test</span><span class="p">)</span>
+    <span class="n">mae</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">y_test</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">preds</span><span class="p">)))</span> <span class="o">/</span> <span class="n">x_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">MAE :'</span><span class="p">,</span> <span class="n">mae</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mae</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">evaluate</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Evaluate the model on 10000 test data ...
+
+MAE : 0.672389703640273
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0.672389703640273</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Summary">
+<a class="anchor" href="#Summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary<a class="anchor-link" href="#Summary"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As with the User-based CF, we have also summarised the Item-based CF into the python class <a href="https://github.com/nzhinusoftcm/review-on-collaborative-filtering/blob/master/recsys/memories/ItemToItem.py">ItemToItem</a>.</p>
+<h4 id="ItemToItem-:-usage">
+<a class="anchor" href="#ItemToItem-:-usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>ItemToItem : usage<a class="anchor-link" href="#ItemToItem-:-usage"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">recsys.memories.ItemToItem</span> <span class="kn">import</span> <span class="n">ItemToItem</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">ids_encoder</span><span class="p">,</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">get_examples</span>
+<span class="kn">from</span> <span class="nn">recsys.datasets</span> <span class="kn">import</span> <span class="n">ml100k</span>
+
+<span class="c1"># load data</span>
+<span class="n">ratings</span><span class="p">,</span> <span class="n">movies</span> <span class="o">=</span> <span class="n">ml100k</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+<span class="c1"># prepare data</span>
+<span class="n">ratings</span><span class="p">,</span> <span class="n">uencoder</span><span class="p">,</span> <span class="n">iencoder</span> <span class="o">=</span> <span class="n">ids_encoder</span><span class="p">(</span><span class="n">ratings</span><span class="p">)</span>
+
+<span class="c1"># get examples as tuples of userids and itemids and labels from normalize ratings</span>
+<span class="n">raw_examples</span><span class="p">,</span> <span class="n">raw_labels</span> <span class="o">=</span> <span class="n">get_examples</span><span class="p">(</span><span class="n">ratings</span><span class="p">,</span> <span class="n">labels_column</span><span class="o">=</span><span class="s1">'rating'</span><span class="p">)</span>
+
+<span class="c1"># train test split</span>
+<span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span><span class="p">),</span> <span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">examples</span><span class="o">=</span><span class="n">raw_examples</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">raw_labels</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Instanciate-the-ItemToItem-CF">
+<a class="anchor" href="#Instanciate-the-ItemToItem-CF" aria-hidden="true"><span class="octicon octicon-link"></span></a>Instanciate the ItemToItem CF<a class="anchor-link" href="#Instanciate-the-ItemToItem-CF"> </a>
+</h4>
+<p>Parameters :</p>
+<ul>
+<li>
+<code>k</code> : number of neighbors to consider for each item</li>
+<li>
+<code>metric</code> : metric to use when computing similarities : let's use <strong>cosine</strong>
+</li>
+<li>
+<code>dataset_name</code> : in this example, we use the ml100k dataset</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">item2item</span> <span class="o">=</span> <span class="n">ItemToItem</span><span class="p">(</span><span class="n">ratings</span><span class="p">,</span> <span class="n">movies</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">'cosine'</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s1">'ml100k'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Normalize ratings ...
+Create the similarity model ...
+Compute nearest neighbors ...
+Item to item recommendation model created with success ...
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">item2item</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Evaluate the model on 10000 test data ...
+
+MAE : 0.507794195659005
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0.507794195659005</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Evaluate-the-Item-based-CF-on-the-ML-1M-dataset">
+<a class="anchor" href="#Evaluate-the-Item-based-CF-on-the-ML-1M-dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Evaluate the Item-based CF on the ML-1M dataset<a class="anchor-link" href="#Evaluate-the-Item-based-CF-on-the-ML-1M-dataset"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">recsys.memories.ItemToItem</span> <span class="kn">import</span> <span class="n">ItemToItem</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">ids_encoder</span><span class="p">,</span> <span class="n">train_test_split</span><span class="p">,</span> <span class="n">get_examples</span>
+<span class="kn">from</span> <span class="nn">recsys.datasets</span> <span class="kn">import</span> <span class="n">ml1m</span>
+
+<span class="c1"># load data</span>
+<span class="n">ratings</span><span class="p">,</span> <span class="n">movies</span> <span class="o">=</span> <span class="n">ml1m</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+<span class="c1"># prepare data</span>
+<span class="n">ratings</span><span class="p">,</span> <span class="n">uencoder</span><span class="p">,</span> <span class="n">iencoder</span> <span class="o">=</span> <span class="n">ids_encoder</span><span class="p">(</span><span class="n">ratings</span><span class="p">)</span>
+
+<span class="c1"># get examples as tuples of userids and itemids and labels from normalize ratings</span>
+<span class="n">raw_examples</span><span class="p">,</span> <span class="n">raw_labels</span> <span class="o">=</span> <span class="n">get_examples</span><span class="p">(</span><span class="n">ratings</span><span class="p">,</span> <span class="n">labels_column</span><span class="o">=</span><span class="s1">'rating'</span><span class="p">)</span>
+
+<span class="c1"># train test split</span>
+<span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span><span class="p">),</span> <span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">examples</span><span class="o">=</span><span class="n">raw_examples</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">raw_labels</span><span class="p">)</span>
+
+<span class="c1"># create the Item-based CF</span>
+<span class="n">item2item</span> <span class="o">=</span> <span class="n">ItemToItem</span><span class="p">(</span><span class="n">ratings</span><span class="p">,</span> <span class="n">movies</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s1">'cosine'</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s1">'ml1m'</span><span class="p">)</span>
+
+<span class="c1"># evaluate the algorithm on test dataset</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"========================="</span><span class="p">)</span>
+<span class="n">item2item</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Normalize ratings ...
+Create the similarity model ...
+Compute nearest neighbors ...
+Item to item recommendation model created with success ...
+=========================
+Evaluate the model on 100021 test data ...
+
+MAE : 0.42514728655396045
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0.42514728655396045</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model-based-CF">
+<a class="anchor" href="#Model-based-CF" aria-hidden="true"><span class="octicon octicon-link"></span></a>Model based CF<a class="anchor-link" href="#Model-based-CF"> </a>
+</h2>
+<p><strong>User-based</strong> and <strong>Item-based CF</strong> are memory based algorithms. They directly act on the user-item interactions to compute recommendation. To the contrary, model-based algorithms are mathematical models trained on the user-item interactions and used to predict recommendation.</p>
+<p>We will start with the SVD (Singular Value Decomposition) algorithm.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="References">
+<a class="anchor" href="#References" aria-hidden="true"><span class="octicon octicon-link"></span></a>References<a class="anchor-link" href="#References"> </a>
+</h2>
+<ol>
+<li>George Karypis (2001)<a href="https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.554.1671&amp;rep=rep1&amp;type=pdf">Evaluation of Item-Based Top-N Recommendation Algorithms</a>
+</li>
+<li>Sarwar et al. (2001) <a href="https://dl.acm.org/doi/10.1145/371920.372071"> Item-based collaborative filtering recommendation algorithms</a> </li>
+<li>Michael D. Ekstrand, et al. (2011). <a href="https://dl.acm.org/doi/10.1561/1100000009"> Collaborative Filtering Recommender Systems</a>
+</li>
+<li>J. Bobadilla et al. (2013)<a href="https://romisatriawahono.net/lecture/rm/survey/information%20retrieval/Bobadilla%20-%20Recommender%20Systems%20-%202013.pdf"> Recommender systems survey</a>
+</li>
+<li>Greg Linden, Brent Smith, and Jeremy York (2003) <a href="https://www.cs.umd.edu/~samir/498/Amazon-Recommendations.pdf">Amazon.com Recommendations : Item-to-Item Collaborative Filtering</a>
+</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Author">
+<a class="anchor" href="#Author" aria-hidden="true"><span class="octicon octicon-link"></span></a>Author<a class="anchor-link" href="#Author"> </a>
+</h2>
+<p><a href="https://www.linkedin.com/in/carmel-wenga-871876178/">Carmel WENGA</a>, <br>
+PhD student at Université de la Polynésie Française, <br> 
+Applied Machine Learning Research Engineer, <br>
+<a href="https://shoppinglist.cm">ShoppingList</a>, NzhinuSoft.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-03.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

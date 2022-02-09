@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>CF Part 4 - SVD method | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="CF Part 4 - SVD method" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Collaborative Filtering on MovieLens Latest-small Part 4 - Finding recommendations using model based singular value decomposition (SVD) method" />
+<meta property="og:description" content="Collaborative Filtering on MovieLens Latest-small Part 4 - Finding recommendations using model based singular value decomposition (SVD) method" />
+<link rel="canonical" href="https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-04.html" />
+<meta property="og:url" content="https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-04.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-23T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="CF Part 4 - SVD method" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-23T00:00:00-05:00","datePublished":"2021-06-23T00:00:00-05:00","description":"Collaborative Filtering on MovieLens Latest-small Part 4 - Finding recommendations using model based singular value decomposition (SVD) method","headline":"CF Part 4 - SVD method","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-04.html"},"url":"https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-04.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">CF Part 4 - SVD method</h1><p class="page-description">Collaborative Filtering on MovieLens Latest-small Part 4 - Finding recommendations using model based singular value decomposition (SVD) method</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-23T00:00:00-05:00" itemprop="datePublished">
+        Jun 23, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      14 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#movie">movie</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#collaborative">collaborative</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-04.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-23-collaborative-filtering-movielens-latest-small-04.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-04.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-23-collaborative-filtering-movielens-latest-small-04.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h3"><a href="#How-do-SVD-works-?">How do SVD works ? </a></li>
+<li class="toc-entry toc-h3"><a href="#SVD-algorithm">SVD algorithm </a></li>
+<li class="toc-entry toc-h3"><a href="#Implementation-details">Implementation details </a></li>
+<li class="toc-entry toc-h3"><a href="#Download-useful-tools">Download useful tools </a></li>
+<li class="toc-entry toc-h3"><a href="#Import-requirements">Import requirements </a></li>
+<li class="toc-entry toc-h3"><a href="#Loading-movielen-ratings">Loading movielen ratings </a></li>
+<li class="toc-entry toc-h3"><a href="#Ids-encoding">Ids encoding </a></li>
+<li class="toc-entry toc-h3"><a href="#SVD-Algorithm">SVD Algorithm </a></li>
+<li class="toc-entry toc-h3"><a href="#Rating-prediction">Rating prediction </a></li>
+<li class="toc-entry toc-h3"><a href="#Make-recommendations">Make recommendations </a></li>
+<li class="toc-entry toc-h3"><a href="#Improving-memory-based-collaborative-filtering">Improving memory based collaborative filtering </a></li>
+<li class="toc-entry toc-h3"><a href="#Matrix-Factorization">Matrix Factorization </a></li>
+<li class="toc-entry toc-h2"><a href="#Reference">Reference </a></li>
+<li class="toc-entry toc-h2"><a href="#Author">Author </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-04.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Due to the high level sparsity of the rating matrix $R$, <strong>user-based</strong> and <strong>item-based</strong> collaborative filtering suffer from <strong>data sparsity</strong> and <strong>scalability</strong>. These cause user and item-based collaborative filtering to be less effective and highly affect their performences.</p>
+<p>To address the high level sparsity problem, <a href="http://files.grouplens.org/papers/webKDD00.pdf">Sarwar et al. (2000)</a> proposed to reduce the dimensionality of the rating $R$ using the <em>Singular Value Decomposition (SVD)</em> algorithm.</p>
+<hr>
+<h3 id="How-do-SVD-works-?">
+<a class="anchor" href="#How-do-SVD-works-?" aria-hidden="true"><span class="octicon octicon-link"></span></a>How do SVD works ?<a class="anchor-link" href="#How-do-SVD-works-?"> </a>
+</h3>
+<p>As described is Figure 1, SVD factors the rating matrix $R$ of size $m\times n$ into three matrices $P$, $\Sigma$ and $Q$ as follows :</p>
+\begin{equation}
+R = P\Sigma Q^{\top}.
+\end{equation}<p>Here, $P$ and $Q$ are two orthogonal matrices of size $m\times \hat{k}$ and $n\times \hat{k}$ respectively and $\Sigma$ is a diagonal matrix of size $ \hat{k}\times \hat{k}$ (with $ \hat{k}$ the rank of matrix $R$) having all singular values of the rating matrix R as its diagonal entries (<a href="https://www.ics.uci.edu/~pazzani/Publications/MLC98.pdf">Billsus and Pazzani, 1998</a>, <a href="http://files.grouplens.org/papers/webKDD00.pdf">Sarwar et al. (2000)</a>).</p>
+<p><img src="https://github.com/nzhinusoftcm/review-on-collaborative-filtering/blob/master/recsys/img/svd.png?raw=1" alt=""></p>
+<center> <b>Figure 1</b> : Singular value decomposition of rating matrix $R$ </center>
+<p>After having choosen $k$, the dimension of factors that will represent users and items, we can truncate matrix $\Sigma$ by only retaining its $k$ largest singular values to yield $\Sigma_k$ and reduce matrices $P$ and $Q$ accordingly to obtain $P_k$ and $Q_k$. The rating matrix will then be estimated as</p>
+\begin{equation}
+R_k = P_k\Sigma_k Q_k^{\top}.
+\end{equation}<p>Once these matrices are known, they can be used for rating predictions ant top-N recommendations. $P_k\Sigma_k^{\frac{1}{2}}$ represents the latent space of users and $\Sigma_k^{\frac{1}{2}}Q_k^{\top}$ the latent space of items. Rating prediction for user $u$ on $i$ is done by the following formular</p>
+\begin{equation}
+\hat{R}_{u,i} = \begin{bmatrix}P_k\Sigma_k^{\frac{1}{2}}\end{bmatrix}_u \begin{bmatrix}\Sigma_k^{\frac{1}{2}}Q_k^{\top}\end{bmatrix}_i.
+\end{equation}<p>Before applying SVD, its important to fill in missing values of the rating matrix $R$. <a href="http://files.grouplens.org/papers/webKDD00.pdf">Sarwar et al. (2000)</a> found the item’s mean rating to be useful default values. The user's average rating can also be used but the former shown better performances. Adding ratings normalization by subtracting the user mean rating or other baseline predictor can improve accuracy.</p>
+<hr>
+<h3 id="SVD-algorithm">
+<a class="anchor" href="#SVD-algorithm" aria-hidden="true"><span class="octicon octicon-link"></span></a>SVD algorithm<a class="anchor-link" href="#SVD-algorithm"> </a>
+</h3>
+<blockquote>
+<ol>
+<li>Factor the normalize rating matrix $R_{norm}$ to obtain matrices $P$, $\Sigma$ and $Q$</li>
+<li>Reduce $\Sigma$ to dimension $k$ to obtain $\Sigma_k$</li>
+<li>Compute the square-root of $\Sigma_k$ to obtain $\Sigma_k^{\frac{1}{2}}$</li>
+<li>Compute the resultant matrices $P_k\Sigma_k^{\frac{1}{2}}$ and $\Sigma_k^{\frac{1}{2}}Q_k^{\top}$ that will be used to compute recommendation scores for any user and items.</li>
+</ol>
+</blockquote>
+<hr>
+<h3 id="Implementation-details">
+<a class="anchor" href="#Implementation-details" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implementation details<a class="anchor-link" href="#Implementation-details"> </a>
+</h3>
+<p>SVD can easily be implemented using python library such as <code>numpy</code>, <code>scipy</code> or <code>sklearn</code>. As described by Andrew Ng in his <a href="https://www.coursera.org/learn/machine-learning/lecture/CEXN0/vectorization-low-rank-matrix-factorization">Machine Learning course</a>, it's not recommended to implement the standard SVD by ourselves. Instead, we can take advantage of matrix libraries (such as those listed before) that are optimized for matrix computations and vectorization.
+Now let's implement the SVD collaborative filtering</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Download-useful-tools">
+<a class="anchor" href="#Download-useful-tools" aria-hidden="true"><span class="octicon octicon-link"></span></a>Download useful tools<a class="anchor-link" href="#Download-useful-tools"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">"recsys.zip"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">"recsys"</span><span class="p">)):</span>
+    <span class="o">!</span>wget https://github.com/nzhinusoftcm/review-on-collaborative-filtering/raw/master/recsys.zip    
+    <span class="o">!</span>unzip recsys.zip
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Import-requirements">
+<a class="anchor" href="#Import-requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Import requirements<a class="anchor-link" href="#Import-requirements"> </a>
+</h3>
+<pre><code>matplotlib==3.2.2
+numpy==1.19.2
+pandas==1.0.5
+python==3.7
+scikit-learn==0.24.1
+scikit-surprise==1.1.1
+scipy==1.6.2</code></pre>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">recsys.datasets</span> <span class="kn">import</span> <span class="n">mlLastedSmall</span><span class="p">,</span> <span class="n">ml100k</span><span class="p">,</span> <span class="n">ml1m</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">LabelEncoder</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">csr_matrix</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Loading-movielen-ratings">
+<a class="anchor" href="#Loading-movielen-ratings" aria-hidden="true"><span class="octicon octicon-link"></span></a>Loading movielen ratings<a class="anchor-link" href="#Loading-movielen-ratings"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ratings</span><span class="p">,</span> <span class="n">movies</span> <span class="o">=</span> <span class="n">mlLastedSmall</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's see how our rating matrix looks like</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">ratings</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span> <span class="n">ratings</span><span class="o">.</span><span class="n">itemid</span><span class="p">,</span> <span class="n">ratings</span><span class="o">.</span><span class="n">rating</span><span class="p">,</span> <span class="n">aggfunc</span><span class="o">=</span><span class="nb">sum</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>itemid</th>
+      <th>1</th>
+      <th>2</th>
+      <th>3</th>
+      <th>4</th>
+      <th>5</th>
+      <th>6</th>
+      <th>7</th>
+      <th>8</th>
+      <th>9</th>
+      <th>10</th>
+      <th>...</th>
+      <th>193565</th>
+      <th>193567</th>
+      <th>193571</th>
+      <th>193573</th>
+      <th>193579</th>
+      <th>193581</th>
+      <th>193583</th>
+      <th>193585</th>
+      <th>193587</th>
+      <th>193609</th>
+    </tr>
+    <tr>
+      <th>userid</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>606</th>
+      <td>2.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>607</th>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>608</th>
+      <td>2.5</td>
+      <td>2.0</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>609</th>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>610</th>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+<p>610 rows × 9724 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can observe that our rating matrix has many of unobserved value. However, as we described earlier, the SVD algorithm requires that all inputs in the matrix must be defined. Let's initialize the unobserved ratings with item's average that led to better performances compared to the user's average or even a null initialization (<a href="http://files.grouplens.org/papers/webKDD00.pdf">Sarwar et al. (2000)</a>).</p>
+<p>We can go further and subtrat from each rating the corresponding user mean to normalize the data. This helps to improve the accuracy of the model.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">umean</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">'userid'</span><span class="p">)[</span><span class="s1">'rating'</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">rating_matrix</span><span class="p">(</span><span class="n">ratings</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    1. Fill NaN values with item's average ratings</span>
+<span class="sd">    2. Normalize ratings by subtracting user's mean ratings</span>
+<span class="sd">    </span>
+<span class="sd">    :param ratings : DataFrame of ratings data</span>
+<span class="sd">    :return</span>
+<span class="sd">        - R : Numpy array of normalized ratings</span>
+<span class="sd">        - df : DataFrame of normalized ratings</span>
+<span class="sd">    """</span>
+    
+    <span class="c1"># fill missing values with item's average ratings</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">ratings</span><span class="o">.</span><span class="n">userid</span><span class="p">,</span> <span class="n">ratings</span><span class="o">.</span><span class="n">itemid</span><span class="p">,</span> <span class="n">ratings</span><span class="o">.</span><span class="n">rating</span><span class="p">,</span> <span class="n">aggfunc</span><span class="o">=</span><span class="nb">sum</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    
+    <span class="c1"># subtract user's mean ratings to normalize data</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">umean</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="c1"># convert our dataframe to numpy array</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    
+    <span class="k">return</span> <span class="n">R</span><span class="p">,</span> <span class="n">df</span>
+
+<span class="c1"># generate rating matrix by calling function rating_matrix</span>
+<span class="n">R</span><span class="p">,</span> <span class="n">df</span> <span class="o">=</span> <span class="n">rating_matrix</span><span class="p">(</span><span class="n">ratings</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>$R$ is our final rating matrix. This is how the final rating matrix looks like</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>itemid</th>
+      <th>1</th>
+      <th>2</th>
+      <th>3</th>
+      <th>4</th>
+      <th>5</th>
+      <th>6</th>
+      <th>7</th>
+      <th>8</th>
+      <th>9</th>
+      <th>10</th>
+      <th>...</th>
+      <th>193565</th>
+      <th>193567</th>
+      <th>193571</th>
+      <th>193573</th>
+      <th>193579</th>
+      <th>193581</th>
+      <th>193583</th>
+      <th>193585</th>
+      <th>193587</th>
+      <th>193609</th>
+    </tr>
+    <tr>
+      <th>userid</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>-0.366379</td>
+      <td>-0.934561</td>
+      <td>-0.366379</td>
+      <td>-2.009236</td>
+      <td>-1.294951</td>
+      <td>-0.366379</td>
+      <td>-1.181194</td>
+      <td>-1.491379</td>
+      <td>-1.241379</td>
+      <td>-0.870167</td>
+      <td>...</td>
+      <td>-0.866379</td>
+      <td>-1.366379</td>
+      <td>-0.366379</td>
+      <td>-0.366379</td>
+      <td>-0.866379</td>
+      <td>-0.366379</td>
+      <td>-0.866379</td>
+      <td>-0.866379</td>
+      <td>-0.866379</td>
+      <td>-0.366379</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-0.027346</td>
+      <td>-0.516458</td>
+      <td>-0.688660</td>
+      <td>-1.591133</td>
+      <td>-0.876847</td>
+      <td>-0.002197</td>
+      <td>-0.763091</td>
+      <td>-1.073276</td>
+      <td>-0.823276</td>
+      <td>-0.452064</td>
+      <td>...</td>
+      <td>-0.448276</td>
+      <td>-0.948276</td>
+      <td>0.051724</td>
+      <td>0.051724</td>
+      <td>-0.448276</td>
+      <td>0.051724</td>
+      <td>-0.448276</td>
+      <td>-0.448276</td>
+      <td>-0.448276</td>
+      <td>0.051724</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1.485033</td>
+      <td>0.995921</td>
+      <td>0.823718</td>
+      <td>-0.078755</td>
+      <td>0.635531</td>
+      <td>1.510181</td>
+      <td>0.749288</td>
+      <td>0.439103</td>
+      <td>0.689103</td>
+      <td>1.060315</td>
+      <td>...</td>
+      <td>1.064103</td>
+      <td>0.564103</td>
+      <td>1.564103</td>
+      <td>1.564103</td>
+      <td>1.064103</td>
+      <td>1.564103</td>
+      <td>1.064103</td>
+      <td>1.064103</td>
+      <td>1.064103</td>
+      <td>1.564103</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.365375</td>
+      <td>-0.123737</td>
+      <td>-0.295940</td>
+      <td>-1.198413</td>
+      <td>-0.484127</td>
+      <td>0.390523</td>
+      <td>-0.370370</td>
+      <td>-0.680556</td>
+      <td>-0.430556</td>
+      <td>-0.059343</td>
+      <td>...</td>
+      <td>-0.055556</td>
+      <td>-0.555556</td>
+      <td>0.444444</td>
+      <td>0.444444</td>
+      <td>-0.055556</td>
+      <td>0.444444</td>
+      <td>-0.055556</td>
+      <td>-0.055556</td>
+      <td>-0.055556</td>
+      <td>0.444444</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.363636</td>
+      <td>-0.204545</td>
+      <td>-0.376748</td>
+      <td>-1.279221</td>
+      <td>-0.564935</td>
+      <td>0.309715</td>
+      <td>-0.451178</td>
+      <td>-0.761364</td>
+      <td>-0.511364</td>
+      <td>-0.140152</td>
+      <td>...</td>
+      <td>-0.136364</td>
+      <td>-0.636364</td>
+      <td>0.363636</td>
+      <td>0.363636</td>
+      <td>-0.136364</td>
+      <td>0.363636</td>
+      <td>-0.136364</td>
+      <td>-0.136364</td>
+      <td>-0.136364</td>
+      <td>0.363636</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>606</th>
+      <td>-1.157399</td>
+      <td>-0.225581</td>
+      <td>-0.397784</td>
+      <td>-1.300256</td>
+      <td>-0.585971</td>
+      <td>0.288679</td>
+      <td>-1.157399</td>
+      <td>-0.782399</td>
+      <td>-0.532399</td>
+      <td>-0.161187</td>
+      <td>...</td>
+      <td>-0.157399</td>
+      <td>-0.657399</td>
+      <td>0.342601</td>
+      <td>0.342601</td>
+      <td>-0.157399</td>
+      <td>0.342601</td>
+      <td>-0.157399</td>
+      <td>-0.157399</td>
+      <td>-0.157399</td>
+      <td>0.342601</td>
+    </tr>
+    <tr>
+      <th>607</th>
+      <td>0.213904</td>
+      <td>-0.354278</td>
+      <td>-0.526481</td>
+      <td>-1.428953</td>
+      <td>-0.714668</td>
+      <td>0.159982</td>
+      <td>-0.600911</td>
+      <td>-0.911096</td>
+      <td>-0.661096</td>
+      <td>-0.289884</td>
+      <td>...</td>
+      <td>-0.286096</td>
+      <td>-0.786096</td>
+      <td>0.213904</td>
+      <td>0.213904</td>
+      <td>-0.286096</td>
+      <td>0.213904</td>
+      <td>-0.286096</td>
+      <td>-0.286096</td>
+      <td>-0.286096</td>
+      <td>0.213904</td>
+    </tr>
+    <tr>
+      <th>608</th>
+      <td>-0.634176</td>
+      <td>-1.134176</td>
+      <td>-1.134176</td>
+      <td>-0.777033</td>
+      <td>-0.062747</td>
+      <td>0.811903</td>
+      <td>0.051009</td>
+      <td>-0.259176</td>
+      <td>-0.009176</td>
+      <td>0.865824</td>
+      <td>...</td>
+      <td>0.365824</td>
+      <td>-0.134176</td>
+      <td>0.865824</td>
+      <td>0.865824</td>
+      <td>0.365824</td>
+      <td>0.865824</td>
+      <td>0.365824</td>
+      <td>0.365824</td>
+      <td>0.365824</td>
+      <td>0.865824</td>
+    </tr>
+    <tr>
+      <th>609</th>
+      <td>-0.270270</td>
+      <td>0.161548</td>
+      <td>-0.010655</td>
+      <td>-0.913127</td>
+      <td>-0.198842</td>
+      <td>0.675808</td>
+      <td>-0.085085</td>
+      <td>-0.395270</td>
+      <td>-0.145270</td>
+      <td>0.729730</td>
+      <td>...</td>
+      <td>0.229730</td>
+      <td>-0.270270</td>
+      <td>0.729730</td>
+      <td>0.729730</td>
+      <td>0.229730</td>
+      <td>0.729730</td>
+      <td>0.229730</td>
+      <td>0.229730</td>
+      <td>0.229730</td>
+      <td>0.729730</td>
+    </tr>
+    <tr>
+      <th>610</th>
+      <td>1.311444</td>
+      <td>-0.256738</td>
+      <td>-0.428941</td>
+      <td>-1.331413</td>
+      <td>-0.617127</td>
+      <td>1.311444</td>
+      <td>-0.503371</td>
+      <td>-0.813556</td>
+      <td>-0.563556</td>
+      <td>-0.192344</td>
+      <td>...</td>
+      <td>-0.188556</td>
+      <td>-0.688556</td>
+      <td>0.311444</td>
+      <td>0.311444</td>
+      <td>-0.188556</td>
+      <td>0.311444</td>
+      <td>-0.188556</td>
+      <td>-0.188556</td>
+      <td>-0.188556</td>
+      <td>0.311444</td>
+    </tr>
+  </tbody>
+</table>
+<p>610 rows × 9724 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Ids-encoding">
+<a class="anchor" href="#Ids-encoding" aria-hidden="true"><span class="octicon octicon-link"></span></a>Ids encoding<a class="anchor-link" href="#Ids-encoding"> </a>
+</h3>
+<p>Let's encode users and items ids such that their values range from 0 to 909 (for users) and from 0 to 9723 (for items)</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">users</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ratings</span><span class="p">[</span><span class="s1">'userid'</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+<span class="n">items</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ratings</span><span class="p">[</span><span class="s1">'itemid'</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+
+<span class="c1"># create our id encoders</span>
+<span class="n">uencoder</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
+<span class="n">iencoder</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
+
+<span class="c1"># fit our label encoder</span>
+<span class="n">uencoder</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>
+<span class="n">iencoder</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>LabelEncoder()</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="SVD-Algorithm">
+<a class="anchor" href="#SVD-Algorithm" aria-hidden="true"><span class="octicon octicon-link"></span></a>SVD Algorithm<a class="anchor-link" href="#SVD-Algorithm"> </a>
+</h3>
+<p>Now that our rating data has been normalize and that missing values has been filled, we can apply the SVD algorithm. Several libraries may be useful such as <code>numpy</code>, <code>scipy</code>, <code>sklearn</code>, ... Let's try it with <code>numpy</code>.</p>
+<p>In our SVD class we provide the following function :</p>
+<ol>
+<li>
+<code>fit()</code> : compute the svd of the rating matrix and save the resultant matrices P, S and Qh (Q transpose) as attributs of the SVD class.</li>
+<li>
+<code>predict()</code>: use matrices P, S and Qh to make ratin prediction for a given $u$ user on an item $i$. Computations are made over encoded values of userid and itemid. The predicted value is the dot product between $u^{th}$ row of $P.\sqrt{S}$ and the $i^{th}$ column of $\sqrt{S}.Qh$. <strong>Note</strong> that since we normalized rating before applying SVD, the predicted value will also be normalize. So, to get the final predicted rating, we have to add to the predicted value the mean rating of user $u$.</li>
+<li>
+<code>recommend()</code>: use matrices P, S and Qh to make recommendations to a given user. The recommended items are those that where not rated by the user and received a high score according to the svd model.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">SVD</span><span class="p">:</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">umeam</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        :param</span>
+<span class="sd">            - umean : mean ratings of users</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">umean</span> <span class="o">=</span> <span class="n">umean</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        
+        <span class="c1"># init svd resultant matrices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Qh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        
+        <span class="c1"># init users and items latent factors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">i_factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([])</span>
+    
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">R</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Fit the SVD model with rating matrix R</span>
+<span class="sd">        """</span>
+        <span class="n">P</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">Qh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">P</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Qh</span> <span class="o">=</span> <span class="n">Qh</span>
+        
+        <span class="c1"># latent factors of users (u_factors) and items (i_factors)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">u_factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">i_factors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">S</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">Qh</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userid</span><span class="p">,</span> <span class="n">itemid</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Make rating prediction for a given user on an item</span>
+<span class="sd">        </span>
+<span class="sd">        :param</span>
+<span class="sd">            - userid : user's id</span>
+<span class="sd">            - itemid : item's id</span>
+<span class="sd">            </span>
+<span class="sd">        :return</span>
+<span class="sd">            - r_hat : predicted rating</span>
+<span class="sd">        """</span>
+        <span class="c1"># encode user and item ids</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">uencoder</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">userid</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">iencoder</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">itemid</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="c1"># the predicted rating is the dot product between the uth row </span>
+        <span class="c1"># of u_factors and the ith column of i_factors</span>
+        <span class="n">r_hat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_factors</span><span class="p">[</span><span class="n">u</span><span class="p">,:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">i_factors</span><span class="p">[:,</span><span class="n">i</span><span class="p">])</span>
+        
+        <span class="c1"># add the mean rating of user u to the predicted value</span>
+        <span class="n">r_hat</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">umean</span><span class="p">[</span><span class="n">u</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">r_hat</span>
+        
+    
+    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userid</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        :param</span>
+<span class="sd">            - userid : user's id</span>
+<span class="sd">        """</span>
+        <span class="c1"># encode user</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">uencoder</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">userid</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        
+        <span class="c1"># the dot product between the uth row of u_factors and i_factors returns</span>
+        <span class="c1"># the predicted value for user u on all items        </span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">u_factors</span><span class="p">[</span><span class="n">u</span><span class="p">,:],</span> <span class="bp">self</span><span class="o">.</span><span class="n">i_factors</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">umean</span><span class="p">[</span><span class="n">u</span><span class="p">]</span>
+        
+        <span class="c1"># sort item ids in decreasing order of predictions</span>
+        <span class="n">top_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">predictions</span><span class="p">))</span>
+
+        <span class="c1"># decode indices to get their corresponding itemids</span>
+        <span class="n">top_items</span> <span class="o">=</span> <span class="n">iencoder</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">top_idx</span><span class="p">)</span>
+        
+        <span class="c1"># sorted predictions</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">top_items</span><span class="p">,</span> <span class="n">preds</span>
+        
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now let's create our SVD model and provide to it user's mean rating; Fit the model with the normalized rating matrix $R$.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">svd</span> <span class="o">=</span> <span class="n">SVD</span><span class="p">(</span><span class="n">umean</span><span class="p">)</span>
+
+<span class="c1"># fit our model with normalized ratings</span>
+<span class="n">svd</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Rating-prediction">
+<a class="anchor" href="#Rating-prediction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rating prediction<a class="anchor-link" href="#Rating-prediction"> </a>
+</h3>
+<p>Our model has been fitted.
+OK ...</p>
+<p>Let's make some predictions for users using function <code>predict</code> of our SVD class. Here are some truth ratings</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ratings</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>rating</th>
+      <th>timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1</td>
+      <td>4.0</td>
+      <td>964982703</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>3</td>
+      <td>4.0</td>
+      <td>964981247</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>6</td>
+      <td>4.0</td>
+      <td>964982224</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>47</td>
+      <td>5.0</td>
+      <td>964983815</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>50</td>
+      <td>5.0</td>
+      <td>964982931</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>1</td>
+      <td>70</td>
+      <td>3.0</td>
+      <td>964982400</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>1</td>
+      <td>101</td>
+      <td>5.0</td>
+      <td>964980868</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>1</td>
+      <td>110</td>
+      <td>4.0</td>
+      <td>964982176</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>1</td>
+      <td>151</td>
+      <td>5.0</td>
+      <td>964984041</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>1</td>
+      <td>157</td>
+      <td>5.0</td>
+      <td>964984100</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's apply our model to make see if our predictions make sens. We will make predictions for user 1 on the 10 items listed above.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">userid</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="c1"># list of items for which we are making predictions for user 1</span>
+<span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">47</span><span class="p">,</span><span class="mi">50</span><span class="p">,</span><span class="mi">70</span><span class="p">,</span><span class="mi">101</span><span class="p">,</span><span class="mi">110</span><span class="p">,</span><span class="mi">151</span><span class="p">,</span><span class="mi">157</span><span class="p">]</span>
+
+<span class="c1"># predictions</span>
+<span class="k">for</span> <span class="n">itemid</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">svd</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">userid</span><span class="o">=</span><span class="n">userid</span><span class="p">,</span> <span class="n">itemid</span><span class="o">=</span><span class="n">itemid</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'prediction for userid=</span><span class="si">{}</span><span class="s1"> and itemid=</span><span class="si">{}</span><span class="s1"> : </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userid</span><span class="p">,</span> <span class="n">itemid</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>prediction for userid=1 and itemid=1 : 4.000000000000007
+prediction for userid=1 and itemid=3 : 4.0000000000000036
+prediction for userid=1 and itemid=6 : 3.9999999999999885
+prediction for userid=1 and itemid=47 : 5.000000000000003
+prediction for userid=1 and itemid=50 : 4.9999999999999964
+prediction for userid=1 and itemid=70 : 2.9999999999999893
+prediction for userid=1 and itemid=101 : 5.000000000000002
+prediction for userid=1 and itemid=110 : 3.999999999999993
+prediction for userid=1 and itemid=151 : 5.000000000000007
+prediction for userid=1 and itemid=157 : 5.000000000000019
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Our prediction error is less than 0.00001</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Make-recommendations">
+<a class="anchor" href="#Make-recommendations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Make recommendations<a class="anchor-link" href="#Make-recommendations"> </a>
+</h3>
+<p>The <code>recommend</code> function makes recommendations for a given user.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">userid</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="c1"># items sorted in decreasing order of predictions for user 1</span>
+<span class="n">sorted_items</span><span class="p">,</span> <span class="n">preds</span> <span class="o">=</span> <span class="n">svd</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">userid</span><span class="o">=</span><span class="n">userid</span><span class="p">)</span>
+
+<span class="c1">##</span>
+<span class="c1"># Now let's exclud from that sorted list items already purchased by the user</span>
+<span class="c1">##</span>
+
+<span class="c1"># list of items rated by the user</span>
+<span class="n">uitems</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ratings</span><span class="o">.</span><span class="n">userid</span> <span class="o">==</span> <span class="n">userid</span><span class="p">]</span><span class="o">.</span><span class="n">itemid</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+
+<span class="c1"># remove from sorted_items items already in uitems and pick the top 30 ones</span>
+<span class="c1"># as recommendation list</span>
+<span class="n">top30</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">sorted_items</span><span class="p">,</span> <span class="n">uitems</span><span class="p">,</span> <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="mi">30</span><span class="p">]</span>
+
+<span class="c1"># get corresponding predictions from the top30 items</span>
+<span class="n">top30_idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sorted_items</span> <span class="o">==</span> <span class="n">idx</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">top30</span><span class="p">)</span>
+<span class="n">top30_predictions</span> <span class="o">=</span> <span class="n">preds</span><span class="p">[</span><span class="n">top30_idx</span><span class="p">]</span>
+
+<span class="c1"># find corresponding movie titles</span>
+<span class="n">zipped_top30</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">top30</span><span class="p">,</span><span class="n">top30_predictions</span><span class="p">))</span>
+<span class="n">top30</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">zipped_top30</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">'itemid'</span><span class="p">,</span><span class="s1">'predictions'</span><span class="p">])</span>
+<span class="n">List</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">top30</span><span class="p">,</span> <span class="n">movies</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">'itemid'</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">'inner'</span><span class="p">)</span>
+
+<span class="c1"># show the list</span>
+<span class="n">List</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>itemid</th>
+      <th>predictions</th>
+      <th>title</th>
+      <th>genres</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>140627</td>
+      <td>5.0</td>
+      <td>Battle For Sevastopol (2015)</td>
+      <td>Drama|Romance|War</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>27373</td>
+      <td>5.0</td>
+      <td>61* (2001)</td>
+      <td>Drama</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>115727</td>
+      <td>5.0</td>
+      <td>Crippled Avengers (Can que) (Return of the 5 D...</td>
+      <td>Action|Adventure</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>151769</td>
+      <td>5.0</td>
+      <td>Three from Prostokvashino (1978)</td>
+      <td>Animation</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4402</td>
+      <td>5.0</td>
+      <td>Dr. Goldfoot and the Bikini Machine (1965)</td>
+      <td>Comedy</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>166183</td>
+      <td>5.0</td>
+      <td>Junior and Karlson (1968)</td>
+      <td>Adventure|Animation|Children</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>165959</td>
+      <td>5.0</td>
+      <td>Alesha Popovich and Tugarin the Dragon (2004)</td>
+      <td>Animation|Comedy|Drama</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>147328</td>
+      <td>5.0</td>
+      <td>The Adventures of Sherlock Holmes and Dr. Wats...</td>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>128087</td>
+      <td>5.0</td>
+      <td>Trinity and Sartana Are Coming (1972)</td>
+      <td>Comedy|Western</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>69860</td>
+      <td>5.0</td>
+      <td>Eichmann (2007)</td>
+      <td>Drama|War</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>131610</td>
+      <td>5.0</td>
+      <td>Willy/Milly (1986)</td>
+      <td>Comedy|Fantasy</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>69211</td>
+      <td>5.0</td>
+      <td>Boy Eats Girl (2005)</td>
+      <td>Comedy|Horror</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>3531</td>
+      <td>5.0</td>
+      <td>All the Vermeers in New York (1990)</td>
+      <td>Comedy|Drama|Romance</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>113829</td>
+      <td>5.0</td>
+      <td>One I Love, The (2014)</td>
+      <td>Comedy|Drama|Romance</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>69469</td>
+      <td>5.0</td>
+      <td>Garfield's Pet Force (2009)</td>
+      <td>Animation</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>26928</td>
+      <td>5.0</td>
+      <td>Summer's Tale, A (Conte d'Ã©tÃ©) (1996)</td>
+      <td>Comedy|Drama|Romance</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>131724</td>
+      <td>5.0</td>
+      <td>The Jinx: The Life and Deaths of Robert Durst ...</td>
+      <td>Documentary</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>26849</td>
+      <td>5.0</td>
+      <td>Stand, The (1994)</td>
+      <td>Adventure|Drama|Fantasy|Horror|Sci-Fi</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>114265</td>
+      <td>5.0</td>
+      <td>Laggies (2014)</td>
+      <td>Comedy|Romance</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>3096</td>
+      <td>5.0</td>
+      <td>My Man Godfrey (1957)</td>
+      <td>Comedy</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>70451</td>
+      <td>5.0</td>
+      <td>Max Manus (2008)</td>
+      <td>Action|Drama|War</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>26840</td>
+      <td>5.0</td>
+      <td>Sonatine (Sonachine) (1993)</td>
+      <td>Action|Comedy|Crime|Drama</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>4788</td>
+      <td>5.0</td>
+      <td>Moscow Does Not Believe in Tears (Moskva sleza...</td>
+      <td>Drama|Romance</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>71268</td>
+      <td>5.0</td>
+      <td>Tyler Perry's I Can Do Bad All by Myself (2009)</td>
+      <td>Comedy|Drama</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>7122</td>
+      <td>5.0</td>
+      <td>King of Hearts (1966)</td>
+      <td>Comedy|Drama|War</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>4813</td>
+      <td>5.0</td>
+      <td>When Worlds Collide (1951)</td>
+      <td>Sci-Fi</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>67618</td>
+      <td>5.0</td>
+      <td>Strictly Sexual (2008)</td>
+      <td>Comedy|Drama|Romance</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>3567</td>
+      <td>5.0</td>
+      <td>Bossa Nova (2000)</td>
+      <td>Comedy|Drama|Romance</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>131098</td>
+      <td>5.0</td>
+      <td>Saving Santa (2013)</td>
+      <td>Animation|Children|Comedy</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>131130</td>
+      <td>5.0</td>
+      <td>Tom and Jerry: A Nutcracker Tale (2007)</td>
+      <td>Animation|Comedy</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The first 30 items have an equivalent rating prediction for the user 1</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Improving-memory-based-collaborative-filtering">
+<a class="anchor" href="#Improving-memory-based-collaborative-filtering" aria-hidden="true"><span class="octicon octicon-link"></span></a>Improving memory based collaborative filtering<a class="anchor-link" href="#Improving-memory-based-collaborative-filtering"> </a>
+</h3>
+<p>SVD can be applied to improve user and item-based collaborative filtering. Instead of computing similarities between user's or item's ratings, we can represent users and items by their corresponding latent factors extracted from the SVD algorithm.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Matrix-Factorization">
+<a class="anchor" href="#Matrix-Factorization" aria-hidden="true"><span class="octicon octicon-link"></span></a>Matrix Factorization<a class="anchor-link" href="#Matrix-Factorization"> </a>
+</h3>
+<p>The <strong>Matrix Factorization</strong> algorithm is a variant of SVD. Also known as Regularized SVD, it uses the <em>Gradient Descent</em> optimizer to optimize the cost function while training the model.</p>
+<p><a href="https://github.com/nzhinusoftcm/review-on-collaborative-filtering/blob/master/5.Matrix_Factorization.ipynb">Go to</a> the Matrix Factorization variant of SVD.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Reference">
+<a class="anchor" href="#Reference" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reference<a class="anchor-link" href="#Reference"> </a>
+</h2>
+<ol>
+<li>Daniel Billsus  and  Michael J. Pazzani (1998). <a href="https://www.ics.uci.edu/~pazzani/Publications/MLC98.pdf">Learning Collaborative Information Filters</a>
+</li>
+<li>Sarwar et al. (2000). <a href="http://files.grouplens.org/papers/webKDD00.pdf">Application of Dimensionality Reduction in Recommender System -- A Case Study</a>
+</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Author">
+<a class="anchor" href="#Author" aria-hidden="true"><span class="octicon octicon-link"></span></a>Author<a class="anchor-link" href="#Author"> </a>
+</h2>
+<p><a href="https://www.linkedin.com/in/carmel-wenga-871876178/">Carmel WENGA</a>, <br>
+PhD student at Université de la Polynésie Française, <br> 
+Applied Machine Learning Research Engineer, <br>
+<a href="https://shoppinglist.cm">ShoppingList</a>, NzhinuSoft.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-04.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

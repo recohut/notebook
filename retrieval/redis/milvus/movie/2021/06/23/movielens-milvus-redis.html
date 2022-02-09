@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Recommender with Redis and Milvus | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Recommender with Redis and Milvus" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Storing the pre-calculated user and items vectors of movielens dataset into redis in-memory database and then indexing into milvus for efficient large-scale retrieval" />
+<meta property="og:description" content="Storing the pre-calculated user and items vectors of movielens dataset into redis in-memory database and then indexing into milvus for efficient large-scale retrieval" />
+<link rel="canonical" href="https://nb.recohut.com/retrieval/redis/milvus/movie/2021/06/23/movielens-milvus-redis.html" />
+<meta property="og:url" content="https://nb.recohut.com/retrieval/redis/milvus/movie/2021/06/23/movielens-milvus-redis.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-23T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Recommender with Redis and Milvus" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-23T00:00:00-05:00","datePublished":"2021-06-23T00:00:00-05:00","description":"Storing the pre-calculated user and items vectors of movielens dataset into redis in-memory database and then indexing into milvus for efficient large-scale retrieval","headline":"Recommender with Redis and Milvus","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/retrieval/redis/milvus/movie/2021/06/23/movielens-milvus-redis.html"},"url":"https://nb.recohut.com/retrieval/redis/milvus/movie/2021/06/23/movielens-milvus-redis.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Recommender with Redis and Milvus</h1><p class="page-description">Storing the pre-calculated user and items vectors of movielens dataset into redis in-memory database and then indexing into milvus for efficient large-scale retrieval</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-23T00:00:00-05:00" itemprop="datePublished">
+        Jun 23, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      7 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#retrieval">retrieval</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#redis">redis</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#milvus">milvus</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#movie">movie</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-23-movielens-milvus-redis.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-23-movielens-milvus-redis.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-23-movielens-milvus-redis.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-23-movielens-milvus-redis.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h3"><a href="#Install-and-run-Milvus-server">Install and run Milvus server </a></li>
+<li class="toc-entry toc-h3"><a href="#Install-and-run-Redis-server">Install and run Redis server </a></li>
+<li class="toc-entry toc-h3"><a href="#Downloading-Pretrained-Models">Downloading Pretrained Models </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#1.-Connectings-to-Milvus-and-Redis">1. Connectings to Milvus and Redis </a></li>
+<li class="toc-entry toc-h4"><a href="#2.-Loading-Movies-into-Redis">2. Loading Movies into Redis </a></li>
+<li class="toc-entry toc-h4"><a href="#3.-Creating-Partition-and-Collection-in-Milvus">3. Creating Partition and Collection in Milvus </a></li>
+<li class="toc-entry toc-h4"><a href="#4.-Getting-Embeddings-and-IDs">4. Getting Embeddings and IDs </a></li>
+<li class="toc-entry toc-h4"><a href="#4.-Importing-Vectors-into-Milvus">4. Importing Vectors into Milvus </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#Recalling-Vectors-in-Milvus">Recalling Vectors in Milvus </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#1.-Genarating-User-Embeddings">1. Genarating User Embeddings </a></li>
+<li class="toc-entry toc-h4"><a href="#2.-Searching">2. Searching </a></li>
+<li class="toc-entry toc-h4"><a href="#3.-Returning-Information-by-IDs">3. Returning Information by IDs </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#Conclusion">Conclusion </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-23-movielens-milvus-redis.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<table>
+<thead>
+<tr>
+<th>Packages</th>
+<th>Servers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>pymilvus</td>
+<td>milvus-1.1.0</td>
+</tr>
+<tr>
+<td>redis</td>
+<td>redis</td>
+</tr>
+<tr>
+<td>paddle_serving_app</td>
+</tr>
+<tr>
+<td>paddlepaddle</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">pymilvus</span><span class="o">==</span><span class="mf">1.1</span><span class="o">.</span><span class="mi">0</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">paddle_serving_app</span><span class="o">==</span><span class="mf">0.3</span><span class="o">.</span><span class="mi">1</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">paddlepaddle</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">redis</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Install-and-run-Milvus-server">
+<a class="anchor" href="#Install-and-run-Milvus-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>Install and run Milvus server<a class="anchor-link" href="#Install-and-run-Milvus-server"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p></p>
+<div class="flash flash-error">
+    <svg class="octicon octicon-alert" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8.22 1.754a.25.25 0 00-.44 0L1.698 13.132a.25.25 0 00.22.368h12.164a.25.25 0 00.22-.368L8.22 1.754zm-1.763-.707c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575L6.457 1.047zM9 11a1 1 0 11-2 0 1 1 0 012 0zm-.25-5.25a.75.75 0 00-1.5 0v2.5a.75.75 0 001.5 0v-2.5z"></path></svg>
+    <strong>Warning: </strong>It will take ~40 minutes to install!
+</div>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">git</span> <span class="n">clone</span> <span class="o">-</span><span class="n">b</span> <span class="mf">1.1</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">milvus</span><span class="o">-</span><span class="n">io</span><span class="o">/</span><span class="n">milvus</span><span class="o">.</span><span class="n">git</span>
+<span class="o">%</span> <span class="n">cd</span> <span class="o">/</span><span class="n">content</span><span class="o">/</span><span class="n">milvus</span><span class="o">/</span><span class="n">core</span>
+<span class="err">!</span> <span class="o">./</span><span class="n">ubuntu_build_deps</span><span class="o">.</span><span class="n">sh</span>
+<span class="err">!</span><span class="o">./</span><span class="n">build</span><span class="o">.</span><span class="n">sh</span> <span class="o">-</span><span class="n">t</span> <span class="n">Release</span>
+<span class="c1"># !./build.sh -t Release -g</span>
+
+<span class="o">%</span> <span class="n">cd</span> <span class="o">/</span><span class="n">content</span><span class="o">/</span><span class="n">milvus</span><span class="o">/</span><span class="n">core</span><span class="o">/</span><span class="n">milvus</span>
+<span class="err">!</span> <span class="n">echo</span> <span class="err">$</span><span class="n">LD_LIBRARY_PATH</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'LD_LIBRARY_PATH'</span><span class="p">]</span> <span class="o">+=</span><span class="s2">":/content/milvus/core/milvus/lib"</span>
+<span class="err">!</span> <span class="n">echo</span> <span class="err">$</span><span class="n">LD_LIBRARY_PATH</span>
+<span class="o">%</span> <span class="n">cd</span> <span class="n">scripts</span>
+<span class="err">!</span> <span class="n">nohup</span> <span class="o">./</span><span class="n">start_server</span><span class="o">.</span><span class="n">sh</span> <span class="o">&amp;</span>
+<span class="err">!</span> <span class="n">cat</span> <span class="n">nohup</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">cat</span> <span class="n">nohup</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+    __  _________ _   ____  ______    
+   /  |/  /  _/ /| | / / / / / __/    
+  / /|_/ // // /_| |/ / /_/ /\ \    
+ /_/  /_/___/____/___/\____/___/     
+
+Welcome to use Milvus!
+Milvus Release version: v1.1.1, built at 2021-06-23 14:11.42, with OpenBLAS library.
+You are using Milvus CPU edition
+Last commit id: 3fc81236452d8060fe7adc1793ad1d69f3d8423c
+
+Loading configuration from: ../conf/server_config.yaml
+NOTICE: You are using SQLite as the meta data management. We recommend change it to MySQL.
+Supported CPU instruction sets: avx2, sse4_2
+FAISS hook AVX2
+Milvus server started successfully!
+Milvus server is going to shutdown ...
+Milvus server exit...
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We are using Redis as a metadata storage service. Code can easily be modified to use a python dictionary, but that usually does not work in any use case outside of quick examples. We need a metadata storage service in order to be able to be able to map between embeddings and the corresponding data.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Install-and-run-Redis-server">
+<a class="anchor" href="#Install-and-run-Redis-server" aria-hidden="true"><span class="octicon octicon-link"></span></a>Install and run Redis server<a class="anchor-link" href="#Install-and-run-Redis-server"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">download</span><span class="o">.</span><span class="n">redis</span><span class="o">.</span><span class="n">io</span><span class="o">/</span><span class="n">releases</span><span class="o">/</span><span class="n">redis</span><span class="o">-</span><span class="n">stable</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">check</span><span class="o">-</span><span class="n">certificate</span>
+<span class="err">!</span><span class="n">tar</span> <span class="o">-</span><span class="n">xf</span> <span class="n">redis</span><span class="o">-</span><span class="n">stable</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span> <span class="o">&amp;&amp;</span> <span class="n">cd</span> <span class="n">redis</span><span class="o">-</span><span class="n">stable</span><span class="o">/</span><span class="n">src</span> <span class="o">&amp;&amp;</span> <span class="n">make</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span> <span class="n">nohup</span> <span class="o">./</span><span class="n">redis</span><span class="o">-</span><span class="n">stable</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">redis</span><span class="o">-</span><span class="n">server</span> <span class="o">&gt;</span> <span class="n">redis_nohup</span><span class="o">.</span><span class="n">out</span> <span class="o">&amp;</span>
+<span class="err">!</span> <span class="n">cat</span> <span class="n">redis_nohup</span><span class="o">.</span><span class="n">out</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>nohup: redirecting stderr to stdout
+42581:C 23 Jun 2021 16:02:32.639 # oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+42581:C 23 Jun 2021 16:02:32.639 # Redis version=6.0.5, bits=64, commit=3fc81236, modified=0, pid=42581, just started
+42581:C 23 Jun 2021 16:02:32.639 # Warning: no config file specified, using the default config. In order to specify a config file use ./redis-stable/src/redis-server /path/to/redis.conf
+42581:M 23 Jun 2021 16:02:32.641 * Running mode=standalone, port=6379.
+42581:M 23 Jun 2021 16:02:32.641 # Server initialized
+42581:M 23 Jun 2021 16:02:32.641 # WARNING you have Transparent Huge Pages (THP) support enabled in your kernel. This will create latency and memory usage issues with Redis. To fix this issue run the command 'echo never &gt; /sys/kernel/mm/transparent_hugepage/enabled' as root, and add it to your /etc/rc.local in order to retain the setting after a reboot. Redis must be restarted after THP is disabled.
+42581:M 23 Jun 2021 16:02:32.642 * Ready to accept connections
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">grpcio</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%</span><span class="n">cd</span> <span class="o">/</span><span class="n">content</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>/content
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Downloading-Pretrained-Models">
+<a class="anchor" href="#Downloading-Pretrained-Models" aria-hidden="true"><span class="octicon octicon-link"></span></a>Downloading Pretrained Models<a class="anchor-link" href="#Downloading-Pretrained-Models"> </a>
+</h3>
+<p>This PaddlePaddle model is used to transform user information into vectors.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">paddlerec</span><span class="o">.</span><span class="n">bj</span><span class="o">.</span><span class="n">bcebos</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">aistudio</span><span class="o">/</span><span class="n">user_vector</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">check</span><span class="o">-</span><span class="n">certificate</span>
+<span class="err">!</span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="n">movie_recommender</span><span class="o">/</span><span class="n">user_vector_model</span>
+<span class="err">!</span><span class="n">tar</span> <span class="n">xf</span> <span class="n">user_vector</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span> <span class="o">-</span><span class="n">C</span> <span class="n">movie_recommender</span><span class="o">/</span><span class="n">user_vector_model</span><span class="o">/</span>
+<span class="err">!</span><span class="n">rm</span> <span class="n">user_vector</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>--2021-06-23 16:13:35--  https://paddlerec.bj.bcebos.com/aistudio/user_vector.tar.gz
+Resolving paddlerec.bj.bcebos.com (paddlerec.bj.bcebos.com)... 103.235.46.61, 2409:8c00:6c21:10ad:0:ff:b00e:67d
+Connecting to paddlerec.bj.bcebos.com (paddlerec.bj.bcebos.com)|103.235.46.61|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 33650924 (32M) [application/x-gzip]
+Saving to: ‘user_vector.tar.gz’
+
+user_vector.tar.gz  100%[===================&gt;]  32.09M  7.94MB/s    in 5.4s    
+
+2021-06-23 16:13:42 (5.95 MB/s) - ‘user_vector.tar.gz’ saved [33650924/33650924]
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Downloading Data</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">P</span> <span class="n">movie_recommender</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">paddlerec</span><span class="o">.</span><span class="n">bj</span><span class="o">.</span><span class="n">bcebos</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">aistudio</span><span class="o">/</span><span class="n">movies</span><span class="o">.</span><span class="n">dat</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">check</span><span class="o">-</span><span class="n">certificate</span>
+<span class="c1"># Download movie vecotrs</span>
+<span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">P</span> <span class="n">movie_recommender</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">paddlerec</span><span class="o">.</span><span class="n">bj</span><span class="o">.</span><span class="n">bcebos</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">aistudio</span><span class="o">/</span><span class="n">movie_vectors</span><span class="o">.</span><span class="n">txt</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">check</span><span class="o">-</span><span class="n">certificate</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>--2021-06-23 16:13:43--  https://paddlerec.bj.bcebos.com/aistudio/movies.dat
+Resolving paddlerec.bj.bcebos.com (paddlerec.bj.bcebos.com)... 103.235.46.61, 2409:8c00:6c21:10ad:0:ff:b00e:67d
+Connecting to paddlerec.bj.bcebos.com (paddlerec.bj.bcebos.com)|103.235.46.61|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 171308 (167K) [application/octet-stream]
+Saving to: ‘movie_recommender/movies.dat’
+
+movies.dat          100%[===================&gt;] 167.29K   167KB/s    in 1.0s    
+
+2021-06-23 16:13:46 (167 KB/s) - ‘movie_recommender/movies.dat’ saved [171308/171308]
+
+--2021-06-23 16:13:46--  https://paddlerec.bj.bcebos.com/aistudio/movie_vectors.txt
+Resolving paddlerec.bj.bcebos.com (paddlerec.bj.bcebos.com)... 103.235.46.61, 2409:8c00:6c21:10ad:0:ff:b00e:67d
+Connecting to paddlerec.bj.bcebos.com (paddlerec.bj.bcebos.com)|103.235.46.61|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1095505 (1.0M) [text/plain]
+Saving to: ‘movie_recommender/movie_vectors.txt’
+
+movie_vectors.txt   100%[===================&gt;]   1.04M   648KB/s    in 1.7s    
+
+2021-06-23 16:13:49 (648 KB/s) - ‘movie_recommender/movie_vectors.txt’ saved [1095505/1095505]
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Importing Movies into Milvus</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="1.-Connectings-to-Milvus-and-Redis">
+<a class="anchor" href="#1.-Connectings-to-Milvus-and-Redis" aria-hidden="true"><span class="octicon octicon-link"></span></a>1. Connectings to Milvus and Redis<a class="anchor-link" href="#1.-Connectings-to-Milvus-and-Redis"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span> <span class="n">lsof</span> <span class="o">-</span><span class="n">i</span> <span class="o">-</span><span class="n">P</span> <span class="o">-</span><span class="n">n</span> <span class="o">|</span> <span class="n">grep</span> <span class="o">-</span><span class="n">E</span> <span class="s1">'milvus|redis'</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>milvus_se 42433 root   17u  IPv4 478871      0t0  TCP *:19121 (LISTEN)
+milvus_se 42433 root   20u  IPv4 479283      0t0  TCP *:19530 (LISTEN)
+redis-ser 42581 root    6u  IPv6 507112      0t0  TCP *:6379 (LISTEN)
+redis-ser 42581 root    7u  IPv4 507113      0t0  TCP *:6379 (LISTEN)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">milvus</span> <span class="kn">import</span> <span class="n">Milvus</span><span class="p">,</span> <span class="n">IndexType</span><span class="p">,</span> <span class="n">MetricType</span><span class="p">,</span> <span class="n">Status</span>
+<span class="kn">import</span> <span class="nn">redis</span>
+
+<span class="n">milv</span> <span class="o">=</span> <span class="n">Milvus</span><span class="p">(</span><span class="n">host</span> <span class="o">=</span> <span class="s1">'127.0.0.1'</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="mi">19530</span><span class="p">)</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">StrictRedis</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">"127.0.0.1"</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">6379</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">milv</span><span class="o">.</span><span class="n">client_version</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>'1.1.0'</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="2.-Loading-Movies-into-Redis">
+<a class="anchor" href="#2.-Loading-Movies-into-Redis" aria-hidden="true"><span class="octicon octicon-link"></span></a>2. Loading Movies into Redis<a class="anchor-link" href="#2.-Loading-Movies-into-Redis"> </a>
+</h4>
+<p>We begin by loading all the movie files into redis.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">codecs</span>
+
+<span class="c1">#1::Toy Story (1995)::Animation|Children's|Comedy</span>
+<span class="k">def</span> <span class="nf">process_movie</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">redis_cli</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"::"</span><span class="p">)</span>
+        <span class="n">movie_id</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">genre_group</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">genre_group</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"|"</span><span class="p">)</span>
+        <span class="n">genre</span> <span class="o">=</span> <span class="n">tmp</span>
+        <span class="n">movie_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"movie_id"</span> <span class="p">:</span> <span class="n">movie_id</span><span class="p">,</span>
+                <span class="s2">"title"</span> <span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+                <span class="s2">"genre"</span> <span class="p">:</span> <span class="n">genre</span>
+                <span class="p">}</span>
+        <span class="n">redis_cli</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">"</span><span class="si">{}</span><span class="s2">##movie_info"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">movie_id</span><span class="p">),</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">movie_info</span><span class="p">))</span>
+        
+<span class="k">with</span> <span class="n">codecs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"movie_recommender/movies.dat"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span><span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">,</span><span class="n">errors</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="n">process_movie</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="3.-Creating-Partition-and-Collection-in-Milvus">
+<a class="anchor" href="#3.-Creating-Partition-and-Collection-in-Milvus" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. Creating Partition and Collection in Milvus<a class="anchor-link" href="#3.-Creating-Partition-and-Collection-in-Milvus"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">COLLECTION_NAME</span> <span class="o">=</span> <span class="s1">'demo_films'</span>
+<span class="n">PARTITION_NAME</span> <span class="o">=</span> <span class="s1">'Movie'</span>
+
+<span class="c1">#Dropping collection for clean slate run</span>
+<span class="n">milv</span><span class="o">.</span><span class="n">drop_collection</span><span class="p">(</span><span class="n">COLLECTION_NAME</span><span class="p">)</span>
+
+
+<span class="n">param</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'collection_name'</span><span class="p">:</span><span class="n">COLLECTION_NAME</span><span class="p">,</span> 
+         <span class="s1">'dimension'</span><span class="p">:</span><span class="mi">32</span><span class="p">,</span> 
+         <span class="s1">'index_file_size'</span><span class="p">:</span><span class="mi">2048</span><span class="p">,</span> 
+         <span class="s1">'metric_type'</span><span class="p">:</span><span class="n">MetricType</span><span class="o">.</span><span class="n">L2</span>
+        <span class="p">}</span>
+
+<span class="n">milv</span><span class="o">.</span><span class="n">create_collection</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+<span class="c1"># milv.create_partition(COLLECTION_NAME, PARTITION_NAME)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>Status(code=0, message='Create collection successfully!')</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">milv</span><span class="o">.</span><span class="n">get_collection_info</span><span class="p">(</span><span class="n">COLLECTION_NAME</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(Status(code=0, message='Describe collection successfully!'),
+ CollectionSchema(collection_name='demo_films', dimension=32, index_file_size=2048, metric_type=&lt;MetricType: L2&gt;))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="4.-Getting-Embeddings-and-IDs">
+<a class="anchor" href="#4.-Getting-Embeddings-and-IDs" aria-hidden="true"><span class="octicon octicon-link"></span></a>4. Getting Embeddings and IDs<a class="anchor-link" href="#4.-Getting-Embeddings-and-IDs"> </a>
+</h4>
+<p>The vectors in <code>movie_vectors.txt</code> are obtained from the <code>user_vector_model</code> downloaded above. So we can directly get the vectors and the IDs by reading the file.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">get_vectors</span><span class="p">():</span>
+    <span class="k">with</span> <span class="n">codecs</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"movie_recommender/movie_vectors.txt"</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8'</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+    <span class="n">embeddings</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">:</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">":"</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">str_nums</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">)</span>
+        <span class="n">emb</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">str_nums</span><span class="p">]</span>
+        <span class="n">embeddings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">emb</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ids</span><span class="p">,</span> <span class="n">embeddings</span>
+
+<span class="n">ids</span><span class="p">,</span> <span class="n">embeddings</span> <span class="o">=</span> <span class="n">get_vectors</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="4.-Importing-Vectors-into-Milvus">
+<a class="anchor" href="#4.-Importing-Vectors-into-Milvus" aria-hidden="true"><span class="octicon octicon-link"></span></a>4. Importing Vectors into Milvus<a class="anchor-link" href="#4.-Importing-Vectors-into-Milvus"> </a>
+</h4>
+<p>Import vectors into the partition <strong>Movie</strong> under the collection <strong>demo_films</strong>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">status</span> <span class="o">=</span> <span class="n">milv</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">collection_name</span><span class="o">=</span><span class="n">COLLECTION_NAME</span><span class="p">,</span> <span class="n">records</span><span class="o">=</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">ids</span><span class="o">=</span><span class="n">ids</span><span class="p">)</span>
+<span class="n">status</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>Status(code=0, message='Add vectors successfully!')</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Recalling-Vectors-in-Milvus">
+<a class="anchor" href="#Recalling-Vectors-in-Milvus" aria-hidden="true"><span class="octicon octicon-link"></span></a>Recalling Vectors in Milvus<a class="anchor-link" href="#Recalling-Vectors-in-Milvus"> </a>
+</h3>
+<h4 id="1.-Genarating-User-Embeddings">
+<a class="anchor" href="#1.-Genarating-User-Embeddings" aria-hidden="true"><span class="octicon octicon-link"></span></a>1. Genarating User Embeddings<a class="anchor-link" href="#1.-Genarating-User-Embeddings"> </a>
+</h4>
+<p>Pass in the gender, age and occupation of the user we want to recommend. <strong>user_vector_model</strong> model will generate the corresponding user vector.
+Occupation is chosen from the following choices:</p>
+<ul>
+<li>0:  "other" or not specified</li>
+<li>1:  "academic/educator"</li>
+<li>2:  "artist"</li>
+<li>3:  "clerical/admin"</li>
+<li>4:  "college/grad student"</li>
+<li>5:  "customer service"</li>
+<li>6:  "doctor/health care"</li>
+<li>7:  "executive/managerial"</li>
+<li>8:  "farmer"</li>
+<li>9:  "homemaker"</li>
+<li>10:  "K-12 student"</li>
+<li>11:  "lawyer"</li>
+<li>12:  "programmer"</li>
+<li>13:  "retired"</li>
+<li>14:  "sales/marketing"</li>
+<li>15:  "scientist"</li>
+<li>16:  "self-employed"</li>
+<li>17:  "technician/engineer"</li>
+<li>18:  "tradesman/craftsman"</li>
+<li>19:  "unemployed"</li>
+<li>20:  "writer"</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">paddle_serving_app.local_predict</span> <span class="kn">import</span> <span class="n">LocalPredictor</span>
+
+<span class="k">class</span> <span class="nc">RecallServerServicer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uv_client</span> <span class="o">=</span> <span class="n">LocalPredictor</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uv_client</span><span class="o">.</span><span class="n">load_model_config</span><span class="p">(</span><span class="s2">"movie_recommender/user_vector_model/serving_server_dir"</span><span class="p">)</span> 
+        
+    <span class="k">def</span> <span class="nf">hash2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">%</span> <span class="mi">1000000</span>
+
+    <span class="k">def</span> <span class="nf">get_user_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dic</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"userid"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"gender"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"age"</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">"occupation"</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="n">lod</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">dic</span><span class="p">[</span><span class="s2">"userid"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hash2</span><span class="p">(</span><span class="s1">'0'</span><span class="p">))</span>
+        <span class="n">dic</span><span class="p">[</span><span class="s2">"gender"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hash2</span><span class="p">(</span><span class="s1">'M'</span><span class="p">))</span>
+        <span class="n">dic</span><span class="p">[</span><span class="s2">"age"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hash2</span><span class="p">(</span><span class="s1">'23'</span><span class="p">))</span>
+        <span class="n">dic</span><span class="p">[</span><span class="s2">"occupation"</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hash2</span><span class="p">(</span><span class="s1">'6'</span><span class="p">))</span>
+        <span class="n">lod</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">dic</span><span class="p">[</span><span class="s2">"userid.lod"</span><span class="p">]</span> <span class="o">=</span> <span class="n">lod</span>
+        <span class="n">dic</span><span class="p">[</span><span class="s2">"gender.lod"</span><span class="p">]</span> <span class="o">=</span> <span class="n">lod</span>
+        <span class="n">dic</span><span class="p">[</span><span class="s2">"age.lod"</span><span class="p">]</span> <span class="o">=</span> <span class="n">lod</span>
+        <span class="n">dic</span><span class="p">[</span><span class="s2">"occupation.lod"</span><span class="p">]</span> <span class="o">=</span> <span class="n">lod</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dic</span><span class="p">:</span>
+            <span class="n">dic</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dic</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dic</span><span class="p">[</span><span class="n">key</span><span class="p">]),</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">fetch_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uv_client</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">feed</span><span class="o">=</span><span class="n">dic</span><span class="p">,</span> <span class="n">fetch</span><span class="o">=</span><span class="p">[</span><span class="s2">"save_infer_model/scale_0.tmp_1"</span><span class="p">],</span> <span class="n">batch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fetch_map</span><span class="p">[</span><span class="s2">"save_infer_model/scale_0.tmp_1"</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">recall</span> <span class="o">=</span> <span class="n">RecallServerServicer</span><span class="p">()</span>
+<span class="n">user_vector</span> <span class="o">=</span> <span class="n">recall</span><span class="o">.</span><span class="n">get_user_vector</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>2021-06-23 16:29:24,262 - INFO - LocalPredictor load_model_config params: model_path:movie_recommender/user_vector_model/serving_server_dir, use_gpu:False,            gpu_id:0, use_profile:False, thread_num:1, mem_optim:True, ir_optim:False,            use_trt:False, use_lite:False, use_xpu: False, use_feed_fetch_ops:False
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_vector</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[0.0,
+ 4.911433696746826,
+ 4.132595062255859,
+ 3.2255895137786865,
+ 0.0,
+ 4.944108963012695,
+ 0.0,
+ 0.0,
+ 1.27165687084198,
+ 3.1072912216186523,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 0.0,
+ 1.9184402227401733,
+ 0.0,
+ 0.0,
+ 0.0,
+ 4.42396354675293,
+ 2.0686450004577637,
+ 0.0]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="2.-Searching">
+<a class="anchor" href="#2.-Searching" aria-hidden="true"><span class="octicon octicon-link"></span></a>2. Searching<a class="anchor-link" href="#2.-Searching"> </a>
+</h4>
+<p>Pass in the user vector, and then recall vectors in the previously imported data collection and partition.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">TOP_K</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">SEARCH_PARAM</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'nprobe'</span><span class="p">:</span> <span class="mi">20</span><span class="p">}</span>
+<span class="n">status</span><span class="p">,</span> <span class="n">results</span> <span class="o">=</span> <span class="n">milv</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">collection_name</span><span class="o">=</span><span class="n">COLLECTION_NAME</span><span class="p">,</span> <span class="n">query_records</span><span class="o">=</span><span class="p">[</span><span class="n">user_vector</span><span class="p">],</span> <span class="n">top_k</span><span class="o">=</span><span class="n">TOP_K</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">SEARCH_PARAM</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="3.-Returning-Information-by-IDs">
+<a class="anchor" href="#3.-Returning-Information-by-IDs" aria-hidden="true"><span class="octicon octicon-link"></span></a>3. Returning Information by IDs<a class="anchor-link" href="#3.-Returning-Information-by-IDs"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recall_results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+    <span class="n">recall_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"</span><span class="si">{}</span><span class="s2">##movie_info"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">id</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">'utf-8'</span><span class="p">))</span>
+<span class="n">recall_results</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>['{"movie_id": "760", "title": "Stalingrad (1993)", "genre": ["War"]}',
+ '{"movie_id": "1350", "title": "Omen, The (1976)", "genre": ["Horror"]}',
+ '{"movie_id": "1258", "title": "Shining, The (1980)", "genre": ["Horror"]}',
+ '{"movie_id": "632", "title": "Land and Freedom (Tierra y libertad) (1995)", "genre": ["War"]}',
+ '{"movie_id": "3007", "title": "American Movie (1999)", "genre": ["Documentary"]}',
+ '{"movie_id": "2086", "title": "One Magic Christmas (1985)", "genre": ["Drama", "Fantasy"]}',
+ '{"movie_id": "1051", "title": "Trees Lounge (1996)", "genre": ["Drama"]}',
+ '{"movie_id": "3920", "title": "Faraway, So Close (In Weiter Ferne, So Nah!) (1993)", "genre": ["Drama", "Fantasy"]}',
+ '{"movie_id": "1303", "title": "Man Who Would Be King, The (1975)", "genre": ["Adventure"]}',
+ '{"movie_id": "652", "title": "301, 302 (1995)", "genre": ["Mystery"]}',
+ '{"movie_id": "1605", "title": "Excess Baggage (1997)", "genre": ["Adventure", "Romance"]}',
+ '{"movie_id": "1275", "title": "Highlander (1986)", "genre": ["Action", "Adventure"]}',
+ '{"movie_id": "1126", "title": "Drop Dead Fred (1991)", "genre": ["Comedy", "Fantasy"]}',
+ '{"movie_id": "792", "title": "Hungarian Fairy Tale, A (1987)", "genre": ["Fantasy"]}',
+ '{"movie_id": "2228", "title": "Mountain Eagle, The (1926)", "genre": ["Drama"]}',
+ '{"movie_id": "2659", "title": "It Came from Hollywood (1982)", "genre": ["Comedy", "Documentary"]}',
+ '{"movie_id": "2545", "title": "Relax... It\'s Just Sex (1998)", "genre": ["Comedy"]}',
+ '{"movie_id": "1289", "title": "Koyaanisqatsi (1983)", "genre": ["Documentary", "War"]}',
+ '{"movie_id": "2537", "title": "Beyond the Poseidon Adventure (1979)", "genre": ["Adventure"]}',
+ '{"movie_id": "2864", "title": "Splendor (1999)", "genre": ["Comedy"]}']</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Conclusion">
+<a class="anchor" href="#Conclusion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conclusion<a class="anchor-link" href="#Conclusion"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>After completing the recall service, the results can be further sorted using the <strong>movie_recommender</strong> model, and then the movies with high similarity scores can be recommended to users. You can try this deployable recommendation system using this <a href="QUICK_START.md">quick start</a>.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/retrieval/redis/milvus/movie/2021/06/23/movielens-milvus-redis.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

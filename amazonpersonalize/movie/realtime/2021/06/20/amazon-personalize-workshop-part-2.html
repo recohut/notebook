@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Amazon Personalize Workshop Part 2 - View Campaign and Interactions | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Amazon Personalize Workshop Part 2 - View Campaign and Interactions" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="In the first part, you successfully built and deployed a recommendation model using deep learning with Amazon Personalize. This notebook will expand on that and will walk you through adding the ability to react to real time behavior of users. If their intent changes while browsing a movie, you will see revised recommendations based on that behavior. It will also showcase demo code for simulating user behavior selecting movies before the recommendations are returned." />
+<meta property="og:description" content="In the first part, you successfully built and deployed a recommendation model using deep learning with Amazon Personalize. This notebook will expand on that and will walk you through adding the ability to react to real time behavior of users. If their intent changes while browsing a movie, you will see revised recommendations based on that behavior. It will also showcase demo code for simulating user behavior selecting movies before the recommendations are returned." />
+<link rel="canonical" href="https://nb.recohut.com/amazonpersonalize/movie/realtime/2021/06/20/amazon-personalize-workshop-part-2.html" />
+<meta property="og:url" content="https://nb.recohut.com/amazonpersonalize/movie/realtime/2021/06/20/amazon-personalize-workshop-part-2.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-20T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Amazon Personalize Workshop Part 2 - View Campaign and Interactions" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-20T00:00:00-05:00","datePublished":"2021-06-20T00:00:00-05:00","description":"In the first part, you successfully built and deployed a recommendation model using deep learning with Amazon Personalize. This notebook will expand on that and will walk you through adding the ability to react to real time behavior of users. If their intent changes while browsing a movie, you will see revised recommendations based on that behavior. It will also showcase demo code for simulating user behavior selecting movies before the recommendations are returned.","headline":"Amazon Personalize Workshop Part 2 - View Campaign and Interactions","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/amazonpersonalize/movie/realtime/2021/06/20/amazon-personalize-workshop-part-2.html"},"url":"https://nb.recohut.com/amazonpersonalize/movie/realtime/2021/06/20/amazon-personalize-workshop-part-2.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Amazon Personalize Workshop Part 2 - View Campaign and Interactions</h1><p class="page-description">In the first part, you successfully built and deployed a recommendation model using deep learning with Amazon Personalize. This notebook will expand on that and will walk you through adding the ability to react to real time behavior of users. If their intent changes while browsing a movie, you will see revised recommendations based on that behavior. It will also showcase demo code for simulating user behavior selecting movies before the recommendations are returned.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-20T00:00:00-05:00" itemprop="datePublished">
+        Jun 20, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      5 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#amazonpersonalize">amazonpersonalize</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#movie">movie</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#realtime">realtime</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-20-amazon-personalize-workshop-part-2.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-20-amazon-personalize-workshop-part-2.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-20-amazon-personalize-workshop-part-2.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-20-amazon-personalize-workshop-part-2.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Creating-an-Event-Tracker">Creating an Event Tracker </a></li>
+<li class="toc-entry toc-h2"><a href="#Configuring-Source-Data">Configuring Source Data </a></li>
+<li class="toc-entry toc-h2"><a href="#Getting-Recommendations">Getting Recommendations </a></li>
+<li class="toc-entry toc-h2"><a href="#Simulating-User-Behavior">Simulating User Behavior </a></li>
+<li class="toc-entry toc-h2"><a href="#Conclusion">Conclusion </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-20-amazon-personalize-workshop-part-2.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Below we start with just importing libraries that we need to interact with Personalize</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">boto3</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The line below will retrieve your shared variables from the first notebook.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> -r
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Recommendations from Event data</span>
+<span class="n">personalize</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">'personalize'</span><span class="p">)</span>
+<span class="n">personalize_runtime</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">'personalize-runtime'</span><span class="p">)</span>
+
+<span class="c1"># Establish a connection to Personalize's Event Streaming</span>
+<span class="n">personalize_events</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="n">service_name</span><span class="o">=</span><span class="s1">'personalize-events'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Creating-an-Event-Tracker">
+<a class="anchor" href="#Creating-an-Event-Tracker" aria-hidden="true"><span class="octicon octicon-link"></span></a>Creating an Event Tracker<a class="anchor-link" href="#Creating-an-Event-Tracker"> </a>
+</h2>
+<p>Before your recommendation system can respond to real time events you will need an event tracker, the code below will generate one and can be used going forward with this lab. Feel free to name it something more clever.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">create_event_tracker</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">'MovieClickTracker'</span><span class="p">,</span>
+    <span class="n">datasetGroupArn</span><span class="o">=</span><span class="n">dataset_group_arn</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">'eventTrackerArn'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">response</span><span class="p">[</span><span class="s1">'trackingId'</span><span class="p">])</span>
+<span class="n">TRACKING_ID</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">'trackingId'</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>arn:aws:personalize:us-east-1:284105231590:event-tracker/a1b7dce4
+f252168d-a73d-467a-b2e7-66071f5d6d78
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">event_tracker_arn</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s1">'eventTrackerArn'</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Configuring-Source-Data">
+<a class="anchor" href="#Configuring-Source-Data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuring Source Data<a class="anchor-link" href="#Configuring-Source-Data"> </a>
+</h2>
+<p>Above you'll see your tracking ID and this has been assigned to a variable so no further action is needed by you. The lines below are going to setup the data used for recommendations so you can render the list of movies later.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">items</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'./ml-100k/u.item'</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">'|'</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'latin-1'</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">'ITEM_ID'</span><span class="p">,</span> <span class="s1">'TITLE'</span><span class="p">],</span> <span class="n">index_col</span><span class="o">=</span><span class="s1">'ITEM_ID'</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">get_movie_title</span><span class="p">(</span><span class="n">movie_id</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Takes in an ID, returns a title</span>
+<span class="sd">    """</span>
+    <span class="n">movie_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">movie_id</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">items</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">movie_id</span><span class="p">][</span><span class="s1">'TITLE'</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Getting-Recommendations">
+<a class="anchor" href="#Getting-Recommendations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting Recommendations<a class="anchor-link" href="#Getting-Recommendations"> </a>
+</h2>
+<p>First we will render the recommendations again from the previous notebook:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">recommendations_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>OriginalRecs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Schindler's List (1993)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Pulp Fiction (1994)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Usual Suspects, The (1995)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Raiders of the Lost Ark (1981)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Silence of the Lambs, The (1991)</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Casablanca (1942)</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Fugitive, The (1993)</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Shawshank Redemption, The (1994)</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Amadeus (1984)</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Braveheart (1995)</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Truth About Cats &amp; Dogs, The (1996)</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Sling Blade (1996)</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>One Flew Over the Cuckoo's Nest (1975)</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Aladdin (1992)</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>Back to the Future (1985)</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>Time to Kill, A (1996)</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>Seven (Se7en) (1995)</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>E.T. the Extra-Terrestrial (1982)</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>Princess Bride, The (1987)</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>Godfather, The (1972)</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>Sleepers (1996)</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>Long Kiss Goodnight, The (1996)</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>Monty Python and the Holy Grail (1974)</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>Willy Wonka and the Chocolate Factory (1971)</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>GoodFellas (1990)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Simulating-User-Behavior">
+<a class="anchor" href="#Simulating-User-Behavior" aria-hidden="true"><span class="octicon octicon-link"></span></a>Simulating User Behavior<a class="anchor-link" href="#Simulating-User-Behavior"> </a>
+</h2>
+<p>The lines below provide a code sample that simulates a user interacting with a particular item, you will then get recommendations that differ from those when you started.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">session_dict</span> <span class="o">=</span> <span class="p">{}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">send_movie_click</span><span class="p">(</span><span class="n">USER_ID</span><span class="p">,</span> <span class="n">ITEM_ID</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Simulates a click as an event</span>
+<span class="sd">    to send an event to Amazon Personalize's Event Tracker</span>
+<span class="sd">    """</span>
+    <span class="c1"># Configure Session</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">session_ID</span> <span class="o">=</span> <span class="n">session_dict</span><span class="p">[</span><span class="n">USER_ID</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">session_dict</span><span class="p">[</span><span class="n">USER_ID</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid1</span><span class="p">())</span>
+        <span class="n">session_ID</span> <span class="o">=</span> <span class="n">session_dict</span><span class="p">[</span><span class="n">USER_ID</span><span class="p">]</span>
+        
+    <span class="c1"># Configure Properties:</span>
+    <span class="n">event</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"itemId"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ITEM_ID</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">event_json</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        
+    <span class="c1"># Make Call</span>
+    <span class="n">personalize_events</span><span class="o">.</span><span class="n">put_events</span><span class="p">(</span>
+    <span class="n">trackingId</span> <span class="o">=</span> <span class="n">TRACKING_ID</span><span class="p">,</span>
+    <span class="n">userId</span><span class="o">=</span> <span class="n">USER_ID</span><span class="p">,</span>
+    <span class="n">sessionId</span> <span class="o">=</span> <span class="n">session_ID</span><span class="p">,</span>
+    <span class="n">eventList</span> <span class="o">=</span> <span class="p">[{</span>
+        <span class="s1">'sentAt'</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()),</span>
+        <span class="s1">'eventType'</span><span class="p">:</span> <span class="s1">'EVENT_TYPE'</span><span class="p">,</span>
+        <span class="s1">'properties'</span><span class="p">:</span> <span class="n">event_json</span>
+        <span class="p">}]</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Immediately below this line will update the tracker as if the user has clicked a particular title.</p>
+<p>If the table generated by the cells below does not shift the recommendations simply try another random 3 digit number in the cell above and run both cells again. You'll see a third column generated of recommendations.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">movie_to_click</span> <span class="o">=</span> <span class="mi">270</span>
+<span class="n">movie_title_clicked</span> <span class="o">=</span> <span class="n">get_movie_title</span><span class="p">(</span><span class="n">movie_to_click</span><span class="p">)</span>
+<span class="n">send_movie_click</span><span class="p">(</span><span class="n">USER_ID</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">),</span> <span class="n">ITEM_ID</span><span class="o">=</span><span class="n">movie_to_click</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>After executing this block you will see the alterations in the recommendations now that you have event tracking enabled and that you have sent the events to the service.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">get_recommendations_response</span> <span class="o">=</span> <span class="n">personalize_runtime</span><span class="o">.</span><span class="n">get_recommendations</span><span class="p">(</span>
+    <span class="n">campaignArn</span> <span class="o">=</span> <span class="n">campaign_arn</span><span class="p">,</span>
+    <span class="n">userId</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">),</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Recommendations for user: "</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+
+<span class="n">item_list</span> <span class="o">=</span> <span class="n">get_recommendations_response</span><span class="p">[</span><span class="s1">'itemList'</span><span class="p">]</span>
+
+<span class="n">recommendation_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">item_list</span><span class="p">:</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">get_movie_title</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">'itemId'</span><span class="p">])</span>
+    <span class="n">recommendation_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    
+<span class="n">new_rec_DF</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">recommendation_list</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">movie_title_clicked</span><span class="p">])</span>
+
+<span class="n">recommendations_df</span> <span class="o">=</span> <span class="n">recommendations_df</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_rec_DF</span><span class="p">)</span>
+<span class="n">recommendations_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Recommendations for user:  839
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>OriginalRecs</th>
+      <th>Full Monty, The (1997)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Schindler's List (1993)</td>
+      <td>Professional, The (1994)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Pulp Fiction (1994)</td>
+      <td>unknown</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Usual Suspects, The (1995)</td>
+      <td>Amistad (1997)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Raiders of the Lost Ark (1981)</td>
+      <td>Chasing Amy (1997)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Silence of the Lambs, The (1991)</td>
+      <td>Muppet Treasure Island (1996)</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Casablanca (1942)</td>
+      <td>Empire Strikes Back, The (1980)</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Fugitive, The (1993)</td>
+      <td>River Wild, The (1994)</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Shawshank Redemption, The (1994)</td>
+      <td>Midnight in the Garden of Good and Evil (1997)</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Amadeus (1984)</td>
+      <td>Last of the Mohicans, The (1992)</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Braveheart (1995)</td>
+      <td>Marvin's Room (1996)</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Truth About Cats &amp; Dogs, The (1996)</td>
+      <td>Seven (Se7en) (1995)</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Sling Blade (1996)</td>
+      <td>Spitfire Grill, The (1996)</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>One Flew Over the Cuckoo's Nest (1975)</td>
+      <td>Citizen Ruth (1996)</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Aladdin (1992)</td>
+      <td>Hoodlum (1997)</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>Back to the Future (1985)</td>
+      <td>Henry V (1989)</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>Time to Kill, A (1996)</td>
+      <td>I.Q. (1994)</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>Seven (Se7en) (1995)</td>
+      <td>Dr. Strangelove or: How I Learned to Stop Worr...</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>E.T. the Extra-Terrestrial (1982)</td>
+      <td>Starship Troopers (1997)</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>Princess Bride, The (1987)</td>
+      <td>Santa Clause, The (1994)</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>Godfather, The (1972)</td>
+      <td>Ref, The (1994)</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>Sleepers (1996)</td>
+      <td>Apocalypse Now (1979)</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>Long Kiss Goodnight, The (1996)</td>
+      <td>Star Trek: First Contact (1996)</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>Monty Python and the Holy Grail (1974)</td>
+      <td>Free Willy (1993)</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>Willy Wonka and the Chocolate Factory (1971)</td>
+      <td>Princess Bride, The (1987)</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>GoodFellas (1990)</td>
+      <td>Shanghai Triad (Yao a yao yao dao waipo qiao) ...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Conclusion">
+<a class="anchor" href="#Conclusion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conclusion<a class="anchor-link" href="#Conclusion"> </a>
+</h2>
+<p>You can see now that recommendations are altered by changing the movie that a user interacts with, this system can be modified to any application where users are interacting with a collection of items. These tools are available at any time to pull down and start exploring what is possible with the data you have.</p>
+<p>Execute the cell below to store values needed for the cleanup notebook.</p>
+<p>Finally when you are ready to remove the items from your account, open the <code>Cleanup.ipynb</code> notebook and execute the steps there.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> event_tracker_arn
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'event_tracker_arn' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/amazonpersonalize/movie/realtime/2021/06/20/amazon-personalize-workshop-part-2.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

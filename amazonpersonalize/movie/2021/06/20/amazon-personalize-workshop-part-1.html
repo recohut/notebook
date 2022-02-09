@@ -1,0 +1,2573 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Amazon Personalize Workshop Part 1 - Build your campaign | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Amazon Personalize Workshop Part 1 - Build your campaign" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="This notebook will walk you through the steps to build a recommendation model for movies based on data collected from the movielens data set. The goal is to recommend movies that are relevant based on a particular user. The data is coming from the MovieLens project." />
+<meta property="og:description" content="This notebook will walk you through the steps to build a recommendation model for movies based on data collected from the movielens data set. The goal is to recommend movies that are relevant based on a particular user. The data is coming from the MovieLens project." />
+<link rel="canonical" href="https://nb.recohut.com/amazonpersonalize/movie/2021/06/20/amazon-personalize-workshop-part-1.html" />
+<meta property="og:url" content="https://nb.recohut.com/amazonpersonalize/movie/2021/06/20/amazon-personalize-workshop-part-1.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-20T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Amazon Personalize Workshop Part 1 - Build your campaign" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-20T00:00:00-05:00","datePublished":"2021-06-20T00:00:00-05:00","description":"This notebook will walk you through the steps to build a recommendation model for movies based on data collected from the movielens data set. The goal is to recommend movies that are relevant based on a particular user. The data is coming from the MovieLens project.","headline":"Amazon Personalize Workshop Part 1 - Build your campaign","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/amazonpersonalize/movie/2021/06/20/amazon-personalize-workshop-part-1.html"},"url":"https://nb.recohut.com/amazonpersonalize/movie/2021/06/20/amazon-personalize-workshop-part-1.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Amazon Personalize Workshop Part 1 - Build your campaign</h1><p class="page-description">This notebook will walk you through the steps to build a recommendation model for movies based on data collected from the movielens data set. The goal is to recommend movies that are relevant based on a particular user. The data is coming from the MovieLens project.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-20T00:00:00-05:00" itemprop="datePublished">
+        Jun 20, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      20 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#amazonpersonalize">amazonpersonalize</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#movie">movie</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-20-amazon-personalize-workshop-part-1.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-20-amazon-personalize-workshop-part-1.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-20-amazon-personalize-workshop-part-1.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-20-amazon-personalize-workshop-part-1.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#How-to-Use-the-Notebook">How to Use the Notebook </a></li>
+<li class="toc-entry toc-h2"><a href="#Imports">Imports </a></li>
+<li class="toc-entry toc-h2"><a href="#Configure-the-data">Configure the data </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Specify-a-Bucket-and-Data-Output-Location">Specify a Bucket and Data Output Location </a></li>
+<li class="toc-entry toc-h3"><a href="#Download,-Prepare,-and-Upload-Training-Data">Download, Prepare, and Upload Training Data </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Download-and-Explore-the-Dataset">Download and Explore the Dataset </a></li>
+<li class="toc-entry toc-h4"><a href="#Prepare-and-Upload-Data">Prepare and Upload Data </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#Create-Schema">Create Schema </a></li>
+<li class="toc-entry toc-h3"><a href="#Create-and-Wait-for-Dataset-Group">Create and Wait for Dataset Group </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Create-Dataset-Group">Create Dataset Group </a></li>
+<li class="toc-entry toc-h4"><a href="#Wait-for-Dataset-Group-to-Have-ACTIVE-Status">Wait for Dataset Group to Have ACTIVE Status </a></li>
+<li class="toc-entry toc-h4"><a href="#Create-Dataset">Create Dataset </a></li>
+<li class="toc-entry toc-h4"><a href="#Attach-Policy-to-S3-Bucket">Attach Policy to S3 Bucket </a></li>
+<li class="toc-entry toc-h4"><a href="#Create-Personalize-Role">Create Personalize Role </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Import-the-data">Import the data </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Create-Dataset-Import-Job">Create Dataset Import Job </a></li>
+<li class="toc-entry toc-h4"><a href="#Wait-for-Dataset-Import-Job-to-Have-ACTIVE-Status">Wait for Dataset Import Job to Have ACTIVE Status </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Create-the-Solution-and-Version">Create the Solution and Version </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Select-Recipe">Select Recipe </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#User-Personalization">User Personalization </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#Create-and-Wait-for-Solution">Create and Wait for Solution </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Create-Solution">Create Solution </a></li>
+<li class="toc-entry toc-h4"><a href="#Create-Solution-Version">Create Solution Version </a></li>
+<li class="toc-entry toc-h4"><a href="#Wait-for-Solution-Version-to-Have-ACTIVE-Status">Wait for Solution Version to Have ACTIVE Status </a></li>
+<li class="toc-entry toc-h4"><a href="#Get-Metrics-of-Solution-Version">Get Metrics of Solution Version </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Create-and-Wait-for-the-Campaign">Create and Wait for the Campaign </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Create-Campaign">Create Campaign </a></li>
+<li class="toc-entry toc-h4"><a href="#Wait-for-Campaign-to-Have-ACTIVE-Status">Wait for Campaign to Have ACTIVE Status </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Get-Sample-Recommendations">Get Sample Recommendations </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Call-GetRecommendations">Call GetRecommendations </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Review">Review </a></li>
+<li class="toc-entry toc-h2"><a href="#Notes-for-the-Next-Notebook:">Notes for the Next Notebook: </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-20-amazon-personalize-workshop-part-1.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="How-to-Use-the-Notebook">
+<a class="anchor" href="#How-to-Use-the-Notebook" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to Use the Notebook<a class="anchor-link" href="#How-to-Use-the-Notebook"> </a>
+</h2>
+<p>Code is broken up into cells like the one below. There's a triangular <code>Run</code> button at the top of this page you can click to execute each cell and move onto the next, or you can press <code>Shift</code> + <code>Enter</code> while in the cell to execute it and move onto the next one.</p>
+<p>As a cell is executing you'll notice a line to the side showcase an <code>*</code> while the cell is running or it will update to a number to indicate the last cell that completed executing after it has finished exectuting all the code within a cell.</p>
+<p>Simply follow the instructions below and execute the cells to get started with Amazon Personalize.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Imports">
+<a class="anchor" href="#Imports" aria-hidden="true"><span class="octicon octicon-link"></span></a>Imports<a class="anchor-link" href="#Imports"> </a>
+</h2>
+<p>Python ships with a broad collection of libraries and we need to import those as well as the ones installed to help us like <a href="https://aws.amazon.com/sdk-for-python/">boto3</a> (AWS SDK for python) and <a href="https://pandas.pydata.org/">Pandas</a>/<a href="https://numpy.org/">Numpy</a> which are core data science tools.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">boto3</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="o">!</span>conda install -y -c conda-forge unzip
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Collecting package metadata (current_repodata.json): done
+Solving environment: | 
+The environment is inconsistent, please check the package plan carefully
+The following packages are causing the inconsistency:
+
+  - conda-forge/noarch::seaborn-base==0.11.1=pyhd8ed1ab_1
+  - conda-forge/noarch::nbclassic==0.2.6=pyhd8ed1ab_0
+  - conda-forge/linux-64::blaze==0.11.3=py36_0
+  - conda-forge/linux-64::matplotlib==3.3.4=py36h5fab9bb_0
+  - defaults/linux-64::_anaconda_depends==5.1.0=py36_2
+  - conda-forge/noarch::jupyterlab==3.0.9=pyhd8ed1ab_0
+  - conda-forge/noarch::python-language-server==0.36.2=pyhd8ed1ab_0
+  - conda-forge/noarch::jupyterlab_server==2.3.0=pyhd8ed1ab_0
+  - conda-forge/noarch::pyls-black==0.4.6=pyh9f0ad1d_0
+  - conda-forge/linux-64::scikit-image==0.16.2=py36hb3f55d8_0
+  - conda-forge/noarch::black==20.8b1=py_1
+  - conda-forge/linux-64::anyio==2.1.0=py36h5fab9bb_0
+  - conda-forge/linux-64::jupyter_server==1.4.1=py36h5fab9bb_0
+  - conda-forge/linux-64::bokeh==2.2.3=py36h5fab9bb_0
+  - conda-forge/noarch::aiobotocore==1.2.1=pyhd8ed1ab_0
+  - conda-forge/noarch::numpydoc==1.1.0=py_1
+  - conda-forge/linux-64::spyder==4.2.0=py36h5fab9bb_0
+  - conda-forge/noarch::pyls-spyder==0.3.2=pyhd8ed1ab_0
+  - conda-forge/noarch::odo==0.5.1=py_1
+  - conda-forge/noarch::imageio==2.9.0=py_0
+  - conda-forge/linux-64::yarl==1.6.3=py36h8f6f2f9_1
+  - conda-forge/noarch::sphinx==3.5.1=pyhd8ed1ab_0
+  - conda-forge/noarch::seaborn==0.11.1=hd8ed1ab_1
+  - conda-forge/linux-64::jupyter==1.0.0=py36h5fab9bb_6
+  - conda-forge/noarch::dask==2021.2.0=pyhd8ed1ab_0
+  - conda-forge/linux-64::idna_ssl==1.1.0=py36h9f0ad1d_1001
+  - conda-forge/linux-64::matplotlib-base==3.3.4=py36hd391965_0
+  - conda-forge/noarch::anaconda-client==1.7.2=py_0
+  - conda-forge/noarch::anaconda-project==0.9.1=pyhd8ed1ab_0
+done
+
+
+==&gt; WARNING: A newer version of conda exists. &lt;==
+  current version: 4.8.4
+  latest version: 4.10.1
+
+Please update conda by running
+
+    $ conda update -n base -c defaults conda
+
+
+
+## Package Plan ##
+
+  environment location: /home/ec2-user/anaconda3/envs/python3
+
+  added / updated specs:
+    - unzip
+
+
+The following packages will be downloaded:
+
+    package                    |            build
+    ---------------------------|-----------------
+    aiohttp-3.7.4.post0        |   py36h8f6f2f9_0         622 KB  conda-forge
+    astroid-2.5.8              |   py36h5fab9bb_0         316 KB  conda-forge
+    botocore-1.19.52           |     pyhd3eb1b0_0         3.5 MB
+    ca-certificates-2021.5.30  |       ha878542_0         136 KB  conda-forge
+    certifi-2021.5.30          |   py36h5fab9bb_0         141 KB  conda-forge
+    dataclasses-0.8            |     pyh787bdff_0          22 KB  conda-forge
+    docutils-0.15.2            |   py36h5fab9bb_2         738 KB  conda-forge
+    flask-cors-3.0.10          |     pyhd8ed1ab_0          15 KB  conda-forge
+    jupyter_console-5.2.0      |           py36_1          34 KB  conda-forge
+    lxml-4.6.3                 |   py36h04a5ba7_0         1.5 MB  conda-forge
+    openjpeg-2.4.0             |       hb52868f_1         444 KB  conda-forge
+    pillow-8.2.0               |   py36ha6010c0_1         688 KB  conda-forge
+    pylint-2.7.2               |   py36h5fab9bb_0         466 KB  conda-forge
+    unzip-6.0                  |       h7f98852_2         143 KB  conda-forge
+    urllib3-1.25.11            |             py_0          93 KB  conda-forge
+    ------------------------------------------------------------
+                                           Total:         8.8 MB
+
+The following NEW packages will be INSTALLED:
+
+  aiohttp            conda-forge/linux-64::aiohttp-3.7.4.post0-py36h8f6f2f9_0
+  astroid            conda-forge/linux-64::astroid-2.5.8-py36h5fab9bb_0
+  botocore           pkgs/main/noarch::botocore-1.19.52-pyhd3eb1b0_0
+  colorama           conda-forge/noarch::colorama-0.4.4-pyh9f0ad1d_0
+  dataclasses        conda-forge/noarch::dataclasses-0.8-pyh787bdff_0
+  docutils           conda-forge/linux-64::docutils-0.15.2-py36h5fab9bb_2
+  flask-cors         conda-forge/noarch::flask-cors-3.0.10-pyhd8ed1ab_0
+  idna               conda-forge/noarch::idna-2.10-pyh9f0ad1d_0
+  jupyter_console    conda-forge/linux-64::jupyter_console-5.2.0-py36_1
+  lxml               conda-forge/linux-64::lxml-4.6.3-py36h04a5ba7_0
+  openjpeg           conda-forge/linux-64::openjpeg-2.4.0-hb52868f_1
+  pillow             conda-forge/linux-64::pillow-8.2.0-py36ha6010c0_1
+  pylint             conda-forge/linux-64::pylint-2.7.2-py36h5fab9bb_0
+  requests           conda-forge/noarch::requests-2.25.1-pyhd3deb0d_0
+  unzip              conda-forge/linux-64::unzip-6.0-h7f98852_2
+  urllib3            conda-forge/noarch::urllib3-1.25.11-py_0
+
+The following packages will be UPDATED:
+
+  ca-certificates                      2020.12.5-ha878542_0 --&gt; 2021.5.30-ha878542_0
+  certifi                          2020.12.5-py36h5fab9bb_1 --&gt; 2021.5.30-py36h5fab9bb_0
+
+
+
+Downloading and Extracting Packages
+docutils-0.15.2      | 738 KB    | ##################################### | 100% 
+lxml-4.6.3           | 1.5 MB    | ##################################### | 100% 
+botocore-1.19.52     | 3.5 MB    | ##################################### | 100% 
+jupyter_console-5.2. | 34 KB     | ##################################### | 100% 
+urllib3-1.25.11      | 93 KB     | ##################################### | 100% 
+flask-cors-3.0.10    | 15 KB     | ##################################### | 100% 
+openjpeg-2.4.0       | 444 KB    | ##################################### | 100% 
+pillow-8.2.0         | 688 KB    | ##################################### | 100% 
+aiohttp-3.7.4.post0  | 622 KB    | ##################################### | 100% 
+astroid-2.5.8        | 316 KB    | ##################################### | 100% 
+certifi-2021.5.30    | 141 KB    | ##################################### | 100% 
+pylint-2.7.2         | 466 KB    | ##################################### | 100% 
+dataclasses-0.8      | 22 KB     | ##################################### | 100% 
+ca-certificates-2021 | 136 KB    | ##################################### | 100% 
+unzip-6.0            | 143 KB    | ##################################### | 100% 
+Preparing transaction: done
+Verifying transaction: done
+Executing transaction: done
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Next you will want to validate that your environment can communicate successfully with Amazon Personalize, the lines below do just that.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">personalize</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">'personalize'</span><span class="p">)</span>
+<span class="n">personalize_runtime</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">'personalize-runtime'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">aws_account_number</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">'sts'</span><span class="p">)</span><span class="o">.</span><span class="n">get_caller_identity</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'Account'</span><span class="p">)</span>
+<span class="n">aws_account_number</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>'284105231590'</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Configure-the-data">
+<a class="anchor" href="#Configure-the-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configure the data<a class="anchor-link" href="#Configure-the-data"> </a>
+</h2>
+<p>Data is imported into Amazon Personalize through Amazon S3, below we will specify a bucket that you have created within AWS for the purposes of this exercise.</p>
+<p>Below you will update the <code>bucket</code> variable to instead be set to the value that you created earlier in the CloudFormation steps, this should be in a text file from your earlier work. the <code>filename</code> does not need to be changed.</p>
+<h3 id="Specify-a-Bucket-and-Data-Output-Location">
+<a class="anchor" href="#Specify-a-Bucket-and-Data-Output-Location" aria-hidden="true"><span class="octicon octicon-link"></span></a>Specify a Bucket and Data Output Location<a class="anchor-link" href="#Specify-a-Bucket-and-Data-Output-Location"> </a>
+</h3>
+<p>Be sure to update the <code>bucket</code> value if you customized it during deployment of the CloudFormation template. Click in the cell below to make changes.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">bucket</span> <span class="o">=</span> <span class="s2">"personalizedemobucket202106200728"</span>       <span class="c1"># replace with the name of your S3 bucket</span>
+<span class="n">filename</span> <span class="o">=</span> <span class="s2">"movie-lens-100k.csv"</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Download,-Prepare,-and-Upload-Training-Data">
+<a class="anchor" href="#Download,-Prepare,-and-Upload-Training-Data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Download, Prepare, and Upload Training Data<a class="anchor-link" href="#Download,-Prepare,-and-Upload-Training-Data"> </a>
+</h3>
+<p>At present you do not have the MovieLens data loaded locally yet for examination, execute the lines below to download the latest copy and to examine it quickly.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Download-and-Explore-the-Dataset">
+<a class="anchor" href="#Download-and-Explore-the-Dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Download and Explore the Dataset<a class="anchor-link" href="#Download-and-Explore-the-Dataset"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>wget -N http://files.grouplens.org/datasets/movielens/ml-100k.zip
+<span class="o">!</span>unzip -o ml-100k.zip
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'./ml-100k/u.data'</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">'USER_ID'</span><span class="p">,</span> <span class="s1">'ITEM_ID'</span><span class="p">,</span> <span class="s1">'RATING'</span><span class="p">,</span> <span class="s1">'TIMESTAMP'</span><span class="p">])</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">'display.max_rows'</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>--2021-06-20 02:18:52--  http://files.grouplens.org/datasets/movielens/ml-100k.zip
+Resolving files.grouplens.org (files.grouplens.org)... 128.101.65.152
+Connecting to files.grouplens.org (files.grouplens.org)|128.101.65.152|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 4924029 (4.7M) [application/zip]
+Saving to: ‘ml-100k.zip’
+
+ml-100k.zip         100%[===================&gt;]   4.70M  13.0MB/s    in 0.4s    
+
+2021-06-20 02:18:53 (13.0 MB/s) - ‘ml-100k.zip’ saved [4924029/4924029]
+
+Archive:  ml-100k.zip
+   creating: ml-100k/
+  inflating: ml-100k/allbut.pl       
+  inflating: ml-100k/mku.sh          
+  inflating: ml-100k/README          
+  inflating: ml-100k/u.data          
+  inflating: ml-100k/u.genre         
+  inflating: ml-100k/u.info          
+  inflating: ml-100k/u.item          
+  inflating: ml-100k/u.occupation    
+  inflating: ml-100k/u.user          
+  inflating: ml-100k/u1.base         
+  inflating: ml-100k/u1.test         
+  inflating: ml-100k/u2.base         
+  inflating: ml-100k/u2.test         
+  inflating: ml-100k/u3.base         
+  inflating: ml-100k/u3.test         
+  inflating: ml-100k/u4.base         
+  inflating: ml-100k/u4.test         
+  inflating: ml-100k/u5.base         
+  inflating: ml-100k/u5.test         
+  inflating: ml-100k/ua.base         
+  inflating: ml-100k/ua.test         
+  inflating: ml-100k/ub.base         
+  inflating: ml-100k/ub.test         
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>USER_ID</th>
+      <th>ITEM_ID</th>
+      <th>RATING</th>
+      <th>TIMESTAMP</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>196</td>
+      <td>242</td>
+      <td>3</td>
+      <td>881250949</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>186</td>
+      <td>302</td>
+      <td>3</td>
+      <td>891717742</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>99998</th>
+      <td>13</td>
+      <td>225</td>
+      <td>2</td>
+      <td>882399156</td>
+    </tr>
+    <tr>
+      <th>99999</th>
+      <td>12</td>
+      <td>203</td>
+      <td>3</td>
+      <td>879959583</td>
+    </tr>
+  </tbody>
+</table>
+<p>100000 rows × 4 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Prepare-and-Upload-Data">
+<a class="anchor" href="#Prepare-and-Upload-Data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Prepare and Upload Data<a class="anchor-link" href="#Prepare-and-Upload-Data"> </a>
+</h4>
+<p>As you can see the data contains a UserID, ItemID, Rating, and Timestamp.</p>
+<p>We are now going to remove the items with low rankings, and remove the Rating column before we build our model.</p>
+<p>Once done we will now save the file as a new CSV and then upload it to S3.</p>
+<p>All of that is done by executing the lines in the cell below.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">'RATING'</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">]</span>                <span class="c1"># Keep only movies rated higher than 3 out of 5.</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s1">'USER_ID'</span><span class="p">,</span> <span class="s1">'ITEM_ID'</span><span class="p">,</span> <span class="s1">'TIMESTAMP'</span><span class="p">]]</span> <span class="c1"># select columns that match the columns in the schema below</span>
+<span class="n">data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">boto3</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s1">'s3'</span><span class="p">)</span><span class="o">.</span><span class="n">Bucket</span><span class="p">(</span><span class="n">bucket</span><span class="p">)</span><span class="o">.</span><span class="n">Object</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Create-Schema">
+<a class="anchor" href="#Create-Schema" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Schema<a class="anchor-link" href="#Create-Schema"> </a>
+</h3>
+<p>A core component of how Personalize understands your data comes from the Schema that is defined below. This configuration tells the service how to digest the data provided via your CSV file. Note the columns and types align to what was in the file you created above.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">schema</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"record"</span><span class="p">,</span>
+    <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Interactions"</span><span class="p">,</span>
+    <span class="s2">"namespace"</span><span class="p">:</span> <span class="s2">"com.amazonaws.personalize.schema"</span><span class="p">,</span>
+    <span class="s2">"fields"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"USER_ID"</span><span class="p">,</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"ITEM_ID"</span><span class="p">,</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"string"</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">"name"</span><span class="p">:</span> <span class="s2">"TIMESTAMP"</span><span class="p">,</span>
+            <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"long"</span>
+        <span class="p">}</span>
+    <span class="p">],</span>
+    <span class="s2">"version"</span><span class="p">:</span> <span class="s2">"1.0"</span>
+<span class="p">}</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">create_schema_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">create_schema</span><span class="p">(</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="s2">"personalize-demo-schema"</span><span class="p">,</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">schema_arn</span> <span class="o">=</span> <span class="n">create_schema_response</span><span class="p">[</span><span class="s1">'schemaArn'</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">create_schema_response</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">schema_arn</span> <span class="o">=</span> <span class="s2">"arn:aws:personalize:us-east-1:</span><span class="si">{}</span><span class="s2">:schema/personalize-demo-schema"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">aws_account_number</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Resource already exist with ARN :</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schema_arn</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Resource already exist with ARN :arn:aws:personalize:us-east-1:284105231590:schema/personalize-demo-schema
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Create-and-Wait-for-Dataset-Group">
+<a class="anchor" href="#Create-and-Wait-for-Dataset-Group" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create and Wait for Dataset Group<a class="anchor-link" href="#Create-and-Wait-for-Dataset-Group"> </a>
+</h3>
+<p>The largest grouping in Personalize is a Dataset Group, this will isolate your data, event trackers, solutions, and campaigns. Grouping things together that share a common collection of data. Feel free to alter the name below if you'd like.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Dataset-Group">
+<a class="anchor" href="#Create-Dataset-Group" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Dataset Group<a class="anchor-link" href="#Create-Dataset-Group"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">create_dataset_group_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">create_dataset_group</span><span class="p">(</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"personalize-launch-demo"</span><span class="p">)</span>
+    <span class="n">dataset_group_arn</span> <span class="o">=</span> <span class="n">create_dataset_group_response</span><span class="p">[</span><span class="s1">'datasetGroupArn'</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">create_dataset_group_response</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">dataset_group_arn</span> <span class="o">=</span> <span class="s2">"arn:aws:personalize:us-east-1:</span><span class="si">{}</span><span class="s2">:dataset-group/personalize-launch-demo"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">aws_account_number</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Resource already exist with ARN :</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset_group_arn</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "datasetGroupArn": "arn:aws:personalize:us-east-1:284105231590:dataset-group/personalize-launch-demo",
+  "ResponseMetadata": {
+    "RequestId": "998c048b-22ba-42fc-bb58-c5c6d8c390b6",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "content-type": "application/x-amz-json-1.1",
+      "date": "Sun, 20 Jun 2021 02:43:40 GMT",
+      "x-amzn-requestid": "998c048b-22ba-42fc-bb58-c5c6d8c390b6",
+      "content-length": "102",
+      "connection": "keep-alive"
+    },
+    "RetryAttempts": 0
+  }
+}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Dataset-Group-to-Have-ACTIVE-Status">
+<a class="anchor" href="#Wait-for-Dataset-Group-to-Have-ACTIVE-Status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Wait for Dataset Group to Have ACTIVE Status<a class="anchor-link" href="#Wait-for-Dataset-Group-to-Have-ACTIVE-Status"> </a>
+</h4>
+<p>Before we can use the Dataset Group in any items below it must be active, execute the cell below and wait for it to show active.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span> <span class="c1"># 3 hours</span>
+<span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">max_time</span><span class="p">:</span>
+    <span class="n">describe_dataset_group_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">describe_dataset_group</span><span class="p">(</span>
+        <span class="n">datasetGroupArn</span> <span class="o">=</span> <span class="n">dataset_group_arn</span>
+    <span class="p">)</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">describe_dataset_group_response</span><span class="p">[</span><span class="s2">"datasetGroup"</span><span class="p">][</span><span class="s2">"status"</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"DatasetGroup: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">status</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"ACTIVE"</span> <span class="ow">or</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"CREATE FAILED"</span><span class="p">:</span>
+        <span class="k">break</span>
+        
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>DatasetGroup: ACTIVE
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Dataset">
+<a class="anchor" href="#Create-Dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Dataset<a class="anchor-link" href="#Create-Dataset"> </a>
+</h4>
+<p>After the group, the next thing to create is the actual datasets, in this example we will only create 1 for the interactions data. Execute the cells below to create it.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">dataset_type</span> <span class="o">=</span> <span class="s2">"INTERACTIONS"</span>
+<span class="n">create_dataset_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"personalize-launch-interactions"</span><span class="p">,</span>
+    <span class="n">datasetType</span> <span class="o">=</span> <span class="n">dataset_type</span><span class="p">,</span>
+    <span class="n">datasetGroupArn</span> <span class="o">=</span> <span class="n">dataset_group_arn</span><span class="p">,</span>
+    <span class="n">schemaArn</span> <span class="o">=</span> <span class="n">schema_arn</span>
+<span class="p">)</span>
+
+<span class="n">dataset_arn</span> <span class="o">=</span> <span class="n">create_dataset_response</span><span class="p">[</span><span class="s1">'datasetArn'</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">create_dataset_response</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "datasetArn": "arn:aws:personalize:us-east-1:284105231590:dataset/personalize-launch-demo/INTERACTIONS",
+  "ResponseMetadata": {
+    "RequestId": "7a6533d3-4358-4040-aa09-ce251236d3ff",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "content-type": "application/x-amz-json-1.1",
+      "date": "Sun, 20 Jun 2021 02:45:56 GMT",
+      "x-amzn-requestid": "7a6533d3-4358-4040-aa09-ce251236d3ff",
+      "content-length": "104",
+      "connection": "keep-alive"
+    },
+    "RetryAttempts": 0
+  }
+}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Attach-Policy-to-S3-Bucket">
+<a class="anchor" href="#Attach-Policy-to-S3-Bucket" aria-hidden="true"><span class="octicon octicon-link"></span></a>Attach Policy to S3 Bucket<a class="anchor-link" href="#Attach-Policy-to-S3-Bucket"> </a>
+</h4>
+<p>Amazon Personalize needs to be able to read the content of your S3 bucket that you created earlier. The lines below will do that.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">s3</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s2">"s3"</span><span class="p">)</span>
+
+<span class="n">policy</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Version"</span><span class="p">:</span> <span class="s2">"2012-10-17"</span><span class="p">,</span>
+    <span class="s2">"Id"</span><span class="p">:</span> <span class="s2">"PersonalizeS3BucketAccessPolicy"</span><span class="p">,</span>
+    <span class="s2">"Statement"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">"Sid"</span><span class="p">:</span> <span class="s2">"PersonalizeS3BucketAccessPolicy"</span><span class="p">,</span>
+            <span class="s2">"Effect"</span><span class="p">:</span> <span class="s2">"Allow"</span><span class="p">,</span>
+            <span class="s2">"Principal"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"Service"</span><span class="p">:</span> <span class="s2">"personalize.amazonaws.com"</span>
+            <span class="p">},</span>
+            <span class="s2">"Action"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">"s3:GetObject"</span><span class="p">,</span>
+                <span class="s2">"s3:ListBucket"</span>
+            <span class="p">],</span>
+            <span class="s2">"Resource"</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">"arn:aws:s3:::</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bucket</span><span class="p">),</span>
+                <span class="s2">"arn:aws:s3:::</span><span class="si">{}</span><span class="s2">/*"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bucket</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">s3</span><span class="o">.</span><span class="n">put_bucket_policy</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Policy</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">policy</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{'ResponseMetadata': {'RequestId': 'V0GWAVB6A7MYM4H3',
+  'HostId': 'JKRdfmw/tDRvtC3jhfRi62TLCltQTxUUnTV8gQOzkf1cs+IGsxyvc06+wB4g92NUUnORjZEXWNs=',
+  'HTTPStatusCode': 204,
+  'HTTPHeaders': {'x-amz-id-2': 'JKRdfmw/tDRvtC3jhfRi62TLCltQTxUUnTV8gQOzkf1cs+IGsxyvc06+wB4g92NUUnORjZEXWNs=',
+   'x-amz-request-id': 'V0GWAVB6A7MYM4H3',
+   'date': 'Sun, 20 Jun 2021 02:46:28 GMT',
+   'server': 'AmazonS3'},
+  'RetryAttempts': 0}}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Personalize-Role">
+<a class="anchor" href="#Create-Personalize-Role" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Personalize Role<a class="anchor-link" href="#Create-Personalize-Role"> </a>
+</h4>
+<p>Also Amazon Personalize needs the ability to assume Roles in AWS in order to have the permissions to execute certain tasks, the lines below grant that.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">iam</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s2">"iam"</span><span class="p">)</span>
+
+<span class="n">role_name</span> <span class="o">=</span> <span class="s2">"PersonalizeRoleDemo"</span>
+<span class="n">assume_role_policy_document</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"Version"</span><span class="p">:</span> <span class="s2">"2012-10-17"</span><span class="p">,</span>
+    <span class="s2">"Statement"</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="s2">"Effect"</span><span class="p">:</span> <span class="s2">"Allow"</span><span class="p">,</span>
+          <span class="s2">"Principal"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"Service"</span><span class="p">:</span> <span class="s2">"personalize.amazonaws.com"</span>
+          <span class="p">},</span>
+          <span class="s2">"Action"</span><span class="p">:</span> <span class="s2">"sts:AssumeRole"</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">create_role_response</span> <span class="o">=</span> <span class="n">iam</span><span class="o">.</span><span class="n">create_role</span><span class="p">(</span>
+    <span class="n">RoleName</span> <span class="o">=</span> <span class="n">role_name</span><span class="p">,</span>
+    <span class="n">AssumeRolePolicyDocument</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">assume_role_policy_document</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># AmazonPersonalizeFullAccess provides access to any S3 bucket with a name that includes "personalize" or "Personalize" </span>
+<span class="c1"># if you would like to use a bucket with a different name, please consider creating and attaching a new policy</span>
+<span class="c1"># that provides read access to your bucket or attaching the AmazonS3ReadOnlyAccess policy to the role</span>
+<span class="n">policy_arn</span> <span class="o">=</span> <span class="s2">"arn:aws:iam::aws:policy/service-role/AmazonPersonalizeFullAccess"</span>
+<span class="n">iam</span><span class="o">.</span><span class="n">attach_role_policy</span><span class="p">(</span>
+    <span class="n">RoleName</span> <span class="o">=</span> <span class="n">role_name</span><span class="p">,</span>
+    <span class="n">PolicyArn</span> <span class="o">=</span> <span class="n">policy_arn</span>
+<span class="p">)</span>
+
+<span class="c1"># Now add S3 support</span>
+<span class="n">iam</span><span class="o">.</span><span class="n">attach_role_policy</span><span class="p">(</span>
+    <span class="n">PolicyArn</span><span class="o">=</span><span class="s1">'arn:aws:iam::aws:policy/AmazonS3FullAccess'</span><span class="p">,</span>
+    <span class="n">RoleName</span><span class="o">=</span><span class="n">role_name</span>
+<span class="p">)</span>
+<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span> <span class="c1"># wait for a minute to allow IAM role policy attachment to propagate</span>
+
+<span class="n">role_arn</span> <span class="o">=</span> <span class="n">create_role_response</span><span class="p">[</span><span class="s2">"Role"</span><span class="p">][</span><span class="s2">"Arn"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">role_arn</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>arn:aws:iam::284105231590:role/PersonalizeRoleDemo
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Import-the-data">
+<a class="anchor" href="#Import-the-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Import the data<a class="anchor-link" href="#Import-the-data"> </a>
+</h2>
+<p>Earlier you created the DatasetGroup and Dataset to house your information, now you will execute an import job that will load the data from S3 into Amazon Personalize for usage building your model.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Dataset-Import-Job">
+<a class="anchor" href="#Create-Dataset-Import-Job" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Dataset Import Job<a class="anchor-link" href="#Create-Dataset-Import-Job"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_dataset_import_job_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">create_dataset_import_job</span><span class="p">(</span>
+    <span class="n">jobName</span> <span class="o">=</span> <span class="s2">"personalize-demo-import1"</span><span class="p">,</span>
+    <span class="n">datasetArn</span> <span class="o">=</span> <span class="n">dataset_arn</span><span class="p">,</span>
+    <span class="n">dataSource</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"dataLocation"</span><span class="p">:</span> <span class="s2">"s3://</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="p">},</span>
+    <span class="n">roleArn</span> <span class="o">=</span> <span class="n">role_arn</span>
+<span class="p">)</span>
+
+<span class="n">dataset_import_job_arn</span> <span class="o">=</span> <span class="n">create_dataset_import_job_response</span><span class="p">[</span><span class="s1">'datasetImportJobArn'</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">create_dataset_import_job_response</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "datasetImportJobArn": "arn:aws:personalize:us-east-1:284105231590:dataset-import-job/personalize-demo-import1",
+  "ResponseMetadata": {
+    "RequestId": "f766900d-2d98-4791-8788-3b4e4153e932",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "content-type": "application/x-amz-json-1.1",
+      "date": "Sun, 20 Jun 2021 02:49:04 GMT",
+      "x-amzn-requestid": "f766900d-2d98-4791-8788-3b4e4153e932",
+      "content-length": "112",
+      "connection": "keep-alive"
+    },
+    "RetryAttempts": 0
+  }
+}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Dataset-Import-Job-to-Have-ACTIVE-Status">
+<a class="anchor" href="#Wait-for-Dataset-Import-Job-to-Have-ACTIVE-Status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Wait for Dataset Import Job to Have ACTIVE Status<a class="anchor-link" href="#Wait-for-Dataset-Import-Job-to-Have-ACTIVE-Status"> </a>
+</h4>
+<p>It can take a while before the import job completes, please wait until you see that it is active below.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span> <span class="c1"># 3 hours</span>
+<span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">max_time</span><span class="p">:</span>
+    <span class="n">describe_dataset_import_job_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">describe_dataset_import_job</span><span class="p">(</span>
+        <span class="n">datasetImportJobArn</span> <span class="o">=</span> <span class="n">dataset_import_job_arn</span>
+    <span class="p">)</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">describe_dataset_import_job_response</span><span class="p">[</span><span class="s2">"datasetImportJob"</span><span class="p">][</span><span class="s1">'status'</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"DatasetImportJob: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">status</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"ACTIVE"</span> <span class="ow">or</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"CREATE FAILED"</span><span class="p">:</span>
+        <span class="k">break</span>
+        
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>DatasetImportJob: CREATE PENDING
+DatasetImportJob: CREATE IN_PROGRESS
+DatasetImportJob: CREATE IN_PROGRESS
+DatasetImportJob: ACTIVE
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Create-the-Solution-and-Version">
+<a class="anchor" href="#Create-the-Solution-and-Version" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create the Solution and Version<a class="anchor-link" href="#Create-the-Solution-and-Version"> </a>
+</h2>
+<p>In Amazon Personalize a trained model is called a Solution, each Solution can have many specific versions that relate to a given volume of data when the model was trained.</p>
+<p>To begin we will list all the recipies that are supported, a recipie is an algorithm that has not been trained on your data yet. After listing you'll select one and use that to build your model.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Select-Recipe">
+<a class="anchor" href="#Select-Recipe" aria-hidden="true"><span class="octicon octicon-link"></span></a>Select Recipe<a class="anchor-link" href="#Select-Recipe"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">list_recipes_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">list_recipes</span><span class="p">()</span>
+<span class="n">list_recipes_response</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{'recipes': [{'name': 'aws-hrnn',
+   'recipeArn': 'arn:aws:personalize:::recipe/aws-hrnn',
+   'status': 'ACTIVE',
+   'creationDateTime': datetime.datetime(2019, 6, 10, 0, 0, tzinfo=tzlocal()),
+   'lastUpdatedDateTime': datetime.datetime(2021, 2, 6, 19, 6, 40, 447000, tzinfo=tzlocal())},
+  {'name': 'aws-hrnn-coldstart',
+   'recipeArn': 'arn:aws:personalize:::recipe/aws-hrnn-coldstart',
+   'status': 'ACTIVE',
+   'creationDateTime': datetime.datetime(2019, 6, 10, 0, 0, tzinfo=tzlocal()),
+   'lastUpdatedDateTime': datetime.datetime(2021, 2, 6, 19, 6, 40, 447000, tzinfo=tzlocal())},
+  {'name': 'aws-hrnn-metadata',
+   'recipeArn': 'arn:aws:personalize:::recipe/aws-hrnn-metadata',
+   'status': 'ACTIVE',
+   'creationDateTime': datetime.datetime(2019, 6, 10, 0, 0, tzinfo=tzlocal()),
+   'lastUpdatedDateTime': datetime.datetime(2021, 2, 6, 19, 6, 40, 447000, tzinfo=tzlocal())},
+  {'name': 'aws-personalized-ranking',
+   'recipeArn': 'arn:aws:personalize:::recipe/aws-personalized-ranking',
+   'status': 'ACTIVE',
+   'creationDateTime': datetime.datetime(2019, 6, 10, 0, 0, tzinfo=tzlocal()),
+   'lastUpdatedDateTime': datetime.datetime(2021, 2, 6, 19, 6, 40, 447000, tzinfo=tzlocal())},
+  {'name': 'aws-popularity-count',
+   'recipeArn': 'arn:aws:personalize:::recipe/aws-popularity-count',
+   'status': 'ACTIVE',
+   'creationDateTime': datetime.datetime(2019, 6, 10, 0, 0, tzinfo=tzlocal()),
+   'lastUpdatedDateTime': datetime.datetime(2021, 2, 6, 19, 6, 40, 447000, tzinfo=tzlocal())},
+  {'name': 'aws-sims',
+   'recipeArn': 'arn:aws:personalize:::recipe/aws-sims',
+   'status': 'ACTIVE',
+   'creationDateTime': datetime.datetime(2019, 6, 10, 0, 0, tzinfo=tzlocal()),
+   'lastUpdatedDateTime': datetime.datetime(2021, 2, 6, 19, 6, 40, 447000, tzinfo=tzlocal())},
+  {'name': 'aws-user-personalization',
+   'recipeArn': 'arn:aws:personalize:::recipe/aws-user-personalization',
+   'status': 'ACTIVE',
+   'creationDateTime': datetime.datetime(2019, 6, 10, 0, 0, tzinfo=tzlocal()),
+   'lastUpdatedDateTime': datetime.datetime(2021, 2, 6, 19, 6, 40, 447000, tzinfo=tzlocal())}],
+ 'ResponseMetadata': {'RequestId': '4a9fd177-5443-495c-abcf-3e3a50f7ae86',
+  'HTTPStatusCode': 200,
+  'HTTPHeaders': {'content-type': 'application/x-amz-json-1.1',
+   'date': 'Sun, 20 Jun 2021 02:52:04 GMT',
+   'x-amzn-requestid': '4a9fd177-5443-495c-abcf-3e3a50f7ae86',
+   'content-length': '1259',
+   'connection': 'keep-alive'},
+  'RetryAttempts': 0}}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="User-Personalization">
+<a class="anchor" href="#User-Personalization" aria-hidden="true"><span class="octicon octicon-link"></span></a>User Personalization<a class="anchor-link" href="#User-Personalization"> </a>
+</h4>
+<p>The <a href="https://docs.aws.amazon.com/personalize/latest/dg/native-recipe-new-item-USER_PERSONALIZATION.html">User-Personalization</a> (aws-user-personalization) recipe is optimized for all USER_PERSONALIZATION recommendation scenarios. When recommending items, it uses automatic item exploration.</p>
+<p>With automatic exploration, Amazon Personalize automatically tests different item recommendations, learns from how users interact with these recommended items, and boosts recommendations for items that drive better engagement and conversion. This improves item discovery and engagement when you have a fast-changing catalog, or when new items, such as news articles or promotions, are more relevant to users when fresh.</p>
+<p>You can balance how much to explore (where items with less interactions data or relevance are recommended more frequently) against how much to exploit (where recommendations are based on what we know or relevance). Amazon Personalize automatically adjusts future recommendations based on implicit user feedback.</p>
+<p>First, select the recipe by finding the ARN in the list of recipes above.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">recipe_arn</span> <span class="o">=</span> <span class="s2">"arn:aws:personalize:::recipe/aws-user-personalization"</span> <span class="c1"># aws-user-personalization selected for demo purposes</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Create-and-Wait-for-Solution">
+<a class="anchor" href="#Create-and-Wait-for-Solution" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create and Wait for Solution<a class="anchor-link" href="#Create-and-Wait-for-Solution"> </a>
+</h3>
+<p>First you will create the solution with the API, then you will create a version. It will take several minutes to train the model and thus create your version of a solution. Once it gets started and you are seeing the in progress notifications it is a good time to take a break, grab a coffee, etc.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Solution">
+<a class="anchor" href="#Create-Solution" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Solution<a class="anchor-link" href="#Create-Solution"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_solution_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">create_solution</span><span class="p">(</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"personalize-demo-soln-user-personalization"</span><span class="p">,</span>
+    <span class="n">datasetGroupArn</span> <span class="o">=</span> <span class="n">dataset_group_arn</span><span class="p">,</span>
+    <span class="n">recipeArn</span> <span class="o">=</span> <span class="n">recipe_arn</span>
+<span class="p">)</span>
+
+<span class="n">solution_arn</span> <span class="o">=</span> <span class="n">create_solution_response</span><span class="p">[</span><span class="s1">'solutionArn'</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">create_solution_response</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "solutionArn": "arn:aws:personalize:us-east-1:284105231590:solution/personalize-demo-soln-user-personalization",
+  "ResponseMetadata": {
+    "RequestId": "4b7f984a-bd8a-4cd1-b7a5-6a9f578a577c",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "content-type": "application/x-amz-json-1.1",
+      "date": "Sun, 20 Jun 2021 02:52:04 GMT",
+      "x-amzn-requestid": "4b7f984a-bd8a-4cd1-b7a5-6a9f578a577c",
+      "content-length": "112",
+      "connection": "keep-alive"
+    },
+    "RetryAttempts": 0
+  }
+}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Solution-Version">
+<a class="anchor" href="#Create-Solution-Version" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Solution Version<a class="anchor-link" href="#Create-Solution-Version"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_solution_version_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">create_solution_version</span><span class="p">(</span>
+    <span class="n">solutionArn</span> <span class="o">=</span> <span class="n">solution_arn</span>
+<span class="p">)</span>
+
+<span class="n">solution_version_arn</span> <span class="o">=</span> <span class="n">create_solution_version_response</span><span class="p">[</span><span class="s1">'solutionVersionArn'</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">create_solution_version_response</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "solutionVersionArn": "arn:aws:personalize:us-east-1:284105231590:solution/personalize-demo-soln-user-personalization/c8dd176c",
+  "ResponseMetadata": {
+    "RequestId": "2613b4c0-67f5-4186-8db3-27aeb17a326f",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "content-type": "application/x-amz-json-1.1",
+      "date": "Sun, 20 Jun 2021 02:52:05 GMT",
+      "x-amzn-requestid": "2613b4c0-67f5-4186-8db3-27aeb17a326f",
+      "content-length": "128",
+      "connection": "keep-alive"
+    },
+    "RetryAttempts": 0
+  }
+}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Solution-Version-to-Have-ACTIVE-Status">
+<a class="anchor" href="#Wait-for-Solution-Version-to-Have-ACTIVE-Status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Wait for Solution Version to Have ACTIVE Status<a class="anchor-link" href="#Wait-for-Solution-Version-to-Have-ACTIVE-Status"> </a>
+</h4>
+<p>This will take approximately 40-50 minutes.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span> <span class="c1"># 3 hours</span>
+<span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">max_time</span><span class="p">:</span>
+    <span class="n">describe_solution_version_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">describe_solution_version</span><span class="p">(</span>
+        <span class="n">solutionVersionArn</span> <span class="o">=</span> <span class="n">solution_version_arn</span>
+    <span class="p">)</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">describe_solution_version_response</span><span class="p">[</span><span class="s2">"solutionVersion"</span><span class="p">][</span><span class="s2">"status"</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"SolutionVersion: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">status</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"ACTIVE"</span> <span class="ow">or</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"CREATE FAILED"</span><span class="p">:</span>
+        <span class="k">break</span>
+        
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>SolutionVersion: ACTIVE
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Get-Metrics-of-Solution-Version">
+<a class="anchor" href="#Get-Metrics-of-Solution-Version" aria-hidden="true"><span class="octicon octicon-link"></span></a>Get Metrics of Solution Version<a class="anchor-link" href="#Get-Metrics-of-Solution-Version"> </a>
+</h4>
+<p>Now that your solution and version exists, you can obtain the metrics for it to judge its performance. These metrics are not particularly good as it is a demo set of data, but with larger more complex datasets you should see improvements.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">get_solution_metrics_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">get_solution_metrics</span><span class="p">(</span>
+    <span class="n">solutionVersionArn</span> <span class="o">=</span> <span class="n">solution_version_arn</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">get_solution_metrics_response</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "solutionVersionArn": "arn:aws:personalize:us-east-1:284105231590:solution/personalize-demo-soln-user-personalization/c8dd176c",
+  "metrics": {
+    "coverage": 0.3184,
+    "mean_reciprocal_rank_at_25": 0.1395,
+    "normalized_discounted_cumulative_gain_at_10": 0.174,
+    "normalized_discounted_cumulative_gain_at_25": 0.2434,
+    "normalized_discounted_cumulative_gain_at_5": 0.1339,
+    "precision_at_10": 0.0427,
+    "precision_at_25": 0.0342,
+    "precision_at_5": 0.0449
+  },
+  "ResponseMetadata": {
+    "RequestId": "31f4c894-2e81-400a-aa82-af6c459d0d24",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "content-type": "application/x-amz-json-1.1",
+      "date": "Sun, 20 Jun 2021 03:42:46 GMT",
+      "x-amzn-requestid": "31f4c894-2e81-400a-aa82-af6c459d0d24",
+      "content-length": "425",
+      "connection": "keep-alive"
+    },
+    "RetryAttempts": 0
+  }
+}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We recommend reading <a href="https://docs.aws.amazon.com/personalize/latest/dg/working-with-training-metrics.html">the documentation</a> to understand the metrics, but we have also copied parts of the documentation below for convenience.</p>
+<p>You need to understand the following terms regarding evaluation in Personalize:</p>
+<ul>
+<li>
+<em>Relevant recommendation</em> refers to a recommendation that matches a value in the testing data for the particular user.</li>
+<li>
+<em>Rank</em> refers to the position of a recommended item in the list of recommendations. Position 1 (the top of the list) is presumed to be the most relevant to the user.</li>
+<li>
+<em>Query</em> refers to the internal equivalent of a GetRecommendations call.</li>
+</ul>
+<p>The metrics produced by Personalize are:</p>
+<ul>
+<li>coverage: The proportion of unique recommended items from all queries out of the total number of unique items in the training data (includes both the Items and Interactions datasets).</li>
+<li>mean_reciprocal_rank_at_25: The <a href="https://en.wikipedia.org/wiki/Mean_reciprocal_rank">mean of the reciprocal ranks</a> of the first relevant recommendation out of the top 25 recommendations over all queries. This metric is appropriate if you're interested in the single highest ranked recommendation.</li>
+<li>normalized_discounted_cumulative_gain_at_K: Discounted gain assumes that recommendations lower on a list of recommendations are less relevant than higher recommendations. Therefore, each recommendation is discounted (given a lower weight) by a factor dependent on its position. To produce the <a href="https://en.wikipedia.org/wiki/Discounted_cumulative_gain">cumulative discounted gain</a> (DCG) at K, each relevant discounted recommendation in the top K recommendations is summed together. The normalized discounted cumulative gain (NDCG) is the DCG divided by the ideal DCG such that NDCG is between 0 - 1. (The ideal DCG is where the top K recommendations are sorted by relevance.) Amazon Personalize uses a weighting factor of 1/log(1 + position), where the top of the list is position 1. This metric rewards relevant items that appear near the top of the list, because the top of a list usually draws more attention.</li>
+<li>precision_at_K: The number of relevant recommendations out of the top K recommendations divided by K. This metric rewards precise recommendation of the relevant items.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Create-and-Wait-for-the-Campaign">
+<a class="anchor" href="#Create-and-Wait-for-the-Campaign" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create and Wait for the Campaign<a class="anchor-link" href="#Create-and-Wait-for-the-Campaign"> </a>
+</h2>
+<p>Now that you have a working solution version you will need to create a campaign to use it with your applications. A campaign is a hosted solution version; an endpoint which you can query for recommendations. Pricing is set by estimating throughput capacity (requests from users for personalization per second). When deploying a campaign, you set a minimum transactions per second (TPS) value (<code>minProvisionedTPS</code>). This service, like many within AWS, will automatically scale based on demand, but if latency is critical, you may want to provision ahead for larger demand. For this demo, the minimum throughput threshold is set to 1. For more information, see the <a href="https://aws.amazon.com/personalize/pricing/">pricing</a> page.</p>
+<p>As mentioned above, the user-personalization recipe used for our solution supports automatic exploration of "cold" items. You can control how much exploration is performed when creating your campaign. The <code>itemExplorationConfig</code> data type supports <code>explorationWeight</code> and <code>explorationItemAgeCutOff</code> parameters. Exploration weight determines how frequently recommendations include items with less interactions data or relevance. The closer the value is to 1.0, the more exploration. At zero, no exploration occurs and recommendations are based on current data (relevance). Exploration item age cut-off determines items to be explored based on time frame since latest interaction. Provide the maximum item age, in days since the latest interaction, to define the scope of item exploration. The larger the value, the more items are considered during exploration. For our campaign below, we'll specify an exploration weight of 0.5.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Campaign">
+<a class="anchor" href="#Create-Campaign" aria-hidden="true"><span class="octicon octicon-link"></span></a>Create Campaign<a class="anchor-link" href="#Create-Campaign"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_campaign_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">create_campaign</span><span class="p">(</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">"personalize-demo-camp"</span><span class="p">,</span>
+    <span class="n">solutionVersionArn</span> <span class="o">=</span> <span class="n">solution_version_arn</span><span class="p">,</span>
+    <span class="n">minProvisionedTPS</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">campaignConfig</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">"itemExplorationConfig"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"explorationWeight"</span><span class="p">:</span> <span class="s2">"0.5"</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">campaign_arn</span> <span class="o">=</span> <span class="n">create_campaign_response</span><span class="p">[</span><span class="s1">'campaignArn'</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">create_campaign_response</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>{
+  "campaignArn": "arn:aws:personalize:us-east-1:284105231590:campaign/personalize-demo-camp",
+  "ResponseMetadata": {
+    "RequestId": "6f9fbb78-aa32-40f0-9bbb-fef8ce90d612",
+    "HTTPStatusCode": 200,
+    "HTTPHeaders": {
+      "content-type": "application/x-amz-json-1.1",
+      "date": "Sun, 20 Jun 2021 03:43:29 GMT",
+      "x-amzn-requestid": "6f9fbb78-aa32-40f0-9bbb-fef8ce90d612",
+      "content-length": "91",
+      "connection": "keep-alive"
+    },
+    "RetryAttempts": 0
+  }
+}
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Campaign-to-Have-ACTIVE-Status">
+<a class="anchor" href="#Wait-for-Campaign-to-Have-ACTIVE-Status" aria-hidden="true"><span class="octicon octicon-link"></span></a>Wait for Campaign to Have ACTIVE Status<a class="anchor-link" href="#Wait-for-Campaign-to-Have-ACTIVE-Status"> </a>
+</h4>
+<p>This should take about 10 minutes.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">max_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="mi">60</span><span class="o">*</span><span class="mi">60</span> <span class="c1"># 3 hours</span>
+<span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">max_time</span><span class="p">:</span>
+    <span class="n">describe_campaign_response</span> <span class="o">=</span> <span class="n">personalize</span><span class="o">.</span><span class="n">describe_campaign</span><span class="p">(</span>
+        <span class="n">campaignArn</span> <span class="o">=</span> <span class="n">campaign_arn</span>
+    <span class="p">)</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">describe_campaign_response</span><span class="p">[</span><span class="s2">"campaign"</span><span class="p">][</span><span class="s2">"status"</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Campaign: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">status</span><span class="p">))</span>
+    
+    <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"ACTIVE"</span> <span class="ow">or</span> <span class="n">status</span> <span class="o">==</span> <span class="s2">"CREATE FAILED"</span><span class="p">:</span>
+        <span class="k">break</span>
+        
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Campaign: CREATE PENDING
+Campaign: CREATE IN_PROGRESS
+Campaign: CREATE IN_PROGRESS
+Campaign: CREATE IN_PROGRESS
+Campaign: CREATE IN_PROGRESS
+Campaign: CREATE IN_PROGRESS
+Campaign: CREATE IN_PROGRESS
+Campaign: CREATE IN_PROGRESS
+Campaign: CREATE IN_PROGRESS
+Campaign: CREATE IN_PROGRESS
+Campaign: ACTIVE
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Get-Sample-Recommendations">
+<a class="anchor" href="#Get-Sample-Recommendations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Get Sample Recommendations<a class="anchor-link" href="#Get-Sample-Recommendations"> </a>
+</h2>
+<p>After the campaign is active you are ready to get recommendations. First we need to select a random user from the collection. Then we will create a few helper functions for getting movie information to show for recommendations instead of just IDs.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># data.head()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>USER_ID</th>
+      <th>ITEM_ID</th>
+      <th>RATING</th>
+      <th>TIMESTAMP</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>196</td>
+      <td>242</td>
+      <td>3</td>
+      <td>881250949</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>186</td>
+      <td>302</td>
+      <td>3</td>
+      <td>891717742</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>22</td>
+      <td>377</td>
+      <td>1</td>
+      <td>878887116</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>244</td>
+      <td>51</td>
+      <td>2</td>
+      <td>880606923</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>166</td>
+      <td>346</td>
+      <td>1</td>
+      <td>886397596</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">user_id</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"USER: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>USER: 839
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">items</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'./ml-100k/u.item'</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">'|'</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'latin-1'</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">'ITEM_ID'</span><span class="p">,</span> <span class="s1">'TITLE'</span><span class="p">],</span> <span class="n">index_col</span><span class="o">=</span><span class="s1">'ITEM_ID'</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">get_movie_title</span><span class="p">(</span><span class="n">movie_id</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Takes in an ID, returns a title</span>
+<span class="sd">    """</span>
+    <span class="n">movie_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">movie_id</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+    <span class="k">return</span> <span class="n">items</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">movie_id</span><span class="p">][</span><span class="s1">'TITLE'</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Call-GetRecommendations">
+<a class="anchor" href="#Call-GetRecommendations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Call GetRecommendations<a class="anchor-link" href="#Call-GetRecommendations"> </a>
+</h4>
+<p>Using the user that you obtained above, the lines below will get recommendations for you and return the list of movies that are recommended.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">get_recommendations_response</span> <span class="o">=</span> <span class="n">personalize_runtime</span><span class="o">.</span><span class="n">get_recommendations</span><span class="p">(</span>
+    <span class="n">campaignArn</span> <span class="o">=</span> <span class="n">campaign_arn</span><span class="p">,</span>
+    <span class="n">userId</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="c1"># Update DF rendering</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">'display.max_rows'</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Recommendations for user: "</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+
+<span class="n">item_list</span> <span class="o">=</span> <span class="n">get_recommendations_response</span><span class="p">[</span><span class="s1">'itemList'</span><span class="p">]</span>
+
+<span class="n">recommendation_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">item_list</span><span class="p">:</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">get_movie_title</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">'itemId'</span><span class="p">])</span>
+    <span class="n">recommendation_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    
+<span class="n">recommendations_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">recommendation_list</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'OriginalRecs'</span><span class="p">])</span>
+<span class="n">recommendations_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Recommendations for user:  839
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>OriginalRecs</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Schindler's List (1993)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Pulp Fiction (1994)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Usual Suspects, The (1995)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Raiders of the Lost Ark (1981)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Silence of the Lambs, The (1991)</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Casablanca (1942)</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Fugitive, The (1993)</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Shawshank Redemption, The (1994)</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Amadeus (1984)</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Braveheart (1995)</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Truth About Cats &amp; Dogs, The (1996)</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Sling Blade (1996)</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>One Flew Over the Cuckoo's Nest (1975)</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Aladdin (1992)</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>Back to the Future (1985)</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>Time to Kill, A (1996)</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>Seven (Se7en) (1995)</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>E.T. the Extra-Terrestrial (1982)</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>Princess Bride, The (1987)</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>Godfather, The (1972)</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>Sleepers (1996)</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>Long Kiss Goodnight, The (1996)</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>Monty Python and the Holy Grail (1974)</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>Willy Wonka and the Chocolate Factory (1971)</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>GoodFellas (1990)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Review">
+<a class="anchor" href="#Review" aria-hidden="true"><span class="octicon octicon-link"></span></a>Review<a class="anchor-link" href="#Review"> </a>
+</h2>
+<p>Using the codes above you have successfully trained a deep learning model to generate movie recommendations based on prior user behavior. Think about other types of problems where this data is available and what it might look like to build a system like this to offer those recommendations.</p>
+<p>Now you are ready to move onto the next notebook.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Notes-for-the-Next-Notebook:">
+<a class="anchor" href="#Notes-for-the-Next-Notebook:" aria-hidden="true"><span class="octicon octicon-link"></span></a>Notes for the Next Notebook:<a class="anchor-link" href="#Notes-for-the-Next-Notebook:"> </a>
+</h2>
+<p>There are a few values you will need for the next notebook, execute the cells below to store them so they can be copied and pasted into the next part of the exercise.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> campaign_arn
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'campaign_arn' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> dataset_group_arn
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'dataset_group_arn' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> solution_version_arn
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'solution_version_arn' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> solution_arn
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'solution_arn' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> dataset_arn
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'dataset_arn' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> campaign_arn
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'campaign_arn' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> schema_arn
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'schema_arn' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> bucket
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'bucket' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> filename
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'filename' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> role_name
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'role_name' (str)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> recommendations_df
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'recommendations_df' (DataFrame)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">store</span> user_id
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Stored 'user_id' (int64)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/amazonpersonalize/movie/2021/06/20/amazon-personalize-workshop-part-1.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

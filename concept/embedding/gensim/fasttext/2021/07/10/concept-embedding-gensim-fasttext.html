@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Training Embeddings Using Gensim and FastText | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Training Embeddings Using Gensim and FastText" />
+<meta name="author" content="<a href='https://notebooks.quantumstat.com/'>Quantum Stat</a>" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Word embeddings are an approach to representing text in NLP. In this notebook we will demonstrate how to train embeddings both CBOW and SkipGram methods using Genism and Fasttext." />
+<meta property="og:description" content="Word embeddings are an approach to representing text in NLP. In this notebook we will demonstrate how to train embeddings both CBOW and SkipGram methods using Genism and Fasttext." />
+<link rel="canonical" href="https://nb.recohut.com/concept/embedding/gensim/fasttext/2021/07/10/concept-embedding-gensim-fasttext.html" />
+<meta property="og:url" content="https://nb.recohut.com/concept/embedding/gensim/fasttext/2021/07/10/concept-embedding-gensim-fasttext.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-10T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Training Embeddings Using Gensim and FastText" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"<a href='https://notebooks.quantumstat.com/'>Quantum Stat</a>"},"dateModified":"2021-07-10T00:00:00-05:00","datePublished":"2021-07-10T00:00:00-05:00","description":"Word embeddings are an approach to representing text in NLP. In this notebook we will demonstrate how to train embeddings both CBOW and SkipGram methods using Genism and Fasttext.","headline":"Training Embeddings Using Gensim and FastText","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/concept/embedding/gensim/fasttext/2021/07/10/concept-embedding-gensim-fasttext.html"},"url":"https://nb.recohut.com/concept/embedding/gensim/fasttext/2021/07/10/concept-embedding-gensim-fasttext.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Training Embeddings Using Gensim and FastText</h1><p class="page-description">Word embeddings are an approach to representing text in NLP. In this notebook we will demonstrate how to train embeddings both CBOW and SkipGram methods using Genism and Fasttext.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-10T00:00:00-05:00" itemprop="datePublished">
+        Jul 10, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name"><a href='https://notebooks.quantumstat.com/'>Quantum Stat</a></span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      10 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#Concept">Concept</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Embedding">Embedding</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Gensim">Gensim</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#FastText">FastText</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-10-concept-embedding-gensim-fasttext.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-10-concept-embedding-gensim-fasttext.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-10-concept-embedding-gensim-fasttext.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-10-concept-embedding-gensim-fasttext.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Continuous-Bag-of-Words-(CBOW)">Continuous Bag of Words (CBOW) </a></li>
+<li class="toc-entry toc-h2"><a href="#SkipGram">SkipGram </a></li>
+<li class="toc-entry toc-h2"><a href="#Training-Your-Embedding-on-Wiki-Corpus">Training Your Embedding on Wiki Corpus </a>
+<ul>
+<li class="toc-entry toc-h5"><a href="#The-corpus-download-page-:-https://dumps.wikimedia.org/enwiki/20200120/">The corpus download page : https://dumps.wikimedia.org/enwiki/20200120/ </a></li>
+<li class="toc-entry toc-h3"><a href="#Hyperparameters">Hyperparameters </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#FastText">FastText </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-10-concept-embedding-gensim-fasttext.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">gensim.models</span> <span class="kn">import</span> <span class="n">Word2Vec</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">'ignore'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Genism word2vec requires that a format of ‘list of lists’ be provided for training where every document contained in a list.</span>
+<span class="c1">#Every list contains lists of tokens of that document.</span>
+<span class="n">corpus</span> <span class="o">=</span> <span class="p">[[</span><span class="s1">'dog'</span><span class="p">,</span><span class="s1">'bites'</span><span class="p">,</span><span class="s1">'man'</span><span class="p">],</span> <span class="p">[</span><span class="s2">"man"</span><span class="p">,</span> <span class="s2">"bites"</span> <span class="p">,</span><span class="s2">"dog"</span><span class="p">],[</span><span class="s2">"dog"</span><span class="p">,</span><span class="s2">"eats"</span><span class="p">,</span><span class="s2">"meat"</span><span class="p">],[</span><span class="s2">"man"</span><span class="p">,</span> <span class="s2">"eats"</span><span class="p">,</span><span class="s2">"food"</span><span class="p">]]</span>
+
+<span class="c1">#Training the model</span>
+<span class="n">model_cbow</span> <span class="o">=</span> <span class="n">Word2Vec</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">sg</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#using CBOW Architecture for trainnig</span>
+<span class="n">model_skipgram</span> <span class="o">=</span> <span class="n">Word2Vec</span><span class="p">(</span><span class="n">corpus</span><span class="p">,</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">sg</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="c1">#using skipGram Architecture for training </span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Continuous-Bag-of-Words-(CBOW)">
+<a class="anchor" href="#Continuous-Bag-of-Words-(CBOW)" aria-hidden="true"><span class="octicon octicon-link"></span></a>Continuous Bag of Words (CBOW)<a class="anchor-link" href="#Continuous-Bag-of-Words-(CBOW)"> </a>
+</h2>
+<p>In CBOW, the primary task is to build a language model that correctly predicts the center word given the context words in which the center word appears.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">model_cbow</span><span class="p">)</span>
+
+<span class="c1">#Summarize vocabulary</span>
+<span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_cbow</span><span class="o">.</span><span class="n">wv</span><span class="o">.</span><span class="n">vocab</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+
+<span class="c1">#Acess vector for one word</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model_cbow</span><span class="p">[</span><span class="s1">'dog'</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Word2Vec(vocab=6, size=100, alpha=0.025)
+['dog', 'bites', 'man', 'eats', 'meat', 'food']
+[-3.1667745e-03  2.5268614e-03 -4.9504861e-03  2.3797194e-03
+ -3.3511904e-03  1.7659335e-03 -9.6838089e-04  3.6862001e-03
+  3.3760078e-03 -1.1944126e-03 -4.7475514e-03 -4.6677454e-03
+  4.7231275e-03  2.1875298e-03  4.9989321e-03 -4.7024325e-04
+  4.6936749e-03  4.5417100e-03 -4.8383311e-03  4.5522186e-03
+  9.4010920e-04 -2.8778350e-03 -2.3938445e-03  7.6240452e-04
+  2.8537741e-05 -1.0585956e-03  1.5203804e-03  1.1994856e-04
+  4.3881699e-03  3.5755127e-04  1.9964906e-03 -3.3893189e-03
+  2.5362791e-03 -3.8559963e-03 -4.6814438e-03 -1.0485576e-03
+  1.9576577e-03 -5.4296525e-04  2.5505766e-03  1.4563937e-03
+  1.1214090e-03  3.1200200e-03  3.5230191e-03  4.4931062e-03
+ -5.5389071e-04  1.6268899e-03 -4.6736463e-03 -1.9612674e-04
+  1.5486709e-03 -3.5581242e-03  1.5163666e-03  2.2859944e-03
+ -3.5728619e-03 -3.5505979e-03  7.8282715e-04 -4.8093311e-03
+ -3.1324120e-03 -3.6213300e-03 -1.4478542e-03  3.4006054e-03
+  2.2276146e-03 -4.1698264e-03 -3.6997625e-03 -4.1264743e-03
+ -4.9103238e-03 -2.2635974e-03 -3.9036905e-03  3.8846405e-03
+ -7.9726276e-05 -2.0692295e-03 -3.0645117e-04 -3.0288144e-03
+ -3.4682599e-03 -3.1768843e-03 -1.1148058e-03 -2.8012963e-03
+ -6.5973290e-04 -2.3705217e-03  4.3961490e-03  3.2166531e-03
+  3.6933657e-04 -6.2054797e-04  2.0661615e-04  3.7390803e-04
+ -3.5061471e-03  3.6587315e-03  2.1328868e-03 -2.5964181e-03
+  4.3381471e-03  4.0168604e-03  1.8054987e-03 -1.2192487e-03
+  1.5615283e-03 -1.8635839e-03  2.9529419e-03 -3.3825964e-03
+ -3.2592549e-03 -4.7523994e-04 -5.3210353e-04 -9.8173530e-04]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between eats and bites:"</span><span class="p">,</span><span class="n">model_cbow</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'eats'</span><span class="p">,</span> <span class="s1">'bites'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between eats and man:"</span><span class="p">,</span><span class="n">model_cbow</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'eats'</span><span class="p">,</span> <span class="s1">'man'</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Similarity between eats and bites: -0.09852024
+Similarity between eats and man: -0.17088428
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>From the above similarity scores we can conclude that eats is more similar to bites than man.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model_cbow</span><span class="o">.</span><span class="n">most_similar</span><span class="p">(</span><span class="s1">'meat'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[('bites', 0.1353721022605896),
+ ('man', 0.1094527617096901),
+ ('food', -0.02215239405632019),
+ ('dog', -0.1444159597158432),
+ ('eats', -0.16309654712677002)]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model_cbow</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">'model_cbow.bin'</span><span class="p">)</span>
+
+<span class="c1"># load model</span>
+<span class="n">new_model_cbow</span> <span class="o">=</span> <span class="n">Word2Vec</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">'model_cbow.bin'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">new_model_cbow</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Word2Vec(vocab=6, size=100, alpha=0.025)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="SkipGram">
+<a class="anchor" href="#SkipGram" aria-hidden="true"><span class="octicon octicon-link"></span></a>SkipGram<a class="anchor-link" href="#SkipGram"> </a>
+</h2>
+<p>In skipgram, the task is to predict the context words from the center word.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">model_skipgram</span><span class="p">)</span>
+
+<span class="c1">#Summarize vocabulary</span>
+<span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_skipgram</span><span class="o">.</span><span class="n">wv</span><span class="o">.</span><span class="n">vocab</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+
+<span class="c1">#Acess vector for one word</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model_skipgram</span><span class="p">[</span><span class="s1">'dog'</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Word2Vec(vocab=6, size=100, alpha=0.025)
+['dog', 'bites', 'man', 'eats', 'meat', 'food']
+[-3.1667745e-03  2.5268614e-03 -4.9504861e-03  2.3797194e-03
+ -3.3511904e-03  1.7659335e-03 -9.6838089e-04  3.6862001e-03
+  3.3760078e-03 -1.1944126e-03 -4.7475514e-03 -4.6677454e-03
+  4.7231275e-03  2.1875298e-03  4.9989321e-03 -4.7024325e-04
+  4.6936749e-03  4.5417100e-03 -4.8383311e-03  4.5522186e-03
+  9.4010920e-04 -2.8778350e-03 -2.3938445e-03  7.6240452e-04
+  2.8537741e-05 -1.0585956e-03  1.5203804e-03  1.1994856e-04
+  4.3881699e-03  3.5755127e-04  1.9964906e-03 -3.3893189e-03
+  2.5362791e-03 -3.8559963e-03 -4.6814438e-03 -1.0485576e-03
+  1.9576577e-03 -5.4296525e-04  2.5505766e-03  1.4563937e-03
+  1.1214090e-03  3.1200200e-03  3.5230191e-03  4.4931062e-03
+ -5.5389071e-04  1.6268899e-03 -4.6736463e-03 -1.9612674e-04
+  1.5486709e-03 -3.5581242e-03  1.5163666e-03  2.2859944e-03
+ -3.5728619e-03 -3.5505979e-03  7.8282715e-04 -4.8093311e-03
+ -3.1324120e-03 -3.6213300e-03 -1.4478542e-03  3.4006054e-03
+  2.2276146e-03 -4.1698264e-03 -3.6997625e-03 -4.1264743e-03
+ -4.9103238e-03 -2.2635974e-03 -3.9036905e-03  3.8846405e-03
+ -7.9726276e-05 -2.0692295e-03 -3.0645117e-04 -3.0288144e-03
+ -3.4682599e-03 -3.1768843e-03 -1.1148058e-03 -2.8012963e-03
+ -6.5973290e-04 -2.3705217e-03  4.3961490e-03  3.2166531e-03
+  3.6933657e-04 -6.2054797e-04  2.0661615e-04  3.7390803e-04
+ -3.5061471e-03  3.6587315e-03  2.1328868e-03 -2.5964181e-03
+  4.3381471e-03  4.0168604e-03  1.8054987e-03 -1.2192487e-03
+  1.5615283e-03 -1.8635839e-03  2.9529419e-03 -3.3825964e-03
+ -3.2592549e-03 -4.7523994e-04 -5.3210353e-04 -9.8173530e-04]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between eats and bites:"</span><span class="p">,</span><span class="n">model_skipgram</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'eats'</span><span class="p">,</span> <span class="s1">'bites'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between eats and man:"</span><span class="p">,</span><span class="n">model_skipgram</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'eats'</span><span class="p">,</span> <span class="s1">'man'</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Similarity between eats and bites: -0.09852936
+Similarity between eats and man: -0.17089055
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>From the above similarity scores we can conclude that eats is more similar to bites than man.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model_skipgram</span><span class="o">.</span><span class="n">most_similar</span><span class="p">(</span><span class="s1">'meat'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[('bites', 0.1353721022605896),
+ ('man', 0.10945276916027069),
+ ('food', -0.022152386605739594),
+ ('dog', -0.1444159746170044),
+ ('eats', -0.16317100822925568)]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model_skipgram</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">'model_skipgram.bin'</span><span class="p">)</span>
+
+<span class="c1"># load model</span>
+<span class="n">new_model_skipgram</span> <span class="o">=</span> <span class="n">Word2Vec</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">'model_skipgram.bin'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">new_model_skipgram</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Word2Vec(vocab=6, size=100, alpha=0.025)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Training-Your-Embedding-on-Wiki-Corpus">
+<a class="anchor" href="#Training-Your-Embedding-on-Wiki-Corpus" aria-hidden="true"><span class="octicon octicon-link"></span></a>Training Your Embedding on Wiki Corpus<a class="anchor-link" href="#Training-Your-Embedding-on-Wiki-Corpus"> </a>
+</h2>
+<h5 id="The-corpus-download-page-:-https://dumps.wikimedia.org/enwiki/20200120/">
+<a class="anchor" href="#The-corpus-download-page-:-https://dumps.wikimedia.org/enwiki/20200120/" aria-hidden="true"><span class="octicon octicon-link"></span></a>The corpus download page : <a href="https://dumps.wikimedia.org/enwiki/20200120/">https://dumps.wikimedia.org/enwiki/20200120/</a><a class="anchor-link" href="#The-corpus-download-page-:-https://dumps.wikimedia.org/enwiki/20200120/"> </a>
+</h5>
+<p>The entire wiki corpus as of 28/04/2020 is just over 16GB in size.
+We will take a part of this corpus due to computation constraints and train our word2vec and fasttext embeddings.</p>
+<p>The file size is 294MB so it can take a while to download.</p>
+<p>Source for code which downloads files from Google Drive: <a href="https://stackoverflow.com/questions/25010369/wget-curl-large-file-from-google-drive/39225039#39225039">https://stackoverflow.com/questions/25010369/wget-curl-large-file-from-google-drive/39225039#39225039</a></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">'data/en'</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<span class="n">file_name</span> <span class="o">=</span> <span class="s2">"data/en/enwiki-latest-pages-articles-multistream14.xml-p13159683p14324602.bz2"</span>
+<span class="n">file_id</span> <span class="o">=</span> <span class="s2">"11804g0GcWnBIVDahjo5fQyc05nQLXGwF"</span>
+
+<span class="k">def</span> <span class="nf">download_file_from_google_drive</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">destination</span><span class="p">):</span>
+    <span class="n">URL</span> <span class="o">=</span> <span class="s2">"https://docs.google.com/uc?export=download"</span>
+
+    <span class="n">session</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span>
+
+    <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">URL</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">'id'</span> <span class="p">:</span> <span class="nb">id</span> <span class="p">},</span> <span class="n">stream</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="n">token</span> <span class="o">=</span> <span class="n">get_confirm_token</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span> <span class="s1">'id'</span> <span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s1">'confirm'</span> <span class="p">:</span> <span class="n">token</span> <span class="p">}</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">URL</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="p">,</span> <span class="n">stream</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">save_response_content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span>    
+
+<span class="k">def</span> <span class="nf">get_confirm_token</span><span class="p">(</span><span class="n">response</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">cookies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">'download_warning'</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="k">def</span> <span class="nf">save_response_content</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">destination</span><span class="p">):</span>
+    <span class="n">CHUNK_SIZE</span> <span class="o">=</span> <span class="mi">32768</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="s2">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">CHUNK_SIZE</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span> <span class="c1"># filter out keep-alive new chunks</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
+    <span class="n">download_file_from_google_drive</span><span class="p">(</span><span class="n">file_id</span><span class="p">,</span> <span class="n">file_name</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"file already exists, skipping download"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"File at: </span><span class="si">{</span><span class="n">file_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>file already exists, skipping download
+File at: data/en/enwiki-latest-pages-articles-multistream14.xml-p13159683p14324602.bz2
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">gensim.corpora.wikicorpus</span> <span class="kn">import</span> <span class="n">WikiCorpus</span>
+<span class="kn">from</span> <span class="nn">gensim.models.word2vec</span> <span class="kn">import</span> <span class="n">Word2Vec</span>
+<span class="kn">from</span> <span class="nn">gensim.models.fasttext</span> <span class="kn">import</span> <span class="n">FastText</span>
+<span class="kn">import</span> <span class="nn">time</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">wiki</span> <span class="o">=</span> <span class="n">WikiCorpus</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">lemmatize</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dictionary</span><span class="o">=</span><span class="p">{})</span>
+<span class="n">sentences</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">wiki</span><span class="o">.</span><span class="n">get_texts</span><span class="p">())</span>
+
+<span class="c1">#if you get a memory error executing the lines above</span>
+<span class="c1">#comment the lines out and uncomment the lines below. </span>
+<span class="c1">#loading will be slower, but stable.</span>
+<span class="c1"># wiki = WikiCorpus(file_name, processes=4, lemmatize=False, dictionary={})</span>
+<span class="c1"># sentences = list(wiki.get_texts())</span>
+
+<span class="c1">#if you still get a memory error, try settings processes to 1 or 2 and then run it again.</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Hyperparameters">
+<a class="anchor" href="#Hyperparameters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Hyperparameters<a class="anchor-link" href="#Hyperparameters"> </a>
+</h3>
+<ol>
+<li>sg - Selecting the training algorithm: 1 for skip-gram else its 0 for CBOW. Default is CBOW.</li>
+<li>min_count-  Ignores all words with total frequency lower than this.<br>
+There are many more hyperparamaeters whose list can be found in the official documentation <a href="https://radimrehurek.com/gensim/models/word2vec.html">here.</a>
+</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">word2vec_cbow</span> <span class="o">=</span> <span class="n">Word2Vec</span><span class="p">(</span><span class="n">sentences</span><span class="p">,</span><span class="n">min_count</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">sg</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"CBOW Model Training Complete.</span><span class="se">\n</span><span class="s2">Time taken for training is:</span><span class="si">{:.2f}</span><span class="s2"> hrs "</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="mf">3600.0</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>CBOW Model Training Complete.
+Time taken for training is:0.04 hrs 
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">word2vec_cbow</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Summarize vocabulary</span>
+<span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">word2vec_cbow</span><span class="o">.</span><span class="n">wv</span><span class="o">.</span><span class="n">vocab</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length of vocabulary: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Printing the first 30 words."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">words</span><span class="p">[:</span><span class="mi">30</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Acess vector for one word</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length of vector: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">word2vec_cbow</span><span class="p">[</span><span class="s1">'film'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">word2vec_cbow</span><span class="p">[</span><span class="s1">'film'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Compute similarity </span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between film and drama:"</span><span class="p">,</span><span class="n">word2vec_cbow</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'film'</span><span class="p">,</span> <span class="s1">'drama'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between film and tiger:"</span><span class="p">,</span><span class="n">word2vec_cbow</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'film'</span><span class="p">,</span> <span class="s1">'tiger'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Word2Vec(vocab=111150, size=100, alpha=0.025)
+------------------------------
+Length of vocabulary: 111150
+Printing the first 30 words.
+['the', 'roses', 'registered', 'as', 'is', 'brisbane', 'racing', 'club', 'group', 'thoroughbred', 'horse', 'race', 'for', 'three', 'year', 'old', 'filles', 'run', 'under', 'set', 'weights', 'conditions', 'over', 'distance', 'of', 'metres', 'at', 'racecourse', 'australia', 'during']
+------------------------------
+Length of vector: 100
+[-0.25941572 -1.6287326   2.5331333  -1.5818936   0.9024474   0.8614945
+  2.4875445  -0.95802265 -1.3792082  -1.1744157  -4.300686    1.0071316
+  0.10418405  4.855032    0.6251962  -0.06472338  0.19993098 -0.7291219
+  2.342258   -1.7298651   0.7895099  -2.2819378   0.7158192  -0.62419826
+  0.6720258   3.6712303   1.3836899   0.17808275 -3.7205396   0.2529162
+  1.0290879  -0.9228959   0.9451632   1.7415334   1.9618814   1.4535053
+  2.670452    0.9272077   0.25056183 -0.4078236   0.5795217   0.6316829
+  0.50204426 -0.19865237 -2.697352    0.75351495  1.0796617   2.247825
+ -2.956658    2.6606686  -0.42392135 -0.44319883 -2.9274392  -1.0198026
+  1.404833   -0.10840467  0.50829273  1.0767945  -0.65002084 -3.4231277
+  4.719826   -1.5996053   0.82882935  1.635043   -0.45730942 -1.3166244
+ -1.3349417  -2.3565981   1.7141095  -2.6643796  -1.2148786   0.2972199
+ -2.2865987  -1.6022073   2.0965865  -0.87479544 -1.4143106  -0.9149557
+  2.2900226   1.1464663  -2.6113467  -1.5517493   1.3018385   4.1072307
+  1.1441547   1.0222696   0.4847384   2.4148073  -2.881392   -0.67044157
+ -2.482836   -0.417894    3.1442287  -1.6087203   1.865813   -3.717568
+  0.5994761   1.8819104   3.355772   -1.9087372 ]
+------------------------------
+Similarity between film and drama: 0.4986632
+Similarity between film and tiger: 0.15477756
+------------------------------
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">gensim.models</span> <span class="kn">import</span> <span class="n">Word2Vec</span><span class="p">,</span> <span class="n">KeyedVectors</span>   
+<span class="n">word2vec_cbow</span><span class="o">.</span><span class="n">wv</span><span class="o">.</span><span class="n">save_word2vec_format</span><span class="p">(</span><span class="s1">'word2vec_cbow.bin'</span><span class="p">,</span> <span class="n">binary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># load model</span>
+<span class="c1"># new_modelword2vec_cbow = Word2Vec.load('word2vec_cbow.bin')</span>
+<span class="c1"># print(word2vec_cbow)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">word2vec_skipgram</span> <span class="o">=</span> <span class="n">Word2Vec</span><span class="p">(</span><span class="n">sentences</span><span class="p">,</span><span class="n">min_count</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">sg</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"SkipGram Model Training Complete</span><span class="se">\n</span><span class="s2">Time taken for training is:</span><span class="si">{:.2f}</span><span class="s2"> hrs "</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="mf">3600.0</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>SkipGram Model Training Complete
+Time taken for training is:0.10 hrs 
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">word2vec_skipgram</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Summarize vocabulary</span>
+<span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">word2vec_skipgram</span><span class="o">.</span><span class="n">wv</span><span class="o">.</span><span class="n">vocab</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length of vocabulary: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Printing the first 30 words."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">words</span><span class="p">[:</span><span class="mi">30</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Acess vector for one word</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length of vector: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">word2vec_skipgram</span><span class="p">[</span><span class="s1">'film'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">word2vec_skipgram</span><span class="p">[</span><span class="s1">'film'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Compute similarity </span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between film and drama:"</span><span class="p">,</span><span class="n">word2vec_skipgram</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'film'</span><span class="p">,</span> <span class="s1">'drama'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between film and tiger:"</span><span class="p">,</span><span class="n">word2vec_skipgram</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'film'</span><span class="p">,</span> <span class="s1">'tiger'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Word2Vec(vocab=111150, size=100, alpha=0.025)
+------------------------------
+Length of vocabulary: 111150
+Printing the first 30 words.
+['the', 'roses', 'registered', 'as', 'is', 'brisbane', 'racing', 'club', 'group', 'thoroughbred', 'horse', 'race', 'for', 'three', 'year', 'old', 'filles', 'run', 'under', 'set', 'weights', 'conditions', 'over', 'distance', 'of', 'metres', 'at', 'racecourse', 'australia', 'during']
+------------------------------
+Length of vector: 100
+[ 1.94889292e-01 -7.88324535e-01  4.66947220e-02  2.57520348e-01
+  2.65304267e-01  3.63538593e-01  4.63590741e-01 -1.62654325e-01
+  9.11010578e-02 -6.58479631e-02 -6.97350129e-02 -6.56900406e-02
+  2.19506964e-01  2.20394313e-01  1.05092540e-01  8.26439075e-03
+ -9.39796269e-02  5.50851583e-01  7.65753444e-04 -2.22807571e-01
+ -3.17346871e-01  3.20529372e-01  4.51157093e-02 -1.93709806e-01
+  2.07626969e-02  1.69344515e-01  2.77250055e-02  1.10369585e-02
+ -4.75540310e-01  1.10796697e-01  4.28172469e-01  4.06191871e-02
+  5.15495241e-01 -6.85295224e-01 -5.06723702e-01 -4.52192919e-03
+  1.51265517e-03 -3.84557724e-01 -2.22782314e-01  5.11201501e-01
+  1.42252162e-01 -7.73397386e-01 -2.78606623e-01  4.70017433e-01
+ -2.70037323e-01  5.04850507e-01 -1.48356587e-01  2.26073325e-01
+ -3.36060971e-01 -1.19667962e-01 -2.59654850e-01 -4.44965392e-01
+  1.11614995e-01  1.62986945e-02  4.82374012e-01 -7.87460804e-02
+ -1.13825299e-01 -2.24003598e-01  4.93353546e-01 -5.57069406e-02
+  2.43176505e-01 -1.84876159e-01  2.13489812e-02  3.42909366e-01
+  2.02496469e-01 -4.25657362e-01  8.17572057e-01 -2.83644646e-01
+ -5.23434244e-02 -3.27616245e-01  4.43994589e-02 -3.90237272e-01
+  2.12029487e-01 -7.25788534e-01  5.52469850e-01 -4.72590374e-03
+ -2.02829018e-01 -9.59078223e-03  3.68973225e-01 -2.69762665e-01
+ -2.85591751e-01 -2.68359333e-01  3.10093671e-01  2.02198789e-01
+  5.80960453e-01 -2.47493789e-01 -7.37856887e-03 -3.59723950e-03
+  3.14893663e-01  1.12885557e-01 -5.09416103e-01 -7.58459032e-01
+  5.30587435e-01 -1.51896626e-01 -3.37440372e-01  4.22841489e-01
+ -3.34523350e-01  3.21759552e-01  7.44457126e-01 -1.26014173e-01]
+------------------------------
+Similarity between film and drama: 0.63833964
+Similarity between film and tiger: 0.22270091
+------------------------------
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">word2vec_skipgram</span><span class="o">.</span><span class="n">wv</span><span class="o">.</span><span class="n">save_word2vec_format</span><span class="p">(</span><span class="s1">'word2vec_sg.bin'</span><span class="p">,</span> <span class="n">binary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># load model</span>
+<span class="c1"># new_model_skipgram = Word2Vec.load('model_skipgram.bin')</span>
+<span class="c1"># print(model_skipgram)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="FastText">
+<a class="anchor" href="#FastText" aria-hidden="true"><span class="octicon octicon-link"></span></a>FastText<a class="anchor-link" href="#FastText"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">fasttext_cbow</span> <span class="o">=</span> <span class="n">FastText</span><span class="p">(</span><span class="n">sentences</span><span class="p">,</span> <span class="n">sg</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"FastText CBOW Model Training Complete</span><span class="se">\n</span><span class="s2">Time taken for training is:</span><span class="si">{:.2f}</span><span class="s2"> hrs "</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="mf">3600.0</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>FastText CBOW Model Training Complete
+Time taken for training is:0.12 hrs 
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">fasttext_cbow</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Summarize vocabulary</span>
+<span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">fasttext_cbow</span><span class="o">.</span><span class="n">wv</span><span class="o">.</span><span class="n">vocab</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length of vocabulary: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Printing the first 30 words."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">words</span><span class="p">[:</span><span class="mi">30</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Acess vector for one word</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length of vector: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fasttext_cbow</span><span class="p">[</span><span class="s1">'film'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">fasttext_cbow</span><span class="p">[</span><span class="s1">'film'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Compute similarity </span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between film and drama:"</span><span class="p">,</span><span class="n">fasttext_cbow</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'film'</span><span class="p">,</span> <span class="s1">'drama'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between film and tiger:"</span><span class="p">,</span><span class="n">fasttext_cbow</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'film'</span><span class="p">,</span> <span class="s1">'tiger'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>FastText(vocab=111150, size=100, alpha=0.025)
+------------------------------
+Length of vocabulary: 111150
+Printing the first 30 words.
+['the', 'roses', 'registered', 'as', 'is', 'brisbane', 'racing', 'club', 'group', 'thoroughbred', 'horse', 'race', 'for', 'three', 'year', 'old', 'filles', 'run', 'under', 'set', 'weights', 'conditions', 'over', 'distance', 'of', 'metres', 'at', 'racecourse', 'australia', 'during']
+------------------------------
+Length of vector: 100
+[ 0.47473213  1.6783198  -4.766255   -3.2404876   0.80164665  1.993539
+  3.4226568  -0.7035685  -3.0426116   1.5137119   3.8207133   1.3821473
+ -0.7379625  -0.6726444   1.8303355  -2.1288188   1.2368282  -3.0745962
+  1.4226121  -2.8884995   7.2847705  -1.564321    2.869352    0.6962616
+  4.469778    2.5569658   2.621335   -4.612509   -2.2389078   3.6648748
+  0.7189718   1.0702186  -3.175641    2.7648733   0.13811935 -2.441776
+ -3.9559126  -0.03163956 -1.1257534  -0.64402825 -1.5076644  -0.58919376
+ -0.14338583  4.2466817   4.3784213   3.0076942  -5.972965    2.2950342
+ -0.50719374 -3.916504   -2.1366098  -2.661619    2.3540869   2.1862476
+  5.1004434   4.1282     -4.164653    1.1288711  -4.001655   -4.051289
+  2.5718336  -0.40600455  3.8396242   2.214367    1.8413899   4.5216975
+ -1.6419586   2.7617378  -2.0902452   2.598776    4.041824   -5.1805005
+ -2.777213   -0.02546828 -0.07393612 -3.2800605  -2.9874747  -0.6490991
+  3.6039045  -1.4168853   3.6110177  -1.0872458  -0.6365031  -1.0161037
+  3.7344344   0.29839793  0.421953   -1.811646    1.3730506   7.575645
+  3.3998368   5.0335827  -0.2107324  -2.331183    0.19383769  3.0550041
+  4.1529713   3.988616    0.04955976  1.3424706 ]
+------------------------------
+Similarity between film and drama: 0.5669882
+Similarity between film and tiger: 0.24975622
+------------------------------
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+<span class="n">fasttext_skipgram</span> <span class="o">=</span> <span class="n">FastText</span><span class="p">(</span><span class="n">sentences</span><span class="p">,</span> <span class="n">sg</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"FastText SkipGram Model Training Complete</span><span class="se">\n</span><span class="s2">Time taken for training is:</span><span class="si">{:.2f}</span><span class="s2"> hrs "</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span><span class="o">/</span><span class="mf">3600.0</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>FastText SkipGram Model Training Complete
+Time taken for training is:0.20 hrs 
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">fasttext_skipgram</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Summarize vocabulary</span>
+<span class="n">words</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">fasttext_skipgram</span><span class="o">.</span><span class="n">wv</span><span class="o">.</span><span class="n">vocab</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length of vocabulary: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">words</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Printing the first 30 words."</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">words</span><span class="p">[:</span><span class="mi">30</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Acess vector for one word</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Length of vector: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fasttext_skipgram</span><span class="p">[</span><span class="s1">'film'</span><span class="p">])</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">fasttext_skipgram</span><span class="p">[</span><span class="s1">'film'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+
+<span class="c1">#Compute similarity </span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between film and drama:"</span><span class="p">,</span><span class="n">fasttext_skipgram</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'film'</span><span class="p">,</span> <span class="s1">'drama'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Similarity between film and tiger:"</span><span class="p">,</span><span class="n">fasttext_skipgram</span><span class="o">.</span><span class="n">similarity</span><span class="p">(</span><span class="s1">'film'</span><span class="p">,</span> <span class="s1">'tiger'</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span><span class="o">*</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>FastText(vocab=111150, size=100, alpha=0.025)
+------------------------------
+Length of vocabulary: 111150
+Printing the first 30 words.
+['the', 'roses', 'registered', 'as', 'is', 'brisbane', 'racing', 'club', 'group', 'thoroughbred', 'horse', 'race', 'for', 'three', 'year', 'old', 'filles', 'run', 'under', 'set', 'weights', 'conditions', 'over', 'distance', 'of', 'metres', 'at', 'racecourse', 'australia', 'during']
+------------------------------
+Length of vector: 100
+[-8.4101312e-02 -6.9478154e-04  3.3954462e-01 -3.6973858e-01
+  1.6844368e-01  3.4855682e-01  8.0026442e-01 -5.0405812e-01
+ -6.0389137e-01  2.1694953e-02  4.0937051e-01 -3.5893116e-02
+ -1.3717794e-01  4.0389201e-01  3.9567137e-01  2.4365921e-01
+  5.6551516e-02 -1.5994829e-01 -1.8148309e-01 -2.6480275e-01
+ -4.8462763e-01  9.5473409e-02 -1.1126036e-02 -1.8805853e-01
+  2.4277805e-01  2.4251699e-01 -1.7501226e-01 -4.3078136e-01
+ -3.6442232e-01  9.1702184e-03 -3.2344624e-01 -1.0232232e-01
+ -5.2684498e-01 -2.7622378e-01  4.2112619e-01 -4.3196991e-02
+  3.1967857e-01  1.7001998e-01  3.3157614e-01 -2.4995559e-01
+ -1.3239473e-01 -3.4502399e-01  2.1341468e-01  5.8890671e-01
+  1.7721146e-01  1.5974782e-01 -3.8579264e-01 -2.8241745e-01
+  6.7402735e-02 -7.1903253e-01  1.3665260e-01 -5.9633050e-02
+ -5.9002697e-01 -6.1173952e-01 -1.0246418e-03 -5.1254374e-01
+ -1.5101396e-01  1.6967247e-01  2.8125226e-01 -4.6728057e-01
+ -5.4966863e-02 -1.3736627e-02 -1.5689149e-01  8.3176725e-02
+  1.8850440e-02  4.1858605e-01 -1.1376646e-02 -4.0758383e-02
+ -1.7871203e-01  2.7792713e-01  5.5813068e-01 -3.5465869e-01
+  1.3662770e-01  2.5777066e-01 -3.0423281e-01  7.8141141e-01
+  1.1446947e-02 -4.0541172e-01  2.9406905e-01  6.0151044e-02
+  4.9637925e-02 -3.9679220e-01  4.5333567e-01  1.0888510e-02
+  2.7147910e-01 -1.7305572e-01 -2.8098795e-01 -6.1907400e-03
+ -2.3080334e-01  5.8609635e-01 -1.0097053e-01  6.6119152e-01
+  1.8578811e-01 -5.9025098e-02 -5.3886050e-01  2.6664239e-01
+ -2.2193529e-02  7.0487672e-01  3.9477929e-01  3.7981489e-01]
+------------------------------
+Similarity between film and drama: 0.626041
+Similarity between film and tiger: 0.27831402
+------------------------------
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>An interesting obeseravtion if you noticed is that CBOW trains faster than SkipGram in both cases.
+We will leave it to the user to figure out why. A hint would be to refer the working of CBOW and skipgram.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/concept/embedding/gensim/fasttext/2021/07/10/concept-embedding-gensim-fasttext.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

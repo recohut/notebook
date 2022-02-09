@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Simple Similarity based Recommmendations | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Simple Similarity based Recommmendations" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A beginner guide to understand the similarity based recommendations from the ground-up" />
+<meta property="og:description" content="A beginner guide to understand the similarity based recommendations from the ground-up" />
+<link rel="canonical" href="https://nb.recohut.com/similarity/2021/06/19/simple-similarity-based-recommenders.html" />
+<meta property="og:url" content="https://nb.recohut.com/similarity/2021/06/19/simple-similarity-based-recommenders.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-19T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Simple Similarity based Recommmendations" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-19T00:00:00-05:00","datePublished":"2021-06-19T00:00:00-05:00","description":"A beginner guide to understand the similarity based recommendations from the ground-up","headline":"Simple Similarity based Recommmendations","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/similarity/2021/06/19/simple-similarity-based-recommenders.html"},"url":"https://nb.recohut.com/similarity/2021/06/19/simple-similarity-based-recommenders.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Simple Similarity based Recommmendations</h1><p class="page-description">A beginner guide to understand the similarity based recommendations from the ground-up</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-19T00:00:00-05:00" itemprop="datePublished">
+        Jun 19, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      7 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#similarity">similarity</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-19-simple-similarity-based-recommenders.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-19-simple-similarity-based-recommenders.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-19-simple-similarity-based-recommenders.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-19-simple-similarity-based-recommenders.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h3"><a href="#Minkowski-Distance">Minkowski Distance </a></li>
+<li class="toc-entry toc-h3"><a href="#Pearson-Correlation-Coefficient">Pearson Correlation Coefficient </a></li>
+<li class="toc-entry toc-h3"><a href="#Cosine-Similarity">Cosine Similarity </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-19-simple-similarity-based-recommenders.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">names</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">faker_music</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">faker</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Requirement already satisfied: faker_music in /usr/local/lib/python3.7/dist-packages (0.4)
+Collecting faker
+  Downloading https://files.pythonhosted.org/packages/eb/70/b46c571bfd410d56b8794fa87257eb084f3a6b0c6783bf05188bd33276be/Faker-8.8.1-py3-none-any.whl (1.2MB)
+     |████████████████████████████████| 1.2MB 4.1MB/s 
+Requirement already satisfied: python-dateutil&gt;=2.4 in /usr/local/lib/python3.7/dist-packages (from faker) (2.8.1)
+Requirement already satisfied: text-unidecode==1.3 in /usr/local/lib/python3.7/dist-packages (from faker) (1.3)
+Requirement already satisfied: six&gt;=1.5 in /usr/local/lib/python3.7/dist-packages (from python-dateutil&gt;=2.4-&gt;faker) (1.15.0)
+Installing collected packages: faker
+Successfully installed faker-8.8.1
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">names</span>
+<span class="kn">from</span> <span class="nn">faker</span> <span class="kn">import</span> <span class="n">Faker</span>
+<span class="kn">from</span> <span class="nn">faker_music</span> <span class="kn">import</span> <span class="n">MusicProvider</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
+
+<span class="n">fake</span> <span class="o">=</span> <span class="n">Faker</span><span class="p">()</span>
+<span class="n">fake</span><span class="o">.</span><span class="n">add_provider</span><span class="p">(</span><span class="n">MusicProvider</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">generate_data</span><span class="p">():</span>
+  
+  <span class="n">NUM_USER</span> <span class="o">=</span> <span class="mi">8</span>
+  <span class="n">NUM_ITEM</span> <span class="o">=</span> <span class="mi">8</span>
+
+  <span class="n">RATING_OPTIONS</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">5.5</span><span class="p">,</span><span class="mf">0.5</span><span class="p">)</span>
+
+  <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+    
+    <span class="n">users</span> <span class="o">=</span> <span class="p">[</span><span class="n">names</span><span class="o">.</span><span class="n">get_full_name</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_USER</span><span class="p">)]</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[</span><span class="n">fake</span><span class="o">.</span><span class="n">music_genre</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_ITEM</span><span class="p">)]</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="n">users</span><span class="p">,</span> <span class="n">items</span><span class="p">)),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">'USERS'</span><span class="p">,</span> <span class="s1">'ITEMS'</span><span class="p">])</span>
+
+    <span class="n">PROBS</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.6</span><span class="p">]</span>
+    <span class="n">PROBS</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="mf">0.05</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">RATING_OPTIONS</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">PROBS</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">/</span><span class="nb">sum</span><span class="p">(</span><span class="n">PROBS</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">PROBS</span><span class="p">]</span>
+
+    <span class="n">data</span><span class="p">[</span><span class="s1">'RATINGS'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">RATING_OPTIONS</span><span class="p">,</span> <span class="n">NUM_USER</span><span class="o">*</span><span class="n">NUM_ITEM</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">PROBS</span><span class="p">)</span>
+
+    <span class="n">data</span><span class="p">[</span><span class="s1">'RATINGS'</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">'RATINGS'</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'float32'</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="s1">'ITEMS'</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s1">'USERS'</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s1">'RATINGS'</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">items</span><span class="p">))</span><span class="o">==</span><span class="n">NUM_ITEM</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">users</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span><span class="p">,</span> <span class="n">users</span> <span class="o">=</span> <span class="n">generate_data</span><span class="p">()</span>
+<span class="n">data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>USERS</th>
+      <th>Betty Wilkinson</th>
+      <th>Cynthia Doughty</th>
+      <th>Earl Williams</th>
+      <th>George Brooks</th>
+      <th>Halina Manganaro</th>
+      <th>Johnson Butera</th>
+      <th>Laurence Force</th>
+      <th>Ralph Papp</th>
+    </tr>
+    <tr>
+      <th>ITEMS</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Alternative</th>
+      <td>3.5</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Comedy</th>
+      <td>NaN</td>
+      <td>3.5</td>
+      <td>0.5</td>
+      <td>4.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.5</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>German Folk</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Jazz</th>
+      <td>NaN</td>
+      <td>1.5</td>
+      <td>NaN</td>
+      <td>0.5</td>
+      <td>0.5</td>
+      <td>1.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Pop</th>
+      <td>NaN</td>
+      <td>2.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Rock</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.5</td>
+      <td>NaN</td>
+      <td>1.5</td>
+    </tr>
+    <tr>
+      <th>Singer/Songwriter</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.5</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Spoken Word</th>
+      <td>NaN</td>
+      <td>1.5</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.5</td>
+      <td>5.0</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1">#   f.write(json.dumps([row.dropna().to_dict() for index, row in data.iterrows()]))</span>
+<span class="n">data</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="s1">'data.json'</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">'data.json'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Betty Wilkinson</th>
+      <th>Cynthia Doughty</th>
+      <th>Earl Williams</th>
+      <th>George Brooks</th>
+      <th>Halina Manganaro</th>
+      <th>Johnson Butera</th>
+      <th>Laurence Force</th>
+      <th>Ralph Papp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>Alternative</th>
+      <td>3.5</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Comedy</th>
+      <td>NaN</td>
+      <td>3.5</td>
+      <td>0.5</td>
+      <td>4.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.5</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>German Folk</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Jazz</th>
+      <td>NaN</td>
+      <td>1.5</td>
+      <td>NaN</td>
+      <td>0.5</td>
+      <td>0.5</td>
+      <td>1.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Pop</th>
+      <td>NaN</td>
+      <td>2.5</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Rock</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.5</td>
+      <td>NaN</td>
+      <td>1.5</td>
+    </tr>
+    <tr>
+      <th>Singer/Songwriter</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.5</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Spoken Word</th>
+      <td>NaN</td>
+      <td>1.5</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.5</td>
+      <td>5.0</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">'data.json'</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+<span class="n">data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{'Betty Wilkinson': {'Alternative': 3.5,
+  'Comedy': None,
+  'German Folk': None,
+  'Jazz': None,
+  'Pop': None,
+  'Rock': None,
+  'Singer/Songwriter': None,
+  'Spoken Word': None},
+ 'Cynthia Doughty': {'Alternative': None,
+  'Comedy': 3.5,
+  'German Folk': None,
+  'Jazz': 1.5,
+  'Pop': 2.5,
+  'Rock': None,
+  'Singer/Songwriter': None,
+  'Spoken Word': 1.5},
+ 'Earl Williams': {'Alternative': 4.0,
+  'Comedy': 0.5,
+  'German Folk': None,
+  'Jazz': None,
+  'Pop': None,
+  'Rock': 3.0,
+  'Singer/Songwriter': 2.0,
+  'Spoken Word': 1.0},
+ 'George Brooks': {'Alternative': None,
+  'Comedy': 4.5,
+  'German Folk': None,
+  'Jazz': 0.5,
+  'Pop': None,
+  'Rock': None,
+  'Singer/Songwriter': None,
+  'Spoken Word': None},
+ 'Halina Manganaro': {'Alternative': 2.0,
+  'Comedy': None,
+  'German Folk': 4.5,
+  'Jazz': 0.5,
+  'Pop': 4.0,
+  'Rock': None,
+  'Singer/Songwriter': None,
+  'Spoken Word': None},
+ 'Johnson Butera': {'Alternative': 5.0,
+  'Comedy': None,
+  'German Folk': None,
+  'Jazz': 1.5,
+  'Pop': None,
+  'Rock': 0.5,
+  'Singer/Songwriter': None,
+  'Spoken Word': 1.5},
+ 'Laurence Force': {'Alternative': None,
+  'Comedy': 3.5,
+  'German Folk': None,
+  'Jazz': None,
+  'Pop': 3.0,
+  'Rock': None,
+  'Singer/Songwriter': 0.5,
+  'Spoken Word': 5.0},
+ 'Ralph Papp': {'Alternative': None,
+  'Comedy': None,
+  'German Folk': None,
+  'Jazz': None,
+  'Pop': None,
+  'Rock': 1.5,
+  'Singer/Songwriter': None,
+  'Spoken Word': None}}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">del_none</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Delete keys with the value ``None`` in a dictionary, recursively.</span>
+
+<span class="sd">    This alters the input so you may wish to ``copy`` the dict first.</span>
+<span class="sd">    """</span>
+    <span class="c1"># For Python 3, write `list(d.items())`; `d.items()` won’t work</span>
+    <span class="c1"># For Python 2, write `d.items()`; `d.iteritems()` won’t work</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">del_none</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>  <span class="c1"># For convenience</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">del_none</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+<span class="n">data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{'Betty Wilkinson': {'Alternative': 3.5},
+ 'Cynthia Doughty': {'Comedy': 3.5,
+  'Jazz': 1.5,
+  'Pop': 2.5,
+  'Spoken Word': 1.5},
+ 'Earl Williams': {'Alternative': 4.0,
+  'Comedy': 0.5,
+  'Rock': 3.0,
+  'Singer/Songwriter': 2.0,
+  'Spoken Word': 1.0},
+ 'George Brooks': {'Comedy': 4.5, 'Jazz': 0.5},
+ 'Halina Manganaro': {'Alternative': 2.0,
+  'German Folk': 4.5,
+  'Jazz': 0.5,
+  'Pop': 4.0},
+ 'Johnson Butera': {'Alternative': 5.0,
+  'Jazz': 1.5,
+  'Rock': 0.5,
+  'Spoken Word': 1.5},
+ 'Laurence Force': {'Comedy': 3.5,
+  'Pop': 3.0,
+  'Singer/Songwriter': 0.5,
+  'Spoken Word': 5.0},
+ 'Ralph Papp': {'Rock': 1.5}}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Minkowski-Distance">
+<a class="anchor" href="#Minkowski-Distance" aria-hidden="true"><span class="octicon octicon-link"></span></a>Minkowski Distance<a class="anchor-link" href="#Minkowski-Distance"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">minkowski</span><span class="p">(</span><span class="n">ratings1</span><span class="p">,</span> <span class="n">ratings2</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Compute the Minkowski Distance between two users.</span>
+<span class="sd">    If `r` is not given, it defaults to Euclidian.</span>
+<span class="sd">    """</span>
+
+    <span class="n">mink_distance</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ratings1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">ratings2</span><span class="p">:</span>
+            <span class="n">mink_distance</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ratings1</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">-</span> <span class="n">ratings2</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="o">**</span><span class="n">r</span>
+
+    <span class="n">mink_distance</span> <span class="o">=</span> <span class="n">mink_distance</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">r</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mink_distance</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">nearest_neighbors</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">users</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">"""Create a sorted list of users</span>
+<span class="sd">    based on their Minkowski Distance Metric</span>
+<span class="sd">    (Euclidian by default) to username"""</span>
+
+    <span class="n">distances</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="o">!=</span> <span class="n">username</span><span class="p">:</span>
+            <span class="n">mnht_distance</span> <span class="o">=</span> <span class="n">minkowski</span><span class="p">(</span><span class="n">users</span><span class="p">[</span><span class="n">username</span><span class="p">],</span> <span class="n">users</span><span class="p">[</span><span class="n">user</span><span class="p">],</span> <span class="n">r</span><span class="p">)</span>
+            <span class="n">distances</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mnht_distance</span><span class="p">,</span> <span class="n">user</span><span class="p">))</span>
+
+    <span class="n">distances</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">distances</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">recommend_bands</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">users</span><span class="p">):</span>
+    <span class="sd">"""Recommend bands based on other users' ratings"""</span>
+    
+    <span class="n">neighbor</span> <span class="o">=</span> <span class="n">nearest_neighbors</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">users</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="si">{}</span><span class="s2">'s neighbor is </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">neighbor</span><span class="p">))</span>
+
+    <span class="n">recom_bands</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">band</span><span class="p">,</span> <span class="n">rating</span> <span class="ow">in</span> <span class="n">users</span><span class="p">[</span><span class="n">neighbor</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">band</span> <span class="ow">in</span> <span class="n">users</span><span class="p">[</span><span class="n">username</span><span class="p">]:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="si">{}</span><span class="s2"> gave </span><span class="si">{}</span><span class="s2"> stars to </span><span class="si">{}</span><span class="s2"> and </span><span class="si">{}</span><span class="s2"> not listened it before!"</span>\
+                  <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">neighbor</span><span class="p">,</span> <span class="n">rating</span><span class="p">,</span> <span class="n">band</span><span class="p">,</span> <span class="n">username</span><span class="p">))</span>
+            <span class="n">recom_bands</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">rating</span><span class="p">,</span> <span class="n">band</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="si">{}</span><span class="s2"> gave </span><span class="si">{}</span><span class="s2"> stars to </span><span class="si">{}</span><span class="s2"> but </span><span class="si">{}</span><span class="s2"> already listened it!"</span>\
+                  <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">neighbor</span><span class="p">,</span> <span class="n">rating</span><span class="p">,</span> <span class="n">band</span><span class="p">,</span> <span class="n">username</span><span class="p">))</span>
+    
+    <span class="n">recom_bands</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">band</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">band</span> <span class="ow">in</span> <span class="n">recom_bands</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'Recommendations for </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">recommend_bands</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">data</span><span class="p">)))</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="si">{}</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">'='</span><span class="o">*</span><span class="mi">50</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Johnson Butera's neighbor is Cynthia Doughty
+Cynthia Doughty gave 3.5 stars to Comedy and Johnson Butera not listened it before!
+Cynthia Doughty gave 1.5 stars to Jazz but Johnson Butera already listened it!
+Cynthia Doughty gave 2.5 stars to Pop and Johnson Butera not listened it before!
+Cynthia Doughty gave 1.5 stars to Spoken Word but Johnson Butera already listened it!
+Recommendations for Johnson Butera: ['Comedy', 'Pop']
+
+==================================================
+
+Cynthia Doughty's neighbor is Betty Wilkinson
+Betty Wilkinson gave 3.5 stars to Alternative and Cynthia Doughty not listened it before!
+Recommendations for Cynthia Doughty: ['Alternative']
+
+==================================================
+
+Betty Wilkinson's neighbor is Cynthia Doughty
+Cynthia Doughty gave 3.5 stars to Comedy and Betty Wilkinson not listened it before!
+Cynthia Doughty gave 1.5 stars to Jazz and Betty Wilkinson not listened it before!
+Cynthia Doughty gave 2.5 stars to Pop and Betty Wilkinson not listened it before!
+Cynthia Doughty gave 1.5 stars to Spoken Word and Betty Wilkinson not listened it before!
+Recommendations for Betty Wilkinson: ['Comedy', 'Pop', 'Spoken Word', 'Jazz']
+
+==================================================
+
+Halina Manganaro's neighbor is George Brooks
+George Brooks gave 4.5 stars to Comedy and Halina Manganaro not listened it before!
+George Brooks gave 0.5 stars to Jazz but Halina Manganaro already listened it!
+Recommendations for Halina Manganaro: ['Comedy']
+
+==================================================
+
+Earl Williams's neighbor is Betty Wilkinson
+Betty Wilkinson gave 3.5 stars to Alternative but Earl Williams already listened it!
+Recommendations for Earl Williams: []
+
+==================================================
+
+George Brooks's neighbor is Betty Wilkinson
+Betty Wilkinson gave 3.5 stars to Alternative and George Brooks not listened it before!
+Recommendations for George Brooks: ['Alternative']
+
+==================================================
+
+Ralph Papp's neighbor is Betty Wilkinson
+Betty Wilkinson gave 3.5 stars to Alternative and Ralph Papp not listened it before!
+Recommendations for Ralph Papp: ['Alternative']
+
+==================================================
+
+Laurence Force's neighbor is Betty Wilkinson
+Betty Wilkinson gave 3.5 stars to Alternative and Laurence Force not listened it before!
+Recommendations for Laurence Force: ['Alternative']
+
+==================================================
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Pearson-Correlation-Coefficient">
+<a class="anchor" href="#Pearson-Correlation-Coefficient" aria-hidden="true"><span class="octicon octicon-link"></span></a>Pearson Correlation Coefficient<a class="anchor-link" href="#Pearson-Correlation-Coefficient"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">pearson_corrcoef</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    
+    <span class="n">x_mean</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">y_mean</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+    <span class="n">numer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_mean</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">y_mean</span><span class="p">)</span> <span class="p">)</span>
+    <span class="n">denom</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="n">x_mean</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="p">)</span> <span class="p">)</span><span class="o">**</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">y_mean</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="p">)</span> <span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+
+    <span class="k">return</span> <span class="n">numer</span> <span class="o">/</span> <span class="n">denom</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">pearson_users</span><span class="p">(</span><span class="n">user1</span><span class="p">,</span> <span class="n">user2</span><span class="p">):</span>
+    
+    <span class="k">global</span> <span class="n">data</span>
+    <span class="n">ratings1</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">ratings2</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">user1</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="n">user2</span><span class="p">]:</span>
+            <span class="n">ratings1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">user1</span><span class="p">][</span><span class="n">key</span><span class="p">])</span>
+            <span class="n">ratings2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">user2</span><span class="p">][</span><span class="n">key</span><span class="p">])</span>
+
+    <span class="n">ratings1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ratings1</span><span class="p">)</span>
+    <span class="n">ratings2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ratings2</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pearson_corrcoef</span><span class="p">(</span><span class="n">ratings1</span><span class="p">,</span> <span class="n">ratings2</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>False</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">for</span> <span class="n">user1</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+  <span class="k">for</span> <span class="n">user2</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">user1</span><span class="o">!=</span><span class="n">user2</span><span class="p">:</span>
+      <span class="n">pearson_corr</span> <span class="o">=</span> <span class="n">pearson_users</span><span class="p">(</span><span class="n">user1</span><span class="p">,</span> <span class="n">user2</span><span class="p">)</span>
+      <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">pearson_corr</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Pearson correlation between </span><span class="si">{}</span><span class="s2"> and </span><span class="si">{}</span><span class="s2"> is </span><span class="si">{:.2f}</span><span class="s2">"</span>\
+              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user1</span><span class="p">,</span> <span class="n">user2</span><span class="p">,</span> <span class="n">pearson_corr</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Pearson correlation between Johnson Butera and Halina Manganaro is 1.00
+Pearson correlation between Johnson Butera and Earl Williams is 0.60
+Pearson correlation between Cynthia Doughty and Halina Manganaro is 1.00
+Pearson correlation between Cynthia Doughty and Earl Williams is -1.00
+Pearson correlation between Cynthia Doughty and George Brooks is 1.00
+Pearson correlation between Cynthia Doughty and Laurence Force is -0.72
+Pearson correlation between Halina Manganaro and Johnson Butera is 1.00
+Pearson correlation between Halina Manganaro and Cynthia Doughty is 1.00
+Pearson correlation between Earl Williams and Johnson Butera is 0.60
+Pearson correlation between Earl Williams and Cynthia Doughty is -1.00
+Pearson correlation between Earl Williams and Laurence Force is -0.79
+Pearson correlation between George Brooks and Cynthia Doughty is 1.00
+Pearson correlation between Laurence Force and Cynthia Doughty is -0.72
+Pearson correlation between Laurence Force and Earl Williams is -0.79
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Cosine-Similarity">
+<a class="anchor" href="#Cosine-Similarity" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cosine Similarity<a class="anchor-link" href="#Cosine-Similarity"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">johnson</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">'data.json'</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="s1">'Johnson Butera'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+<span class="n">halina</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">'data.json'</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)[</span><span class="s1">'Halina Manganaro'</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">x_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">johnson</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="p">)</span>
+<span class="n">y_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">halina</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="p">)</span>
+<span class="n">dot_prod</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">johnson</span><span class="p">,</span> <span class="n">halina</span><span class="p">)</span>
+
+<span class="n">dot_prod</span> <span class="o">/</span> <span class="p">(</span><span class="n">x_size</span> <span class="o">*</span> <span class="n">y_size</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0.3096973345860341</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/similarity/2021/06/19/simple-similarity-based-recommenders.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

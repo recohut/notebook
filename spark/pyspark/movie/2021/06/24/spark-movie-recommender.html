@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Movie recommender on PySpark | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Movie recommender on PySpark" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Building a scalable movie recommendation system using PySpark trained on movielens" />
+<meta property="og:description" content="Building a scalable movie recommendation system using PySpark trained on movielens" />
+<link rel="canonical" href="https://nb.recohut.com/spark/pyspark/movie/2021/06/24/spark-movie-recommender.html" />
+<meta property="og:url" content="https://nb.recohut.com/spark/pyspark/movie/2021/06/24/spark-movie-recommender.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-24T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Movie recommender on PySpark" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-24T00:00:00-05:00","datePublished":"2021-06-24T00:00:00-05:00","description":"Building a scalable movie recommendation system using PySpark trained on movielens","headline":"Movie recommender on PySpark","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/spark/pyspark/movie/2021/06/24/spark-movie-recommender.html"},"url":"https://nb.recohut.com/spark/pyspark/movie/2021/06/24/spark-movie-recommender.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Movie recommender on PySpark</h1><p class="page-description">Building a scalable movie recommendation system using PySpark trained on movielens</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-24T00:00:00-05:00" itemprop="datePublished">
+        Jun 24, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      8 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#spark">spark</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#pyspark">pyspark</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#movie">movie</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-24-spark-movie-recommender.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-24-spark-movie-recommender.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-24-spark-movie-recommender.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-24-spark-movie-recommender.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Environment-Setup">Environment Setup </a></li>
+<li class="toc-entry toc-h2"><a href="#Data-Loading">Data Loading </a></li>
+<li class="toc-entry toc-h2"><a href="#Basic-example">Basic example </a></li>
+<li class="toc-entry toc-h2"><a href="#Advanced-example">Advanced example </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-24-spark-movie-recommender.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Environment-Setup">
+<a class="anchor" href="#Environment-Setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Environment Setup<a class="anchor-link" href="#Environment-Setup"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">openjdk</span><span class="o">-</span><span class="mi">8</span><span class="o">-</span><span class="n">jdk</span><span class="o">-</span><span class="n">headless</span> <span class="o">-</span><span class="n">qq</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">null</span>
+<span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">downloads</span><span class="o">.</span><span class="n">apache</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">spark</span><span class="o">/</span><span class="n">spark</span><span class="o">-</span><span class="mf">3.1</span><span class="o">.</span><span class="mi">1</span><span class="o">/</span><span class="n">spark</span><span class="o">-</span><span class="mf">3.1</span><span class="o">.</span><span class="mi">1</span><span class="o">-</span><span class="nb">bin</span><span class="o">-</span><span class="n">hadoop3</span><span class="o">.</span><span class="mf">2.</span><span class="n">tgz</span>
+<span class="err">!</span><span class="n">tar</span> <span class="o">-</span><span class="n">xvf</span> <span class="n">spark</span><span class="o">-</span><span class="mf">3.1</span><span class="o">.</span><span class="mi">1</span><span class="o">-</span><span class="nb">bin</span><span class="o">-</span><span class="n">hadoop3</span><span class="o">.</span><span class="mf">2.</span><span class="n">tgz</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">findspark</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"JAVA_HOME"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"/usr/lib/jvm/java-8-openjdk-amd64"</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"SPARK_HOME"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"/content/spark-3.1.1-bin-hadoop3.2"</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># findspark.init()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span>
+<span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">master</span><span class="p">(</span><span class="s2">"local[*]"</span><span class="p">)</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># df.show(3)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">koalas</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">matplotlib.ticker</span> <span class="k">as</span> <span class="nn">ticker</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
+<span class="kn">from</span> <span class="nn">matplotlib.lines</span> <span class="kn">import</span> <span class="n">Line2D</span>
+
+<span class="c1"># Downloaded Packages (not available by Default)</span>
+<span class="kn">import</span> <span class="nn">databricks.koalas</span>
+
+<span class="c1"># PySpark Utilities</span>
+<span class="kn">import</span> <span class="nn">pyspark.sql.functions</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">Row</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.evaluation</span> <span class="kn">import</span> <span class="n">RegressionEvaluator</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.recommendation</span> <span class="kn">import</span> <span class="n">ALS</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.recommendation</span> <span class="kn">import</span> <span class="n">ALS</span><span class="p">,</span> <span class="n">ALSModel</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.evaluation</span> <span class="kn">import</span> <span class="n">RegressionEvaluator</span><span class="p">,</span> <span class="n">BinaryClassificationEvaluator</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.tuning</span> <span class="kn">import</span> <span class="n">ParamGridBuilder</span><span class="p">,</span> <span class="n">TrainValidationSplit</span>
+<span class="kn">from</span> <span class="nn">pyspark.mllib.evaluation</span> <span class="kn">import</span> <span class="n">RegressionMetrics</span><span class="p">,</span> <span class="n">RankingMetrics</span>
+
+<span class="c1"># Random Seed</span>
+<span class="n">SEED</span> <span class="o">=</span> <span class="mi">1492</span>
+
+<span class="c1"># Set-up</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">'seaborn'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>WARNING:root:'PYARROW_IGNORE_TIMEZONE' environment variable was not set. It is required to set this environment variable to '1' in both driver and executor sides if you use pyarrow&gt;=2.0.0. Koalas will set it for you but it does not work if there is a Spark context already launched.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data-Loading">
+<a class="anchor" href="#Data-Loading" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data Loading<a class="anchor-link" href="#Data-Loading"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">complete_dataset_url</span> <span class="o">=</span> <span class="s1">'http://files.grouplens.org/datasets/movielens/ml-latest.zip'</span>
+<span class="n">small_dataset_url</span> <span class="o">=</span> <span class="s1">'http://files.grouplens.org/datasets/movielens/ml-latest-small.zip'</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We also need to define download locations.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="n">datasets_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">'.'</span><span class="p">,</span> <span class="s1">'datasets'</span><span class="p">)</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">complete_dataset_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span> <span class="s1">'ml-latest.zip'</span><span class="p">)</span>
+<span class="n">small_dataset_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span> <span class="s1">'ml-latest-small.zip'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now we can proceed with both downloads.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">urllib.request</span>
+
+<span class="n">small_f</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span> <span class="p">(</span><span class="n">small_dataset_url</span><span class="p">,</span> <span class="n">small_dataset_path</span><span class="p">)</span>
+<span class="n">complete_f</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span> <span class="p">(</span><span class="n">complete_dataset_url</span><span class="p">,</span> <span class="n">complete_dataset_path</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Both of them are zip files containing a folder with ratings, movies, etc. We need to extract them into its individual folders so we can use each file later on.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">zipfile</span>
+
+<span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">small_dataset_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">z</span><span class="p">:</span>
+    <span class="n">z</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">complete_dataset_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">z</span><span class="p">:</span>
+    <span class="n">z</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Basic-example">
+<a class="anchor" href="#Basic-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Basic example<a class="anchor-link" href="#Basic-example"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span>\
+    <span class="o">.</span><span class="n">builder</span>\
+    <span class="o">.</span><span class="n">appName</span><span class="p">(</span><span class="s2">"ALSExample"</span><span class="p">)</span>\
+    <span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+
+<span class="n">lines</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">'SPARK_HOME'</span><span class="p">),</span><span class="s2">"data/mllib/als/sample_movielens_ratings.txt"</span><span class="p">))</span><span class="o">.</span><span class="n">rdd</span>
+<span class="n">parts</span> <span class="o">=</span> <span class="n">lines</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">row</span><span class="p">:</span> <span class="n">row</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"::"</span><span class="p">))</span>
+<span class="n">ratingsRDD</span> <span class="o">=</span> <span class="n">parts</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">Row</span><span class="p">(</span><span class="n">userId</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">movieId</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                                      <span class="n">rating</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="n">timestamp</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">3</span><span class="p">])))</span>
+<span class="n">ratings</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span><span class="n">ratingsRDD</span><span class="p">)</span>
+<span class="p">(</span><span class="n">training</span><span class="p">,</span> <span class="n">test</span><span class="p">)</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">randomSplit</span><span class="p">([</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">])</span>
+
+<span class="c1"># Build the recommendation model using ALS on the training data</span>
+<span class="c1"># Note we set cold start strategy to 'drop' to ensure we don't get NaN evaluation metrics</span>
+<span class="n">als</span> <span class="o">=</span> <span class="n">ALS</span><span class="p">(</span><span class="n">maxIter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">regParam</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">userCol</span><span class="o">=</span><span class="s2">"userId"</span><span class="p">,</span> <span class="n">itemCol</span><span class="o">=</span><span class="s2">"movieId"</span><span class="p">,</span> <span class="n">ratingCol</span><span class="o">=</span><span class="s2">"rating"</span><span class="p">)</span>
+<span class="c1"># als = ALS(maxIter=5, regParam=0.01, userCol="userId", itemCol="movieId", ratingCol="rating", coldStartStrategy="drop")</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">als</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">training</span><span class="p">)</span>
+
+<span class="c1"># Evaluate the model by computing the RMSE on the test data</span>
+<span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">RegressionEvaluator</span><span class="p">(</span><span class="n">metricName</span><span class="o">=</span><span class="s2">"rmse"</span><span class="p">,</span> <span class="n">labelCol</span><span class="o">=</span><span class="s2">"rating"</span><span class="p">,</span>
+                                <span class="n">predictionCol</span><span class="o">=</span><span class="s2">"prediction"</span><span class="p">)</span>
+<span class="n">rmse</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Root-mean-square error = "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rmse</span><span class="p">))</span>
+
+<span class="c1"># Generate top 10 movie recommendations for each user</span>
+<span class="n">userRecs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">recommendForAllUsers</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">userRecs</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Generate top 10 user recommendations for each movie</span>
+<span class="n">movieRecs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">recommendForAllItems</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">movieRecs</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Generate top 10 movie recommendations for a specified set of users</span>
+<span class="n">users</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">als</span><span class="o">.</span><span class="n">getUserCol</span><span class="p">())</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">userSubsetRecs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">recommendForUserSubset</span><span class="p">(</span><span class="n">users</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">userSubsetRecs</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># Generate top 10 user recommendations for a specified set of movies</span>
+<span class="n">movies</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">als</span><span class="o">.</span><span class="n">getItemCol</span><span class="p">())</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">movieSubSetRecs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">recommendForItemSubset</span><span class="p">(</span><span class="n">movies</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">movieSubSetRecs</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">spark</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Advanced-example">
+<a class="anchor" href="#Advanced-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Advanced example<a class="anchor-link" href="#Advanced-example"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li><a href="https://nbviewer.jupyter.org/github/SonalSavaliya/Movie-Recommender-System/blob/master/movie_recommender_using_spark.ipynb">https://nbviewer.jupyter.org/github/SonalSavaliya/Movie-Recommender-System/blob/master/movie_recommender_using_spark.ipynb</a></li>
+<li><a href="https://nbviewer.jupyter.org/github/Ansu-John/Movie-Recommender-System/blob/main/Movie%20Recommender%20System.ipynb">https://nbviewer.jupyter.org/github/Ansu-John/Movie-Recommender-System/blob/main/Movie%20Recommender%20System.ipynb</a></li>
+<li><a href="https://nbviewer.jupyter.org/github/assadullah1467/PySpark-Recommendation-Engine/blob/master/Recommender_System_PySpark.ipynb">https://nbviewer.jupyter.org/github/assadullah1467/PySpark-Recommendation-Engine/blob/master/Recommender_System_PySpark.ipynb</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">spark</span> <span class="o">=</span> <span class="n">SparkSession</span><span class="o">.</span><span class="n">builder</span><span class="o">.</span><span class="n">appName</span><span class="p">(</span><span class="s2">"Reco-Spark-Example2"</span><span class="p">)</span><span class="o">.</span><span class="n">getOrCreate</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span><span class="s1">'ml-latest-small'</span><span class="p">,</span><span class="s1">'ratings.csv'</span><span class="p">),</span>
+                      <span class="n">inferSchema</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">printSchema</span><span class="p">()</span>
+<span class="n">data</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>+------+-------+------+---------+
+|userId|movieId|rating|timestamp|
++------+-------+------+---------+
+|     1|      1|   4.0|964982703|
+|     1|      3|   4.0|964981247|
+|     1|      6|   4.0|964982224|
+|     1|     47|   5.0|964983815|
+|     1|     50|   5.0|964982931|
++------+-------+------+---------+
+only showing top 5 rows
+
+root
+ |-- userId: integer (nullable = true)
+ |-- movieId: integer (nullable = true)
+ |-- rating: double (nullable = true)
+ |-- timestamp: integer (nullable = true)
+
++-------+------------------+----------------+------------------+--------------------+
+|summary|            userId|         movieId|            rating|           timestamp|
++-------+------------------+----------------+------------------+--------------------+
+|  count|            100836|          100836|            100836|              100836|
+|   mean|326.12756356856676|19435.2957177992| 3.501556983616962|1.2059460873684695E9|
+| stddev| 182.6184914635004|35530.9871987003|1.0425292390606342|2.1626103599513078E8|
+|    min|                 1|               1|               0.5|           828124615|
+|    max|               610|          193609|               5.0|          1537799250|
++-------+------------------+----------------+------------------+--------------------+
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">titles</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">datasets_path</span><span class="p">,</span><span class="s1">'ml-latest-small'</span><span class="p">,</span><span class="s1">'movies.csv'</span><span class="p">),</span>
+                        <span class="n">inferSchema</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">titles</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>+-------+--------------------+--------------------+
+|movieId|               title|              genres|
++-------+--------------------+--------------------+
+|      1|    Toy Story (1995)|Adventure|Animati...|
+|      2|      Jumanji (1995)|Adventure|Childre...|
+|      3|Grumpier Old Men ...|      Comedy|Romance|
+|      4|Waiting to Exhale...|Comedy|Drama|Romance|
+|      5|Father of the Bri...|              Comedy|
++-------+--------------------+--------------------+
+only showing top 5 rows
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">titles</span><span class="p">,</span><span class="n">data</span><span class="o">.</span><span class="n">movieId</span><span class="o">==</span><span class="n">titles</span><span class="o">.</span><span class="n">movieId</span><span class="p">,</span><span class="s2">"left"</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="n">data</span><span class="o">.</span><span class="n">movieId</span><span class="p">,</span>
+                                                              <span class="n">titles</span><span class="o">.</span><span class="n">title</span><span class="p">,</span>
+                                                              <span class="n">data</span><span class="o">.</span><span class="n">userId</span><span class="p">,</span>
+                                                              <span class="n">data</span><span class="o">.</span><span class="n">rating</span><span class="p">])</span>
+<span class="n">data</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>+-------+--------------------+------+------+
+|movieId|               title|userId|rating|
++-------+--------------------+------+------+
+|      1|    Toy Story (1995)|     1|   4.0|
+|      3|Grumpier Old Men ...|     1|   4.0|
+|      6|         Heat (1995)|     1|   4.0|
+|     47|Seven (a.k.a. Se7...|     1|   5.0|
+|     50|Usual Suspects, T...|     1|   5.0|
++-------+--------------------+------+------+
+only showing top 5 rows
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">rand</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">lit</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="n">rand</span><span class="p">())</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="s1">'userId'</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="s1">'count'</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="s1">'userId'</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="s1">'count'</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="s1">'title'</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="s1">'count'</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">groupBy</span><span class="p">(</span><span class="s1">'title'</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="s1">'count'</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>+-------+------------------------------------------------------------------------------+------+------+
+|movieId|title                                                                         |userId|rating|
++-------+------------------------------------------------------------------------------+------+------+
+|3676   |Eraserhead (1977)                                                             |387   |4.0   |
+|1198   |Raiders of the Lost Ark (Indiana Jones and the Raiders of the Lost Ark) (1981)|30    |5.0   |
+|34405  |Serenity (2005)                                                               |414   |3.5   |
+|52281  |Grindhouse (2007)                                                             |590   |3.0   |
+|2278   |Ronin (1998)                                                                  |64    |5.0   |
+|1676   |Starship Troopers (1997)                                                      |428   |3.5   |
+|48516  |Departed, The (2006)                                                          |434   |5.0   |
+|292    |Outbreak (1995)                                                               |379   |4.0   |
+|50005  |Curse of the Golden Flower (Man cheng jin dai huang jin jia) (2006)           |232   |3.0   |
+|5060   |M*A*S*H (a.k.a. MASH) (1970)                                                  |514   |3.0   |
++-------+------------------------------------------------------------------------------+------+------+
+only showing top 10 rows
+
++------+-----+
+|userId|count|
++------+-----+
+|414   |2698 |
+|599   |2478 |
+|474   |2108 |
+|448   |1864 |
+|274   |1346 |
+|610   |1302 |
+|68    |1260 |
+|380   |1218 |
+|606   |1115 |
+|288   |1055 |
++------+-----+
+only showing top 10 rows
+
++------+-----+
+|userId|count|
++------+-----+
+|569   |20   |
+|207   |20   |
+|194   |20   |
+|257   |20   |
+|189   |20   |
+|442   |20   |
+|278   |20   |
+|431   |20   |
+|406   |20   |
+|53    |20   |
++------+-----+
+only showing top 10 rows
+
++-----------------------------------------+-----+
+|title                                    |count|
++-----------------------------------------+-----+
+|Forrest Gump (1994)                      |329  |
+|Shawshank Redemption, The (1994)         |317  |
+|Pulp Fiction (1994)                      |307  |
+|Silence of the Lambs, The (1991)         |279  |
+|Matrix, The (1999)                       |278  |
+|Star Wars: Episode IV - A New Hope (1977)|251  |
+|Jurassic Park (1993)                     |238  |
+|Braveheart (1995)                        |237  |
+|Terminator 2: Judgment Day (1991)        |224  |
+|Schindler's List (1993)                  |220  |
++-----------------------------------------+-----+
+only showing top 10 rows
+
++---------------------------------+-----+
+|title                            |count|
++---------------------------------+-----+
+|Mozart and the Whale (2005)      |1    |
+|Angel at My Table, An (1990)     |1    |
+|Wicked Blood (2014)              |1    |
+|Just Before I Go (2014)          |1    |
+|Smiley's People (1982)           |1    |
+|Fat City (1972)                  |1    |
+|National Lampoon's Bag Boy (2007)|1    |
+|Damn Yankees! (1958)             |1    |
+|Tom Segura: Disgraceful (2018)   |1    |
+|Survive Style 5+ (2004)          |1    |
++---------------------------------+-----+
+only showing top 10 rows
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">test_data</span><span class="p">)</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">randomSplit</span><span class="p">([</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">als</span> <span class="o">=</span> <span class="n">ALS</span><span class="p">(</span><span class="n">maxIter</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">regParam</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">userCol</span><span class="o">=</span><span class="s2">"userId"</span><span class="p">,</span> <span class="n">itemCol</span><span class="o">=</span><span class="s2">"movieId"</span><span class="p">,</span> <span class="n">ratingCol</span><span class="o">=</span><span class="s2">"rating"</span><span class="p">)</span>
+<span class="c1"># als = ALS(maxIter=5, regParam=0.01, userCol="userId", itemCol="movieId", ratingCol="rating", coldStartStrategy="drop")</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">als</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">predictions</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>+-------+--------------------+------+------+------------+
+|movieId|               title|userId|rating|  prediction|
++-------+--------------------+------+------+------------+
+|    471|Hudsucker Proxy, ...|   133|   4.0|-0.023575544|
+|    471|Hudsucker Proxy, ...|   182|   4.5|   2.7194414|
+|    471|Hudsucker Proxy, ...|   387|   3.0|   3.3777792|
+|    471|Hudsucker Proxy, ...|   217|   2.0|   1.9056505|
+|    471|Hudsucker Proxy, ...|   555|   3.0|   3.0670002|
+|    471|Hudsucker Proxy, ...|   176|   5.0|   4.4713492|
+|    471|Hudsucker Proxy, ...|   312|   4.0|   4.0964546|
+|    471|Hudsucker Proxy, ...|   287|   4.5|  0.77415377|
+|    471|Hudsucker Proxy, ...|    32|   3.0|     4.56229|
+|    471|Hudsucker Proxy, ...|   373|   5.0| -0.05078125|
+|    496|What Happened Was...|   191|   5.0|         NaN|
+|    833|High School High ...|   609|   3.0|   1.0141177|
+|    833|High School High ...|   492|   4.0|   1.2495432|
+|    833|High School High ...|   608|   0.5|   1.1099852|
+|   1088|Dirty Dancing (1987)|   599|   2.5|   2.0041223|
+|   1088|Dirty Dancing (1987)|   177|   3.5|   3.2147155|
+|   1088|Dirty Dancing (1987)|   479|   4.0|   3.3820715|
+|   1088|Dirty Dancing (1987)|   554|   5.0|    5.179201|
+|   1088|Dirty Dancing (1987)|   583|   3.5|   4.4660583|
+|   1088|Dirty Dancing (1987)|   594|   4.5|    4.519591|
++-------+--------------------+------+------+------------+
+only showing top 20 rows
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">RegressionEvaluator</span><span class="p">(</span><span class="n">metricName</span><span class="o">=</span><span class="s2">"rmse"</span><span class="p">,</span> <span class="n">labelCol</span><span class="o">=</span><span class="s2">"rating"</span><span class="p">,</span> <span class="n">predictionCol</span><span class="o">=</span><span class="s2">"prediction"</span><span class="p">)</span>
+<span class="n">rmse</span> <span class="o">=</span> <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Root-mean-square error = "</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rmse</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Root-mean-square error = nan
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A NaN result is due to SPARK-14489 and because the model can't predict values for users for which there's no data. 
+A temporary workaround is to exclude rows with predicted NaN values or to replace them with a constant, for instance,
+the general mean rating. However, to map to a real business problem, the data scientist, in collaboration with the 
+business owner, must define what happens if such an event occurs. For example, you can provide no recommendation for 
+a user until that user rates a few items. Alternatively, before user rates five items, you can use a user-based recommender
+system that's based on the user's profile (that's another recommender system to develop).</p>
+<p>Replace predicted NaN values with the average rating and evaluate the model:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">avgRatings</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s1">'rating'</span><span class="p">)</span><span class="o">.</span><span class="n">groupBy</span><span class="p">()</span><span class="o">.</span><span class="n">avg</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'The average rating in the dataset is: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">avgRatings</span><span class="p">))</span>
+
+<span class="n">evaluator</span> <span class="o">=</span> <span class="n">RegressionEvaluator</span><span class="p">(</span><span class="n">metricName</span><span class="o">=</span><span class="s1">'rmse'</span><span class="p">,</span> <span class="n">labelCol</span><span class="o">=</span><span class="s1">'rating'</span><span class="p">,</span> <span class="n">predictionCol</span><span class="o">=</span><span class="s1">'prediction'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'The root mean squared error for our model is: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">predictions</span><span class="o">.</span><span class="n">na</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">avgRatings</span><span class="p">))))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>The average rating in the dataset is: 3.501556983616962
+The root mean squared error for our model is: 1.0846835088076119
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now exclude predicted NaN values and evaluate the model</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">RegressionEvaluator</span><span class="p">(</span><span class="n">metricName</span><span class="o">=</span><span class="s1">'rmse'</span><span class="p">,</span> <span class="n">labelCol</span><span class="o">=</span><span class="s1">'rating'</span><span class="p">,</span> <span class="n">predictionCol</span><span class="o">=</span><span class="s1">'prediction'</span><span class="p">)</span>
+<span class="nb">print</span> <span class="p">(</span><span class="s1">'The root mean squared error for our model is: </span><span class="si">{}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">predictions</span><span class="o">.</span><span class="n">na</span><span class="o">.</span><span class="n">drop</span><span class="p">())))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>The root mean squared error for our model is: 1.0809233240280964
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">single_user</span> <span class="o">=</span> <span class="n">test_data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s1">'userId'</span><span class="p">]</span><span class="o">==</span><span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">([</span><span class="s1">'movieId'</span><span class="p">,</span><span class="s1">'userId'</span><span class="p">])</span>
+<span class="n">single_user</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="n">recommendations</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">single_user</span><span class="p">)</span>
+<span class="n">recommendations</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="s1">'prediction'</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>+-------+------+
+|movieId|userId|
++-------+------+
+|    357|    12|
+|    543|    12|
+|    830|    12|
+|   2072|    12|
+|   2717|    12|
+|   4018|    12|
+|  40629|    12|
++-------+------+
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">unique_movies</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s1">'movieId'</span><span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+<span class="n">unique_movies</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+<span class="c1">#assigning alias name 'a' to unique movies df</span>
+<span class="n">a</span> <span class="o">=</span> <span class="n">unique_movies</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s1">'a'</span><span class="p">)</span>
+
+<span class="c1">#selecting a user</span>
+<span class="n">user_id</span><span class="o">=</span><span class="mi">12</span>
+
+<span class="c1">#creating another dataframe which contains already watched movie by active user </span>
+<span class="n">watched_movies</span><span class="o">=</span><span class="n">indexed</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">indexed</span><span class="p">[</span><span class="s1">'userId'</span><span class="p">]</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">)</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s1">'movieId'</span><span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+<span class="n">watched_movies</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+
+<span class="c1">#assigning alias name 'b' to watched movies df</span>
+<span class="n">b</span><span class="o">=</span><span class="n">watched_movies</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s1">'b'</span><span class="p">)</span>
+
+<span class="c1">#joining both tables on left join </span>
+<span class="n">total_movies</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">movieId</span> <span class="o">==</span> <span class="n">b</span><span class="o">.</span><span class="n">movieId</span><span class="p">,</span><span class="n">how</span><span class="o">=</span><span class="s1">'left'</span><span class="p">)</span>
+
+<span class="c1">#selecting movies which active user is yet to rate or watch</span>
+<span class="n">remaining_movies</span><span class="o">=</span><span class="n">total_movies</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">col</span><span class="p">(</span><span class="s2">"b.movieId"</span><span class="p">)</span><span class="o">.</span><span class="n">isNull</span><span class="p">())</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">movieId</span><span class="p">)</span><span class="o">.</span><span class="n">distinct</span><span class="p">()</span>
+<span class="n">remaining_movies</span><span class="o">=</span><span class="n">remaining_movies</span><span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">"userId"</span><span class="p">,</span><span class="n">lit</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">user_id</span><span class="p">)))</span>
+
+<span class="c1">#making recommendations using ALS recommender model and selecting only top 'n' movies</span>
+<span class="n">recommendations</span><span class="o">=</span><span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">remaining_movies</span><span class="p">)</span><span class="o">.</span><span class="n">orderBy</span><span class="p">(</span><span class="s1">'prediction'</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">recommendations</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>+-------+------+----------+
+|movieId|userId|prediction|
++-------+------+----------+
+|6654   |12    |NaN       |
+|91784  |12    |NaN       |
+|1507   |12    |NaN       |
+|100068 |12    |NaN       |
+|6336   |12    |NaN       |
++-------+------+----------+
+only showing top 5 rows
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/spark/pyspark/movie/2021/06/24/spark-movie-recommender.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

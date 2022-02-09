@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Build a Kubeflow Pipeline | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Build a Kubeflow Pipeline" />
+<meta name="author" content="<a href='https://www.kubeflow.org/docs/started/kubeflow-overview/'>Kubeflow</a>" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A tutorial on building pipelines to orchestrate your ML workflow" />
+<meta property="og:description" content="A tutorial on building pipelines to orchestrate your ML workflow" />
+<link rel="canonical" href="https://nb.recohut.com/mlops/kubeflow/2021/07/01/build-a-kubeflow-pipeline.html" />
+<meta property="og:url" content="https://nb.recohut.com/mlops/kubeflow/2021/07/01/build-a-kubeflow-pipeline.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-01T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Build a Kubeflow Pipeline" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"<a href='https://www.kubeflow.org/docs/started/kubeflow-overview/'>Kubeflow</a>"},"dateModified":"2021-07-01T00:00:00-05:00","datePublished":"2021-07-01T00:00:00-05:00","description":"A tutorial on building pipelines to orchestrate your ML workflow","headline":"Build a Kubeflow Pipeline","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/mlops/kubeflow/2021/07/01/build-a-kubeflow-pipeline.html"},"url":"https://nb.recohut.com/mlops/kubeflow/2021/07/01/build-a-kubeflow-pipeline.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Build a Kubeflow Pipeline</h1><p class="page-description">A tutorial on building pipelines to orchestrate your ML workflow</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-01T00:00:00-05:00" itemprop="datePublished">
+        Jul 1, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name"><a href='https://www.kubeflow.org/docs/started/kubeflow-overview/'>Kubeflow</a></span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      11 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#MLOps">MLOps</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Kubeflow">Kubeflow</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-01-build-a-kubeflow-pipeline.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-01-build-a-kubeflow-pipeline.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-01-build-a-kubeflow-pipeline.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-01-build-a-kubeflow-pipeline.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Before-you-begin">Before you begin </a></li>
+<li class="toc-entry toc-h2"><a href="#Understanding-pipelines">Understanding pipelines </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Understanding-pipeline-components">Understanding pipeline components </a></li>
+<li class="toc-entry toc-h3"><a href="#Understanding-the-pipeline-graph">Understanding the pipeline graph </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Designing-your-pipeline">Designing your pipeline </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Building-pipeline-components">Building pipeline components </a></li>
+<li class="toc-entry toc-h3"><a href="#Understanding-how-data-is-passed-between-components">Understanding how data is passed between components </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Getting-started-building-a-pipeline">Getting started building a pipeline </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Design-your-pipeline">Design your pipeline </a></li>
+<li class="toc-entry toc-h3"><a href="#Build-your-pipeline-components">Build your pipeline components </a></li>
+<li class="toc-entry toc-h3"><a href="#Build-your-pipeline">Build your pipeline </a></li>
+<li class="toc-entry toc-h3"><a href="#Compile-and-run-your-pipeline">Compile and run your pipeline </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Option-1:-Compile-and-then-upload-in-UI">Option 1: Compile and then upload in UI </a></li>
+<li class="toc-entry toc-h4"><a href="#Option-2:-run-the-pipeline-using-Kubeflow-Pipelines-SDK-client">Option 2: run the pipeline using Kubeflow Pipelines SDK client </a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Next-steps">Next steps </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-01-build-a-kubeflow-pipeline.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A Kubeflow pipeline is a portable and scalable definition of a machine learning
+(ML) workflow. Each step in your ML workflow, such as preparing data or
+training a model, is an instance of a pipeline component. This document
+provides an overview of pipeline concepts and best practices, and instructions
+describing how to build an ML pipeline.</p>
+<h2 id="Before-you-begin">
+<a class="anchor" href="#Before-you-begin" aria-hidden="true"><span class="octicon octicon-link"></span></a>Before you begin<a class="anchor-link" href="#Before-you-begin"> </a>
+</h2>
+<ol>
+<li>Run the following command to install the Kubeflow Pipelines SDK. If you run this command in a Jupyter
+notebook, restart the kernel after installing the SDK. </li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>pip install kfp --upgrade
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>Import the <code>kfp</code> and <code>kfp.components</code> packages.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">kfp</span>
+<span class="kn">import</span> <span class="nn">kfp.components</span> <span class="k">as</span> <span class="nn">comp</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Understanding-pipelines">
+<a class="anchor" href="#Understanding-pipelines" aria-hidden="true"><span class="octicon octicon-link"></span></a>Understanding pipelines<a class="anchor-link" href="#Understanding-pipelines"> </a>
+</h2>
+<p>A Kubeflow pipeline is a portable and scalable definition of an ML workflow,
+based on containers. A pipeline is composed of a set of input parameters and a
+list of the steps in this workflow. Each step in a pipeline is an instance of a
+component, which is represented as an instance of 
+<a href="https://kubeflow-pipelines.readthedocs.io/en/latest/source/kfp.dsl.html#kfp.dsl.ContainerOp"><code>ContainerOp</code></a>.</p>
+<p>You can use pipelines to:</p>
+<ul>
+<li>Orchestrate repeatable ML workflows.</li>
+<li>Accelerate experimentation by running a workflow with different sets of
+hyperparameters.</li>
+</ul>
+<h3 id="Understanding-pipeline-components">
+<a class="anchor" href="#Understanding-pipeline-components" aria-hidden="true"><span class="octicon octicon-link"></span></a>Understanding pipeline components<a class="anchor-link" href="#Understanding-pipeline-components"> </a>
+</h3>
+<p>A pipeline component is a containerized application that performs one step in a
+pipeline's workflow. Pipeline components are defined in
+<a href="https://www.kubeflow.org/docs/components/pipelines/reference/component-spec/">component specifications</a>, which define the following:</p>
+<ul>
+<li>The component's interface, its inputs and outputs.</li>
+<li>The component's implementation, the container image and the command to
+execute.</li>
+<li>The component's metadata, such as the name and description of the
+component.</li>
+</ul>
+<p>You can build components by <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/component-development/">defining a component specification for a
+containerized application</a>, or you can <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/python-function-components/">use the Kubeflow
+Pipelines SDK to generate a component specification for a Python
+function</a>. You can also <a href="https://www.kubeflow.org/docs/examples/shared-resources/">reuse prebuilt components
+in your pipeline</a>.</p>
+<h3 id="Understanding-the-pipeline-graph">
+<a class="anchor" href="#Understanding-the-pipeline-graph" aria-hidden="true"><span class="octicon octicon-link"></span></a>Understanding the pipeline graph<a class="anchor-link" href="#Understanding-the-pipeline-graph"> </a>
+</h3>
+<p>Each step in your pipeline's workflow is an instance of a component. When
+you define your pipeline, you specify the source of each step's inputs. Step
+inputs can be set from the pipeline's input arguments, constants, or step
+inputs can depend on the outputs of other steps in this pipeline. Kubeflow
+Pipelines uses these dependencies to define your pipeline's workflow as
+a graph.</p>
+<p>For example, consider a pipeline with the following steps: ingest data,
+generate statistics, preprocess data, and train a model. The following
+describes the data dependencies between each step.</p>
+<ul>
+<li>
+<strong>Ingest data</strong>: This step loads data from an external source which is
+specified using a pipeline argument, and it outputs a dataset. Since
+this step does not depend on the output of any other steps, this step
+can run first.</li>
+<li>
+<strong>Generate statistics</strong>: This step uses the ingested dataset to generate
+and output a set of statistics. Since this step depends on the dataset
+produced by the ingest data step, it must run after the ingest data step.</li>
+<li>
+<strong>Preprocess data</strong>: This step preprocesses the ingested dataset and
+transforms the data into a preprocessed dataset. Since this step depends
+on the dataset produced by the ingest data step, it must run after the
+ingest data step.</li>
+<li>
+<strong>Train a model</strong>: This step trains a model using the preprocessed dataset,
+the generated statistics, and pipeline parameters, such as the learning
+rate. Since this step depends on the preprocessed data and the generated
+statistics, it must run after both the preprocess data and generate
+statistics steps are complete.</li>
+</ul>
+<p>Since the generate statistics and preprocess data steps both depend on the
+ingested data, the generate statistics and preprocess data steps can run in
+parallel. All other steps are executed once their data dependencies are
+available.</p>
+<h2 id="Designing-your-pipeline">
+<a class="anchor" href="#Designing-your-pipeline" aria-hidden="true"><span class="octicon octicon-link"></span></a>Designing your pipeline<a class="anchor-link" href="#Designing-your-pipeline"> </a>
+</h2>
+<p>When designing your pipeline, think about how to split your ML workflow into
+pipeline components. The process of splitting an ML workflow into pipeline
+components is similar to the process of splitting a monolithic script into
+testable functions. The following rules can help you define the components
+that you need to build your pipeline.</p>
+<ul>
+<li>
+<p>Components should have a single responsibility. Having a single
+responsibility makes it easier to test and reuse a component. For example,
+if you have a component that loads data you can reuse that for similar
+tasks that load data. If you have a component that loads and transforms
+a dataset, the component can be less useful since you can use it only when
+you need to load and transform that dataset.</p>
+</li>
+<li>
+<p>Reuse components when possible. Kubeflow Pipelines provides <a href="https://www.kubeflow.org/docs/examples/shared-resources/">components for
+common pipeline tasks and for access to cloud
+services</a>.</p>
+</li>
+<li>
+<p>Consider what you need to know to debug your pipeline and research the
+lineage of the models that your pipeline produces. Kubeflow Pipelines
+stores the inputs and outputs of each pipeline step. By interrogating the
+artifacts produced by a pipeline run, you can better understand the
+variations in model quality between runs or track down bugs in your
+workflow.</p>
+</li>
+</ul>
+<p>In general, you should design your components with composability in mind.</p>
+<p>Pipelines are composed of component instances, also called steps. Steps can
+define their inputs as depending on the output of another step. The
+dependencies between steps define the pipeline workflow graph.</p>
+<h3 id="Building-pipeline-components">
+<a class="anchor" href="#Building-pipeline-components" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building pipeline components<a class="anchor-link" href="#Building-pipeline-components"> </a>
+</h3>
+<p>Kubeflow pipeline components are containerized applications that perform a
+step in your ML workflow. Here are the ways that you can define pipeline
+components:</p>
+<ul>
+<li>
+<p>If you have a containerized application that you want to use as a
+pipeline component, create a component specification to define this
+container image as a pipeline component.</p>
+<p>This option provides the flexibility to include code written in any
+language in your pipeline, so long as you can package the application
+as a container image. Learn more about <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/component-development/">building pipeline
+components</a>.</p>
+</li>
+<li>
+<p>If your component code can be expressed as a Python function, <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/python-function-components/">evaluate if
+your component can be built as a Python function-based
+component</a>. The Kubeflow Pipelines SDK makes it
+easier to build lightweight Python function-based components by saving you
+the effort of creating a component specification.</p>
+</li>
+</ul>
+<p>Whenever possible, <a href="https://www.kubeflow.org/docs/examples/shared-resources/">reuse prebuilt components</a> to save
+yourself the effort of building custom components.</p>
+<p>The example in this guide demonstrates how to build a pipeline that uses a
+Python function-based component and reuses a prebuilt component.</p>
+<h3 id="Understanding-how-data-is-passed-between-components">
+<a class="anchor" href="#Understanding-how-data-is-passed-between-components" aria-hidden="true"><span class="octicon octicon-link"></span></a>Understanding how data is passed between components<a class="anchor-link" href="#Understanding-how-data-is-passed-between-components"> </a>
+</h3>
+<p>When Kubeflow Pipelines runs a component, a container image is started in a
+Kubernetes Pod and your component’s inputs are passed in as command-line
+arguments. When your component has finished, the component's outputs are
+returned as files.</p>
+<p>In your component's specification, you define the components inputs and outputs
+and how the inputs and output paths are passed to your program as command-line
+arguments. You can pass small inputs, such as short strings or numbers, to your
+component by value. Large inputs, such as datasets, must be passed to your
+component as file paths. Outputs are written to the paths that Kubeflow
+Pipelines provides.</p>
+<p>Python function-based components make it easier to build pipeline components
+by building the component specification for you. Python function-based
+components also handle the complexity of passing inputs into your component
+and passing your function’s outputs back to your pipeline.</p>
+<p>Learn more about how <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/python-function-components/#understanding-how-data-is-passed-between-components">Python function-based components handle inputs and
+outputs</a>.</p>
+<h2 id="Getting-started-building-a-pipeline">
+<a class="anchor" href="#Getting-started-building-a-pipeline" aria-hidden="true"><span class="octicon octicon-link"></span></a>Getting started building a pipeline<a class="anchor-link" href="#Getting-started-building-a-pipeline"> </a>
+</h2>
+<p>The following sections demonstrate how to get started building a Kubeflow
+pipeline by walking through the process of converting a Python script into
+a pipeline.</p>
+<h3 id="Design-your-pipeline">
+<a class="anchor" href="#Design-your-pipeline" aria-hidden="true"><span class="octicon octicon-link"></span></a>Design your pipeline<a class="anchor-link" href="#Design-your-pipeline"> </a>
+</h3>
+<p>The following steps walk through some of the design decisions you may face
+when designing a pipeline.</p>
+<ol>
+<li>Evaluate the process. In the following example, a Python function downloads
+a zipped tar file (<code>.tar.gz</code>) that contains several CSV files, from a
+public website. The function extracts the CSV files and then merges them
+into a single file.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+    
+<span class="k">def</span> <span class="nf">download_and_merge_csv</span><span class="p">(</span><span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_csv</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+  <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="k">as</span> <span class="n">res</span><span class="p">:</span>
+    <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"r|gz"</span><span class="p">)</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="s1">'data'</span><span class="p">)</span>
+  <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+      <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> 
+       <span class="k">for</span> <span class="n">csv_file</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">'data/*.csv'</span><span class="p">)])</span>
+  <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_csv</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>Run the following Python command to test the function. </li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">download_and_merge_csv</span><span class="p">(</span>
+    <span class="n">url</span><span class="o">=</span><span class="s1">'https://storage.googleapis.com/ml-pipeline-playground/iris-csv-files.tar.gz'</span><span class="p">,</span> 
+    <span class="n">output_csv</span><span class="o">=</span><span class="s1">'merged_data.csv'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>Run the following to print the first few rows of the
+merged CSV file.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>head merged_data.csv
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>
+<p>Design your pipeline. For example, consider the following pipeline designs.</p>
+<ul>
+<li>
+<p>Implement the pipeline using a single step. In this case, the pipeline
+contains one component that works similarly to the example function.
+This is a straightforward function, and implementing a single-step
+pipeline is a reasonable approach in this case.</p>
+<p>The down side of this approach is that the zipped tar file would not be
+an artifact of your pipeline runs. Not having this artifact available 
+could make it harder to debug this component in production.</p>
+</li>
+<li>
+<p>Implement this as a two-step pipeline. The first step downloads a file
+from a website. The second step extracts the CSV files from a zipped
+tar file and merges them into a single file.</p>
+<p>This approach has a few benefits:</p>
+<ul>
+<li>You can reuse the <a href="https://github.com/kubeflow/pipelines/blob/master/components/web/Download/component.yaml">Web Download component</a>
+to implement the first step.</li>
+<li>Each step has a single responsibility, which makes the components
+easier to reuse.</li>
+<li>The zipped tar file is an artifact of the first pipeline step.
+This means that you can examine this artifact when debugging
+pipelines that use this component.</li>
+</ul>
+</li>
+</ul>
+<p>This example implements a two-step pipeline.</p>
+</li>
+</ol>
+<h3 id="Build-your-pipeline-components">
+<a class="anchor" href="#Build-your-pipeline-components" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build your pipeline components<a class="anchor-link" href="#Build-your-pipeline-components"> </a>
+</h3>
+<ol>
+<li>
+<p>Build your pipeline components. This example modifies the initial script to
+extract the contents of a zipped tar file, merge the CSV files that were
+contained in the zipped tar file, and return the merged CSV file.</p>
+<p>This example builds a Python function-based component. You can also package
+your component's code as a Docker container image and define the component
+using a ComponentSpec.</p>
+<p>In this case, the following modifications were required to the original
+function.</p>
+<ul>
+<li>The file download logic was removed. The path to the zipped tar file
+is passed as an argument to this function.</li>
+<li>The import statements were moved inside of the function. Python
+function-based components require standalone Python functions. This
+means that any required import statements must be defined within the
+function, and any helper functions must be defined within the function.
+Learn more about <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/python-function-components/">building Python function-based
+components</a>.</li>
+<li>The function's arguments are decorated with the
+<a href="https://kubeflow-pipelines.readthedocs.io/en/latest/source/kfp.components.html?highlight=inputpath#kfp.components.InputPath"><code>kfp.components.InputPath</code></a> and the
+<a href="https://kubeflow-pipelines.readthedocs.io/en/latest/source/kfp.components.html?highlight=outputpath#kfp.components.OutputPath"><code>kfp.components.OutputPath</code></a> annotations. These
+annotations let Kubeflow Pipelines know to provide the path to the
+zipped tar file and to create a path where your function stores the
+merged CSV file. </li>
+</ul>
+<p>The following example shows the updated <code>merge_csv</code> function.</p>
+</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">merge_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">comp</span><span class="o">.</span><span class="n">InputPath</span><span class="p">(</span><span class="s1">'Tarball'</span><span class="p">),</span>
+              <span class="n">output_csv</span><span class="p">:</span> <span class="n">comp</span><span class="o">.</span><span class="n">OutputPath</span><span class="p">(</span><span class="s1">'CSV'</span><span class="p">)):</span>
+  <span class="kn">import</span> <span class="nn">glob</span>
+  <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+  <span class="kn">import</span> <span class="nn">tarfile</span>
+
+  <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"r|gz"</span><span class="p">)</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="s1">'data'</span><span class="p">)</span>
+  <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+      <span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">csv_file</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> 
+       <span class="k">for</span> <span class="n">csv_file</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s1">'data/*.csv'</span><span class="p">)])</span>
+  <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_csv</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>Use <a href="(https://kubeflow-pipelines.readthedocs.io/en/latest/source/kfp.components.html#kfp.components.create_component_from_func"><code>kfp.components.create_component_from_func</code></a>
+to return a factory function that you can use to create pipeline steps.
+This example also specifies the base container image to run this function
+in, the path to save the component specification to, and a list of PyPI
+packages that need to be installed in the container at runtime.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">create_step_merge_csv</span> <span class="o">=</span> <span class="n">kfp</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">create_component_from_func</span><span class="p">(</span>
+    <span class="n">func</span><span class="o">=</span><span class="n">merge_csv</span><span class="p">,</span>
+    <span class="n">output_component_file</span><span class="o">=</span><span class="s1">'component.yaml'</span><span class="p">,</span> <span class="c1"># This is optional. It saves the component spec for future use.</span>
+    <span class="n">base_image</span><span class="o">=</span><span class="s1">'python:3.7'</span><span class="p">,</span>
+    <span class="n">packages_to_install</span><span class="o">=</span><span class="p">[</span><span class="s1">'pandas==1.1.4'</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Build-your-pipeline">
+<a class="anchor" href="#Build-your-pipeline" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build your pipeline<a class="anchor-link" href="#Build-your-pipeline"> </a>
+</h3>
+<ol>
+<li>Use <a href="https://kubeflow-pipelines.readthedocs.io/en/latest/source/kfp.components.html?highlight=load_component_from_url#kfp.components.load_component_from_url"><code>kfp.components.load_component_from_url</code></a>
+to load the component specification YAML for any components that you are
+reusing in this pipeline.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">web_downloader_op</span> <span class="o">=</span> <span class="n">kfp</span><span class="o">.</span><span class="n">components</span><span class="o">.</span><span class="n">load_component_from_url</span><span class="p">(</span>
+    <span class="s1">'https://raw.githubusercontent.com/kubeflow/pipelines/master/components/web/Download/component.yaml'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>
+<p>Define your pipeline as a Python function.</p>
+<p>Your pipeline function's arguments define your pipeline's parameters. Use
+pipeline parameters to experiment with different hyperparameters, such as
+the learning rate used to train a model, or pass run-level inputs, such as
+the path to an input file, into a pipeline run.</p>
+<p>Use the factory functions created by
+<code>kfp.components.create_component_from_func</code> and
+<code>kfp.components.load_component_from_url</code> to create your pipeline's tasks. 
+The inputs to the component factory functions can be pipeline parameters,
+the outputs of other tasks, or a constant value. In this case, the
+<code>web_downloader_task</code> task uses the <code>url</code> pipeline parameter, and the
+<code>merge_csv_task</code> uses the <code>data</code> output of the <code>web_downloader_task</code>.</p>
+</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">my_pipeline</span><span class="p">(</span><span class="n">url</span><span class="p">):</span>
+  <span class="n">web_downloader_task</span> <span class="o">=</span> <span class="n">web_downloader_op</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">)</span>
+  <span class="n">merge_csv_task</span> <span class="o">=</span> <span class="n">create_step_merge_csv</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">web_downloader_task</span><span class="o">.</span><span class="n">outputs</span><span class="p">[</span><span class="s1">'data'</span><span class="p">])</span>
+  <span class="c1"># The outputs of the merge_csv_task can be referenced using the</span>
+  <span class="c1"># merge_csv_task.outputs dictionary: merge_csv_task.outputs['output_csv']</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Compile-and-run-your-pipeline">
+<a class="anchor" href="#Compile-and-run-your-pipeline" aria-hidden="true"><span class="octicon octicon-link"></span></a>Compile and run your pipeline<a class="anchor-link" href="#Compile-and-run-your-pipeline"> </a>
+</h3>
+<p>After defining the pipeline in Python as described in the preceding section, use one of the following options to compile the pipeline and submit it to the Kubeflow Pipelines service.</p>
+<h4 id="Option-1:-Compile-and-then-upload-in-UI">
+<a class="anchor" href="#Option-1:-Compile-and-then-upload-in-UI" aria-hidden="true"><span class="octicon octicon-link"></span></a>Option 1: Compile and then upload in UI<a class="anchor-link" href="#Option-1:-Compile-and-then-upload-in-UI"> </a>
+</h4>
+<ol>
+<li>Run the following to compile your pipeline and save it as <code>pipeline.yaml</code>. </li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">kfp</span><span class="o">.</span><span class="n">compiler</span><span class="o">.</span><span class="n">Compiler</span><span class="p">()</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="n">pipeline_func</span><span class="o">=</span><span class="n">my_pipeline</span><span class="p">,</span>
+    <span class="n">package_path</span><span class="o">=</span><span class="s1">'pipeline.yaml'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>Upload and run your <code>pipeline.yaml</code> using the Kubeflow Pipelines user interface.
+See the guide to <a href="https://www.kubeflow.org/docs/components/pipelines/pipelines-quickstart">getting started with the UI</a>.</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Option-2:-run-the-pipeline-using-Kubeflow-Pipelines-SDK-client">
+<a class="anchor" href="#Option-2:-run-the-pipeline-using-Kubeflow-Pipelines-SDK-client" aria-hidden="true"><span class="octicon octicon-link"></span></a>Option 2: run the pipeline using Kubeflow Pipelines SDK client<a class="anchor-link" href="#Option-2:-run-the-pipeline-using-Kubeflow-Pipelines-SDK-client"> </a>
+</h4>
+<ol>
+<li>Create an instance of the <a href="https://kubeflow-pipelines.readthedocs.io/en/latest/source/kfp.client.html#kfp.Client"><code>kfp.Client</code> class</a> following steps in <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/connect-api">connecting to Kubeflow Pipelines using the SDK client</a>.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">client</span> <span class="o">=</span> <span class="n">kfp</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span> <span class="c1"># change arguments accordingly</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ol>
+<li>Run the pipeline using the <code>kfp.Client</code> instance:</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">client</span><span class="o">.</span><span class="n">create_run_from_pipeline_func</span><span class="p">(</span>
+    <span class="n">my_pipeline</span><span class="p">,</span>
+    <span class="n">arguments</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">'url'</span><span class="p">:</span> <span class="s1">'https://storage.googleapis.com/ml-pipeline-playground/iris-csv-files.tar.gz'</span>
+    <span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Next-steps">
+<a class="anchor" href="#Next-steps" aria-hidden="true"><span class="octicon octicon-link"></span></a>Next steps<a class="anchor-link" href="#Next-steps"> </a>
+</h2>
+<ul>
+<li>Learn about advanced pipeline features, such as <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/dsl-recursion/">authoring recursive
+components</a> and <a href="https://github.com/kubeflow/pipelines/blob/master/samples/tutorials/DSL%20-%20Control%20structures/DSL%20-%20Control%20structures.py">using conditional execution in a
+pipeline</a>.</li>
+<li>Learn how to <a href="https://www.kubeflow.org/docs/components/pipelines/sdk/manipulate-resources/">manipulate Kubernetes resources in a
+pipeline</a> (Experimental).</li>
+</ul>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/mlops/kubeflow/2021/07/01/build-a-kubeflow-pipeline.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

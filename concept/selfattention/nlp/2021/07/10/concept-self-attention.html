@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Concept - Self-Attention | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Concept - Self-Attention" />
+<meta name="author" content="<a href='https://towardsdatascience.com/illustrated-self-attention-2d627e33b20a'>Manuel Romero</a>" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Step-by-step guide to self-attention with illustrations and code" />
+<meta property="og:description" content="Step-by-step guide to self-attention with illustrations and code" />
+<link rel="canonical" href="https://nb.recohut.com/concept/selfattention/nlp/2021/07/10/concept-self-attention.html" />
+<meta property="og:url" content="https://nb.recohut.com/concept/selfattention/nlp/2021/07/10/concept-self-attention.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-10T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Concept - Self-Attention" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"<a href='https://towardsdatascience.com/illustrated-self-attention-2d627e33b20a'>Manuel Romero</a>"},"dateModified":"2021-07-10T00:00:00-05:00","datePublished":"2021-07-10T00:00:00-05:00","description":"Step-by-step guide to self-attention with illustrations and code","headline":"Concept - Self-Attention","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/concept/selfattention/nlp/2021/07/10/concept-self-attention.html"},"url":"https://nb.recohut.com/concept/selfattention/nlp/2021/07/10/concept-self-attention.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Concept - Self-Attention</h1><p class="page-description">Step-by-step guide to self-attention with illustrations and code</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-10T00:00:00-05:00" itemprop="datePublished">
+        Jul 10, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name"><a href='https://towardsdatascience.com/illustrated-self-attention-2d627e33b20a'>Manuel Romero</a></span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      9 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#Concept">Concept</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#SelfAttention">SelfAttention</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#NLP">NLP</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-10-concept-self-attention.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-10-concept-self-attention.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-10-concept-self-attention.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-10-concept-self-attention.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h3"><a href="#Step-0.-What-is-self-attention?">Step 0. What is self-attention? </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-1:-Prepare-inputs">Step 1: Prepare inputs </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-2:-Initialise-weights">Step 2: Initialise weights </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-3:-Derive-key,-query-and-value">Step 3: Derive key, query and value </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-4:-Calculate-attention-scores">Step 4: Calculate attention scores </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-5:-Calculate-softmax">Step 5: Calculate softmax </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-6:-Multiply-scores-with-values">Step 6: Multiply scores with values </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-7:-Sum-weighted-values">Step 7: Sum weighted values </a></li>
+<li class="toc-entry toc-h3"><a href="#Step-8:-Repeat-for-Input-2-&-Input-3">Step 8: Repeat for Input 2 &amp; Input 3 </a></li>
+<li class="toc-entry toc-h3"><a href="#Bonus:-Tensorflow-2-implementation">Bonus: Tensorflow 2 implementation </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-10-concept-self-attention.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="https://miro.medium.com/max/1973/1*_92bnsMJy8Bl539G4v93yg.gif" alt="texto alternativo"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>What do <em>BERT, RoBERTa, ALBERT, SpanBERT, DistilBERT, SesameBERT, SemBERT, MobileBERT, TinyBERT and CamemBERT</em> all have in common? And I’m not looking for the answer “BERT”.
+Answer: <strong>self-attention</strong>. We are not only talking about architectures bearing the name “BERT’, but more correctly <strong>Transformer-based architectures</strong>. Transformer-based architectures, which are primarily used in modelling language understanding tasks, eschew the use of recurrence in neural network (RNNs) and instead trust entirely on self-attention mechanisms to draw global dependencies between inputs and outputs. But what’s the math behind this?</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The main content of this kernel is to walk you through the mathematical operations involved in a self-attention module.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-0.-What-is-self-attention?">
+<a class="anchor" href="#Step-0.-What-is-self-attention?" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 0. What is self-attention?<a class="anchor-link" href="#Step-0.-What-is-self-attention?"> </a>
+</h3>
+<p>If you’re thinking if self-attention is similar to attention, then the answer is yes! They fundamentally share the same concept and many common mathematical operations.
+A self-attention module takes in n inputs, and returns n outputs. What happens in this module? In layman’s terms, the self-attention mechanism allows the inputs to interact with each other (“self”) and find out who they should pay more attention to (“attention”). The outputs are aggregates of these interactions and attention scores.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Following, we are going to explain and implement:</p>
+<ul>
+<li>Prepare inputs</li>
+<li>Initialise weights</li>
+<li>Derive key, query and value</li>
+<li>Calculate attention scores for Input 1</li>
+<li>Calculate softmax</li>
+<li>Multiply scores with values</li>
+<li>Sum weighted values to get Output 1</li>
+<li>Repeat steps 4–7 for Input 2 &amp; Input 3</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-1:-Prepare-inputs">
+<a class="anchor" href="#Step-1:-Prepare-inputs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 1: Prepare inputs<a class="anchor-link" href="#Step-1:-Prepare-inputs"> </a>
+</h3>
+<p>For this tutorial, for the shake of simplicity, we start with 3 inputs, each with dimension 4.</p>
+<p><img src="https://miro.medium.com/max/1973/1*hmvdDXrxhJsGhOQClQdkBA.png" alt="texto alternativo"></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="c1"># Input 1</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="c1"># Input 2</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># Input 3</span>
+ <span class="p">]</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">x</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>tensor([[1., 0., 1., 0.],
+        [0., 2., 0., 2.],
+        [1., 1., 1., 1.]])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-2:-Initialise-weights">
+<a class="anchor" href="#Step-2:-Initialise-weights" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 2: Initialise weights<a class="anchor-link" href="#Step-2:-Initialise-weights"> </a>
+</h3>
+<p>Every input must have three representations (see diagram below). These representations are called <strong>key</strong> (orange), <strong>query</strong> (red), and <strong>value</strong> (purple). For this example, let’s take that we want these representations to have a dimension of 3. Because every input has a dimension of 4, this means each set of the weights must have a shape of 4×3.</p>
+<p><img src="https://miro.medium.com/max/1975/1*VPvXYMGjv0kRuoYqgFvCag.gif" alt="texto del enlace"></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">w_key</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">w_query</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">w_value</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">w_key</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">w_key</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">w_query</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">w_query</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">w_value</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">w_value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Weights for key: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">w_key</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Weights for query: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">w_query</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Weights for value: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">w_value</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Weights for key: 
+ tensor([[0., 0., 1.],
+        [1., 1., 0.],
+        [0., 1., 0.],
+        [1., 1., 0.]])
+Weights for query: 
+ tensor([[1., 0., 1.],
+        [1., 0., 0.],
+        [0., 0., 1.],
+        [0., 1., 1.]])
+Weights for value: 
+ tensor([[0., 2., 0.],
+        [0., 3., 0.],
+        [1., 0., 3.],
+        [1., 1., 0.]])
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Note: <em>In a neural network setting, these weights are usually small numbers, initialised randomly using an appropriate random distribution like Gaussian, Xavier and Kaiming distributions.</em></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-3:-Derive-key,-query-and-value">
+<a class="anchor" href="#Step-3:-Derive-key,-query-and-value" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 3: Derive key, query and value<a class="anchor-link" href="#Step-3:-Derive-key,-query-and-value"> </a>
+</h3>
+<p>Now that we have the three sets of weights, let’s actually obtain the <strong>key</strong>, <strong>query</strong> and <strong>value</strong> representations for every input.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Obtaining the keys:</p>
+
+<pre><code>               [0, 0, 1]
+[1, 0, 1, 0]   [1, 1, 0]   [0, 1, 1]
+[0, 2, 0, 2] x [0, 1, 0] = [4, 4, 0]
+[1, 1, 1, 1]   [1, 1, 0]   [2, 3, 1]</code></pre>
+<p><img src="https://miro.medium.com/max/1975/1*dr6NIaTfTxEWzxB2rc0JWg.gif" alt="texto alternativo"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Obtaining the values:</p>
+
+<pre><code>               [0, 2, 0]
+[1, 0, 1, 0]   [0, 3, 0]   [1, 2, 3] 
+[0, 2, 0, 2] x [1, 0, 3] = [2, 8, 0]
+[1, 1, 1, 1]   [1, 1, 0]   [2, 6, 3]</code></pre>
+<p><img src="https://miro.medium.com/max/1975/1*5kqW7yEwvcC0tjDOW3Ia-A.gif" alt="texto alternativo"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Obtaining the querys:</p>
+
+<pre><code>               [1, 0, 1]
+[1, 0, 1, 0]   [1, 0, 0]   [1, 0, 2]
+[0, 2, 0, 2] x [0, 0, 1] = [2, 2, 2]
+[1, 1, 1, 1]   [0, 1, 1]   [2, 1, 3]</code></pre>
+<p><img src="https://miro.medium.com/max/1975/1*wO_UqfkWkv3WmGQVHvrMJw.gif" alt="texto alternativo"></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p></p>
+<div class="flash">
+    <svg class="octicon octicon-info" viewbox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm6.5-.25A.75.75 0 017.25 7h1a.75.75 0 01.75.75v2.75h.25a.75.75 0 010 1.5h-2a.75.75 0 010-1.5h.25v-2h-.25a.75.75 0 01-.75-.75zM8 6a1 1 0 100-2 1 1 0 000 2z"></path></svg>
+    <strong>Note: </strong>In practice, a bias vector may be added to the product of matrix multiplication.
+</div>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">keys</span> <span class="o">=</span> <span class="n">x</span> <span class="o">@</span> <span class="n">w_key</span>
+<span class="n">querys</span> <span class="o">=</span> <span class="n">x</span> <span class="o">@</span> <span class="n">w_query</span>
+<span class="n">values</span> <span class="o">=</span> <span class="n">x</span> <span class="o">@</span> <span class="n">w_value</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Keys: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+<span class="c1"># tensor([[0., 1., 1.],</span>
+<span class="c1">#         [4., 4., 0.],</span>
+<span class="c1">#         [2., 3., 1.]])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Querys: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">querys</span><span class="p">)</span>
+<span class="c1"># tensor([[1., 0., 2.],</span>
+<span class="c1">#         [2., 2., 2.],</span>
+<span class="c1">#         [2., 1., 3.]])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Values: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+<span class="c1"># tensor([[1., 2., 3.],</span>
+<span class="c1">#         [2., 8., 0.],</span>
+<span class="c1">#         [2., 6., 3.]])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Keys: 
+ tensor([[0., 1., 1.],
+        [4., 4., 0.],
+        [2., 3., 1.]])
+Querys: 
+ tensor([[1., 0., 2.],
+        [2., 2., 2.],
+        [2., 1., 3.]])
+Values: 
+ tensor([[1., 2., 3.],
+        [2., 8., 0.],
+        [2., 6., 3.]])
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-4:-Calculate-attention-scores">
+<a class="anchor" href="#Step-4:-Calculate-attention-scores" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 4: Calculate attention scores<a class="anchor-link" href="#Step-4:-Calculate-attention-scores"> </a>
+</h3>
+<p><img src="https://miro.medium.com/max/1973/1*u27nhUppoWYIGkRDmYFN2A.gif" alt="texto alternativo"></p>
+<p>To obtain <strong>attention scores</strong>, we start off with taking a dot product between Input 1’s <strong>query</strong> (red) with <strong>all keys</strong> (orange), including itself. Since there are 3 key representations (because we have 3 inputs), we obtain 3 attention scores (blue).</p>
+
+<pre><code>            [0, 4, 2]
+[1, 0, 2] x [1, 4, 3] = [2, 4, 4]
+            [1, 0, 1]</code></pre>
+<p>Notice that we only use the query from Input 1. Later we’ll work on repeating this same step for the other querys.</p>
+<p>Note: <em>The above operation is known as dot product attention, one of the several score functions. Other score functions include scaled dot product and additive/concat.</em></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">attn_scores</span> <span class="o">=</span> <span class="n">querys</span> <span class="o">@</span> <span class="n">keys</span><span class="o">.</span><span class="n">T</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">attn_scores</span><span class="p">)</span>
+
+<span class="c1"># tensor([[ 2.,  4.,  4.],  # attention scores from Query 1</span>
+<span class="c1">#         [ 4., 16., 12.],  # attention scores from Query 2</span>
+<span class="c1">#         [ 4., 12., 10.]]) # attention scores from Query 3</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tensor([[ 2.,  4.,  4.],
+        [ 4., 16., 12.],
+        [ 4., 12., 10.]])
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-5:-Calculate-softmax">
+<a class="anchor" href="#Step-5:-Calculate-softmax" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 5: Calculate softmax<a class="anchor-link" href="#Step-5:-Calculate-softmax"> </a>
+</h3>
+<p><img src="https://miro.medium.com/max/1973/1*jf__2D8RNCzefwS0TP1Kyg.gif" alt="texto alternativo"></p>
+<p>Take the <strong>softmax</strong> across these <strong>attention scores</strong> (blue).</p>
+
+<pre><code>softmax([2, 4, 4]) = [0.0, 0.5, 0.5]</code></pre>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torch.nn.functional</span> <span class="kn">import</span> <span class="n">softmax</span>
+
+<span class="n">attn_scores_softmax</span> <span class="o">=</span> <span class="n">softmax</span><span class="p">(</span><span class="n">attn_scores</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">attn_scores_softmax</span><span class="p">)</span>
+<span class="c1"># tensor([[6.3379e-02, 4.6831e-01, 4.6831e-01],</span>
+<span class="c1">#         [6.0337e-06, 9.8201e-01, 1.7986e-02],</span>
+<span class="c1">#         [2.9539e-04, 8.8054e-01, 1.1917e-01]])</span>
+
+<span class="c1"># For readability, approximate the above as follows</span>
+<span class="n">attn_scores_softmax</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+  <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">attn_scores_softmax</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">attn_scores_softmax</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">attn_scores_softmax</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tensor([[6.3379e-02, 4.6831e-01, 4.6831e-01],
+        [6.0337e-06, 9.8201e-01, 1.7986e-02],
+        [2.9539e-04, 8.8054e-01, 1.1917e-01]])
+tensor([[0.0000, 0.5000, 0.5000],
+        [0.0000, 1.0000, 0.0000],
+        [0.0000, 0.9000, 0.1000]])
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-6:-Multiply-scores-with-values">
+<a class="anchor" href="#Step-6:-Multiply-scores-with-values" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 6: Multiply scores with values<a class="anchor-link" href="#Step-6:-Multiply-scores-with-values"> </a>
+</h3>
+<p><img src="https://miro.medium.com/max/1973/1*9cTaJGgXPbiJ4AOCc6QHyA.gif" alt="texto alternativo"></p>
+<p>The softmaxed attention scores for each input (blue) is multiplied with its corresponding <strong>value</strong> (purple). This results in 3 alignment vectors (yellow). In this tutorial, we’ll refer to them as <strong>weighted values</strong>.</p>
+
+<pre><code>1: 0.0 * [1, 2, 3] = [0.0, 0.0, 0.0]
+2: 0.5 * [2, 8, 0] = [1.0, 4.0, 0.0]
+3: 0.5 * [2, 6, 3] = [1.0, 3.0, 1.5]</code></pre>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">weighted_values</span> <span class="o">=</span> <span class="n">values</span><span class="p">[:,</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">attn_scores_softmax</span><span class="o">.</span><span class="n">T</span><span class="p">[:,:,</span><span class="kc">None</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">weighted_values</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tensor([[[0.0000, 0.0000, 0.0000],
+         [0.0000, 0.0000, 0.0000],
+         [0.0000, 0.0000, 0.0000]],
+
+        [[1.0000, 4.0000, 0.0000],
+         [2.0000, 8.0000, 0.0000],
+         [1.8000, 7.2000, 0.0000]],
+
+        [[1.0000, 3.0000, 1.5000],
+         [0.0000, 0.0000, 0.0000],
+         [0.2000, 0.6000, 0.3000]]])
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-7:-Sum-weighted-values">
+<a class="anchor" href="#Step-7:-Sum-weighted-values" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 7: Sum weighted values<a class="anchor-link" href="#Step-7:-Sum-weighted-values"> </a>
+</h3>
+<p><img src="https://miro.medium.com/max/1973/1*1je5TwhVAwwnIeDFvww3ew.gif" alt="texto alternativo"></p>
+<p>Take all the <strong>weighted values</strong> (yellow) and sum them element-wise:</p>
+
+<pre><code>  [0.0, 0.0, 0.0]
++ [1.0, 4.0, 0.0]
++ [1.0, 3.0, 1.5]
+-----------------
+= [2.0, 7.0, 1.5]</code></pre>
+<p>The resulting vector <code>[2.0, 7.0, 1.5]</code> (dark green) <strong>is Output 1</strong>, which is based on the <strong>query representation from Input 1</strong> interacting with all other keys, including itself.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Step-8:-Repeat-for-Input-2-&amp;-Input-3">
+<a class="anchor" href="#Step-8:-Repeat-for-Input-2-&amp;-Input-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Step 8: Repeat for Input 2 &amp; Input 3<a class="anchor-link" href="#Step-8:-Repeat-for-Input-2-&amp;-Input-3"> </a>
+</h3>
+<p><img src="https://miro.medium.com/max/1973/1*G8thyDVqeD8WHim_QzjvFg.gif" alt="texto alternativo"></p>
+<p>Note: <em>The dimension of <strong>query</strong> and <strong>key</strong> must always be the same because of the dot product score function. However, the dimension of <strong>value</strong> may be different from <strong>query</strong> and <strong>key</strong>. The resulting output will consequently follow the dimension of <strong>value</strong>.</em></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">outputs</span> <span class="o">=</span> <span class="n">weighted_values</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+
+<span class="c1"># tensor([[2.0000, 7.0000, 1.5000],  # Output 1</span>
+<span class="c1">#         [2.0000, 8.0000, 0.0000],  # Output 2</span>
+<span class="c1">#         [2.0000, 7.8000, 0.3000]]) # Output 3</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tensor([[2.0000, 7.0000, 1.5000],
+        [2.0000, 8.0000, 0.0000],
+        [2.0000, 7.8000, 0.3000]])
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Bonus:-Tensorflow-2-implementation">
+<a class="anchor" href="#Bonus:-Tensorflow-2-implementation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bonus: Tensorflow 2 implementation<a class="anchor-link" href="#Bonus:-Tensorflow-2-implementation"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">tensorflow_version</span> 2.x
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>TensorFlow 2.x selected.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">x</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="c1"># Input 1</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="c1"># Input 2</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># Input 3</span>
+ <span class="p">]</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tf.Tensor(
+[[1. 0. 1. 0.]
+ [0. 2. 0. 2.]
+ [1. 1. 1. 1.]], shape=(3, 4), dtype=float32)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">w_key</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">w_query</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">w_value</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+  <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">w_key</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">w_key</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">w_query</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">w_query</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">w_value</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">w_value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Weights for key: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">w_key</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Weights for query: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">w_query</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Weights for value: </span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">w_value</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Weights for key: 
+ tf.Tensor(
+[[0. 0. 1.]
+ [1. 1. 0.]
+ [0. 1. 0.]
+ [1. 1. 0.]], shape=(4, 3), dtype=float32)
+Weights for query: 
+ tf.Tensor(
+[[1. 0. 1.]
+ [1. 0. 0.]
+ [0. 0. 1.]
+ [0. 1. 1.]], shape=(4, 3), dtype=float32)
+Weights for value: 
+ tf.Tensor(
+[[0. 2. 0.]
+ [0. 3. 0.]
+ [1. 0. 3.]
+ [1. 1. 0.]], shape=(4, 3), dtype=float32)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">keys</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w_key</span><span class="p">)</span>
+<span class="n">querys</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w_query</span><span class="p">)</span>
+<span class="n">values</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w_value</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">querys</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tf.Tensor(
+[[0. 1. 1.]
+ [4. 4. 0.]
+ [2. 3. 1.]], shape=(3, 3), dtype=float32)
+tf.Tensor(
+[[1. 0. 2.]
+ [2. 2. 2.]
+ [2. 1. 3.]], shape=(3, 3), dtype=float32)
+tf.Tensor(
+[[1. 2. 3.]
+ [2. 8. 0.]
+ [2. 6. 3.]], shape=(3, 3), dtype=float32)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">attn_scores</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">querys</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">transpose_b</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">attn_scores</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tf.Tensor(
+[[ 2.  4.  4.]
+ [ 4. 16. 12.]
+ [ 4. 12. 10.]], shape=(3, 3), dtype=float32)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">attn_scores_softmax</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">attn_scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">attn_scores_softmax</span><span class="p">)</span>
+
+<span class="c1"># For readability, approximate the above as follows</span>
+<span class="n">attn_scores_softmax</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">],</span>
+  <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span>
+  <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]</span>
+<span class="p">]</span>
+<span class="n">attn_scores_softmax</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">attn_scores_softmax</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">attn_scores_softmax</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tf.Tensor(
+[[6.3378938e-02 4.6831051e-01 4.6831051e-01]
+ [6.0336647e-06 9.8200780e-01 1.7986100e-02]
+ [2.9538720e-04 8.8053685e-01 1.1916770e-01]], shape=(3, 3), dtype=float32)
+tf.Tensor(
+[[0.  0.5 0.5]
+ [0.  1.  0. ]
+ [0.  0.9 0.1]], shape=(3, 3), dtype=float32)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">weighted_values</span> <span class="o">=</span> <span class="n">values</span><span class="p">[:,</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">attn_scores_softmax</span><span class="p">)[:,:,</span><span class="kc">None</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">weighted_values</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tf.Tensor(
+[[[0.  0.  0. ]
+  [0.  0.  0. ]
+  [0.  0.  0. ]]
+
+ [[1.  4.  0. ]
+  [2.  8.  0. ]
+  [1.8 7.2 0. ]]
+
+ [[1.  3.  1.5]
+  [0.  0.  0. ]
+  [0.2 0.6 0.3]]], shape=(3, 3, 3), dtype=float32)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">outputs</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">weighted_values</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># 6</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tf.Tensor(
+[[2.        7.        1.5      ]
+ [2.        8.        0.       ]
+ [2.        7.7999997 0.3      ]], shape=(3, 3), dtype=float32)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/concept/selfattention/nlp/2021/07/10/concept-self-attention.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Title | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Title" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2021/01/23/vector-search.html" />
+<meta property="og:url" content="https://nb.recohut.com/2021/01/23/vector-search.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-01-23T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Title" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-01-23T00:00:00-06:00","datePublished":"2021-01-23T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Title","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2021/01/23/vector-search.html"},"url":"https://nb.recohut.com/2021/01/23/vector-search.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Title</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-01-23T00:00:00-06:00" itemprop="datePublished">
+        Jan 23, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      18 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-01-23-vector-search.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-01-23-vector-search.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-01-23-vector-search.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-01-23-vector-search.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-01-23-vector-search.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><div class="flash">
+    <svg class="octicon octicon-info" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm6.5-.25A.75.75 0 017.25 7h1a.75.75 0 01.75.75v2.75h.25a.75.75 0 010 1.5h-2a.75.75 0 010-1.5h.25v-2h-.25a.75.75 0 01-.75-.75zM8 6a1 1 0 100-2 1 1 0 000 2z"></path></svg>
+    <strong>Note: </strong>Uncomment and run the following cells if you work on Google Colab :) Don&#8217;t forget to change your runtime type to GPU!
+</div></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Let's-begin!">Let's begin!<a class="anchor-link" href="#Let's-begin!"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">load_ext</span> autoreload
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">autoreload</span> 2
+<span class="c1"># Used to import data from S3.</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">s3fs</span>
+
+<span class="c1"># Used to create the dense document vectors.</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">sentence_transformers</span> <span class="kn">import</span> <span class="n">SentenceTransformer</span>
+
+<span class="c1"># Used to create and store the Faiss index.</span>
+<span class="kn">import</span> <span class="nn">faiss</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># Used to do vector searches and display the results.</span>
+<span class="kn">from</span> <span class="nn">vector_engine.utils</span> <span class="kn">import</span> <span class="n">vector_search</span><span class="p">,</span> <span class="n">id2details</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Stored and processed data in s3</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;s3://vector-search-blog/misinformation_papers.csv&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>original_title</th>
+      <th>abstract</th>
+      <th>year</th>
+      <th>citations</th>
+      <th>id</th>
+      <th>is_EN</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>When Corrections Fail: The Persistence of Poli...</td>
+      <td>An extensive literature addresses citizen igno...</td>
+      <td>2010</td>
+      <td>901</td>
+      <td>2132553681</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>A postmodern Pandora's box: anti-vaccination m...</td>
+      <td>The Internet plays a large role in disseminati...</td>
+      <td>2010</td>
+      <td>440</td>
+      <td>2117485795</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Spread of (Mis)Information in Social Networks</td>
+      <td>We provide a model to investigate the tension ...</td>
+      <td>2010</td>
+      <td>278</td>
+      <td>2120015072</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Misinformation, disinformation and fake news papers: </span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Misinformation, disinformation and fake news papers: 8430
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The <a href="https://github.com/UKPLab/sentence-transformers">Sentence Transformers library</a> offers pretrained transformers that produce SOTA sentence embeddings. Checkout this <a href="https://docs.google.com/spreadsheets/d/14QplCdTCDwEmTqrn1LH4yrbKvdogK4oQvYO1K1aPR5M/">spreadsheet</a> with all the available models.</p>
+<p>In this tutorial, we will use the <code>distilbert-base-nli-stsb-mean-tokens</code> model which has the best performance on Semantic Textual Similarity tasks among the DistilBERT versions. Moreover, although it's slightly worse than BERT, it is quite faster thanks to having a smaller size.</p>
+<p>I use the same model in <a href="https://www.orion-search.org/">Orion's semantic search engine</a>!</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">SentenceTransformer</span><span class="p">(</span><span class="s1">&#39;distilbert-base-nli-stsb-mean-tokens&#39;</span><span class="p">)</span>
+<span class="c1"># Check if GPU is available and use it</span>
+<span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>100%|██████████| 245M/245M [00:14&lt;00:00, 16.6MB/s]
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>cuda:0
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">embeddings</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">abstract</span><span class="o">.</span><span class="n">to_list</span><span class="p">(),</span> <span class="n">show_progress_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Shape of the vectorised abstract: </span><span class="si">{</span><span class="n">embeddings</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Shape of the vectorised abstract: (768,)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Vector-similarity-search-with-Faiss">Vector similarity search with Faiss<a class="anchor-link" href="#Vector-similarity-search-with-Faiss"> </a></h2><p><a href="https://github.com/facebookresearch/faiss">Faiss</a> is a library for efficient similarity search and clustering of dense vectors. It contains algorithms that search in sets of vectors of any size, even ones that do not fit in RAM.</p>
+<p>Faiss is built around the <code>Index</code> object which contains, and sometimes preprocesses, the searchable vectors. Faiss has a large collection of <a href="https://github.com/facebookresearch/faiss/wiki/Faiss-indexes">indexes</a>. You can even create <a href="https://github.com/facebookresearch/faiss/wiki/Faiss-indexes-(composite">composite indexes</a>). Faiss handles collections of vectors of a fixed dimensionality d, typically a few 10s to 100s.</p>
+<p><strong>Note</strong>: Faiss uses only 32-bit floating point matrices. This means that you will have to change the data type of the input before building the index.</p>
+<p>To learn more about Faiss, you can read their paper on <a href="https://arxiv.org/abs/1702.08734">arXiv</a>.</p>
+<p>Here, we will the <code>IndexFlatL2</code> index:</p>
+<ul>
+<li>It's a simple index that performs a brute-force L2 distance search</li>
+<li>It scales linearly. It will work fine with our data but you might want to try <a href="https://github.com/facebookresearch/faiss/wiki/Faster-search">faster indexes</a> if you work will millions of vectors.</li>
+</ul>
+<p>To create an index with the <code>misinformation</code> abstract vectors, we will:</p>
+<ol>
+<li>Change the data type of the abstract vectors to float32.</li>
+<li>Build an index and pass it the dimension of the vectors it will operate on.</li>
+<li>Pass the index to IndexIDMap, an object that enables us to provide a custom list of IDs for the indexed vectors.</li>
+<li>Add the abstract vectors and their ID mapping to the index. In our case, we will map vectors to their paper IDs from MAG.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">embeddings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">embedding</span> <span class="k">for</span> <span class="n">embedding</span> <span class="ow">in</span> <span class="n">embeddings</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;float32&quot;</span><span class="p">)</span>
+
+<span class="c1"># Step 2: Instantiate the index</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="o">.</span><span class="n">IndexFlatL2</span><span class="p">(</span><span class="n">embeddings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># Step 3: Pass the index to IndexIDMap</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">faiss</span><span class="o">.</span><span class="n">IndexIDMap</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+
+<span class="c1"># Step 4: Add vectors and their IDs</span>
+<span class="n">index</span><span class="o">.</span><span class="n">add_with_ids</span><span class="p">(</span><span class="n">embeddings</span><span class="p">,</span> <span class="n">df</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of vectors in the Faiss index: </span><span class="si">{</span><span class="n">index</span><span class="o">.</span><span class="n">ntotal</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Number of vectors in the Faiss index: 8430
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Searching-the-index">Searching the index<a class="anchor-link" href="#Searching-the-index"> </a></h3><p>The index we built will perform a k-nearest-neighbour search. We have to provide the number of neighbours to be returned.</p>
+<p>Let's query the index with an abstract from our dataset and retrieve the 10 most relevant documents. <strong>The first one must be our query!</strong></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">5415</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#34;We address the diffusion of information about the COVID-19 with a massive data analysis on Twitter, Instagram, YouTube, Reddit and Gab. We analyze engagement and interest in the COVID-19 topic and provide a differential assessment on the evolution of the discourse on a global scale for each platform and their users. We fit information spreading with epidemic models characterizing the basic reproduction number [Formula: see text] for each social media platform. Moreover, we identify information spreading from questionable sources, finding different volumes of misinformation in each platform. However, information from both reliable and questionable sources do not present different spreading patterns. Finally, we provide platform-dependent numerical estimates of rumors&#39; amplification.&#34;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">D</span><span class="p">,</span> <span class="n">I</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">embeddings</span><span class="p">[</span><span class="mi">5415</span><span class="p">]]),</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;L2 distance: </span><span class="si">{</span><span class="n">D</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="se">\n\n</span><span class="s1">MAG paper IDs: </span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>L2 distance: [0.0, 1.267284631729126, 62.72160339355469, 63.670326232910156, 64.58393859863281, 67.47344970703125, 67.96402740478516, 69.47564697265625, 72.5633544921875, 74.62230682373047]
+
+MAG paper IDs: [3092618151, 3011345566, 3012936764, 3055557295, 3011186656, 3044429417, 3092128270, 3024620668, 3047284882, 3048848247]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">id2details</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="s1">&#39;original_title&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[[&#39;The COVID-19 social media infodemic.&#39;],
+ [&#39;The COVID-19 Social Media Infodemic&#39;],
+ [&#39;Understanding the perception of COVID-19 policies by mining a multilanguage Twitter dataset&#39;],
+ [&#39;Covid-19 infodemic reveals new tipping point epidemiology and a revised R formula.&#39;],
+ [&#39;Coronavirus Goes Viral: Quantifying the COVID-19 Misinformation Epidemic on Twitter&#39;],
+ [&#39;Effects of misinformation on COVID-19 individual responses and recommendations for resilience of disastrous consequences of misinformation&#39;],
+ [&#39;Analysis of online misinformation during the peak of the COVID-19 pandemics in Italy&#39;],
+ [&#39;Quantifying COVID-19 Content in the Online Health Opinion War Using Machine Learning&#39;],
+ [&#39;Global Infodemiology of COVID-19: Analysis of Google Web Searches and Instagram Hashtags.&#39;],
+ [&#39;COVID-19-Related Infodemic and Its Impact on Public Health: A Global Social Media Analysis.&#39;]]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">id2details</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="s1">&#39;abstract&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[[&#34;We address the diffusion of information about the COVID-19 with a massive data analysis on Twitter, Instagram, YouTube, Reddit and Gab. We analyze engagement and interest in the COVID-19 topic and provide a differential assessment on the evolution of the discourse on a global scale for each platform and their users. We fit information spreading with epidemic models characterizing the basic reproduction number [Formula: see text] for each social media platform. Moreover, we identify information spreading from questionable sources, finding different volumes of misinformation in each platform. However, information from both reliable and questionable sources do not present different spreading patterns. Finally, we provide platform-dependent numerical estimates of rumors&#39; amplification.&#34;],
+ [&#34;We address the diffusion of information about the COVID-19 with a massive data analysis on Twitter, Instagram, YouTube, Reddit and Gab. We analyze engagement and interest in the COVID-19 topic and provide a differential assessment on the evolution of the discourse on a global scale for each platform and their users. We fit information spreading with epidemic models characterizing the basic reproduction numbers $R_0$ for each social media platform. Moreover, we characterize information spreading from questionable sources, finding different volumes of misinformation in each platform. However, information from both reliable and questionable sources do not present different spreading patterns. Finally, we provide platform-dependent numerical estimates of rumors&#39; amplification.&#34;],
+ [&#39;The objective of this work is to explore popular discourse about the COVID-19 pandemic and policies implemented to manage it. Using Natural Language Processing, Text Mining, and Network Analysis to analyze corpus of tweets that relate to the COVID-19 pandemic, we identify common responses to the pandemic and how these responses differ across time. Moreover, insights as to how information and misinformation were transmitted via Twitter, starting at the early stages of this pandemic, are presented. Finally, this work introduces a dataset of tweets collected from all over the world, in multiple languages, dating back to January 22nd, when the total cases of reported COVID-19 were below 600 worldwide. The insights presented in this work could help inform decision makers in the face of future pandemics, and the dataset introduced can be used to acquire valuable knowledge to help mitigate the COVID-19 pandemic.&#39;],
+ [&#34;Many governments have managed to control their COVID-19 outbreak with a simple message: keep the effective &#39;$R$ number&#39; $R&lt;1$ to prevent widespread contagion and flatten the curve. This raises the question whether a similar policy could control dangerous online &#39;infodemics&#39; of information, misinformation and disinformation. Here we show, using multi-platform data from the COVID-19 infodemic, that its online spreading instead encompasses a different dynamical regime where communities and users within and across independent platforms, sporadically form temporary active links on similar timescales to the viral spreading. This allows material that might have died out, to evolve and even mutate. This has enabled niche networks that were already successfully spreading hate and anti-vaccination material, to rapidly become global super-spreaders of narratives featuring fake COVID-19 treatments, anti-Asian sentiment and conspiracy theories. We derive new tools that incorporate these coupled social-viral dynamics, including an online $R$, to help prevent infodemic spreading at all scales: from spreading across platforms (e.g. Facebook, 4Chan) to spreading within a given subpopulation, or community, or topic. By accounting for similar social and viral timescales, the same mathematical theory also offers a quantitative description of other unconventional infection profiles such as rumors spreading in financial markets and colds spreading in schools.&#34;],
+ [&#39;Background Since the beginning of the coronavirus disease 2019 (COVID-19) epidemic, misinformation has been spreading\xa0uninhibited\xa0over traditional and social media at a rapid pace. We sought to analyze the magnitude of misinformation that is being spread on Twitter\xa0(Twitter, Inc., San Francisco, CA) regarding the coronavirus epidemic.\xa0 Materials and methods We conducted a search on Twitter using 14 different trending hashtags and keywords related to the COVID-19 epidemic. We then summarized and assessed individual tweets for misinformation in comparison to verified and peer-reviewed resources. Descriptive statistics were used to compare\xa0terms and hashtags, and to identify individual tweets and account characteristics. Results The study included 673 tweets. Most tweets were posted by informal individuals/groups (66%), and 129 (19.2%) belonged to verified Twitter accounts. The majority of included tweets contained serious content (91.2%); 548 tweets (81.4%) included genuine information pertaining to the COVID-19 epidemic. Around 70% of the tweets tackled medical/public health information, while the others were pertaining to sociopolitical and financial factors. In total, 153 tweets (24.8%) included misinformation, and 107 (17.4%) included unverifiable information regarding the COVID-19 epidemic. The rate of misinformation was higher among informal individual/group accounts (33.8%, p: &lt;0.001). Tweets from unverified Twitter accounts contained more misinformation (31.0% vs 12.6% for verified accounts, p: &lt;0.001). Tweets from healthcare/public health accounts had the lowest rate of unverifiable information (12.3%, p: 0.04). The number of likes and retweets per tweet was not associated with a difference in either false or unverifiable content. The keyword &#34;COVID-19&#34; had the lowest rate of misinformation and unverifiable information, while the keywords &#34;#2019_ncov&#34; and &#34;Corona&#34; were associated with the highest amount of misinformation and unverifiable content respectively. Conclusions Medical misinformation and unverifiable content pertaining to the global COVID-19 epidemic are being propagated at an alarming rate on social media. We provide an early quantification of the magnitude of misinformation spread and highlight the importance of early interventions in order to curb this phenomenon that endangers public safety at a time when awareness and appropriate preventive actions are paramount.&#39;],
+ [&#39;Abstract The proliferation of misinformation on social media platforms is faster than the spread of Corona Virus Diseases (COVID-19) and it can generate hefty deleterious consequences on health amid a disaster like COVID-19. Drawing upon research on the stimulus-response theory (hypodermic needle theory) and the resilience theory, this study tested a conceptual framework considering general misinformation belief, conspiracy belief, and religious misinformation belief as the stimulus; and credibility evaluations as resilience strategy; and their effects on COVID-19 individual responses. Using a self-administered online survey during the COVID-19 pandemic, the study obtained 483 useable responses and after test, finds that all-inclusive, the propagation of misinformation on social media undermines the COVID-19 individual responses. Particularly, credibility evaluation of misinformation strongly predicts the COVID-19 individual responses with positive influences and religious misinformation beliefs as well as conspiracy beliefs and general misinformation beliefs come next and influence negatively. The findings and general recommendations will help the public, in general, to be cautious about misinformation, and the respective authority of a country, in particular, for initiating proper safety measures about disastrous misinformation to protect the public health from being exploited.&#39;],
+ [&#39;During the Covid-19 pandemics, we also experience another dangerous pandemics based on misinformation. Narratives disconnected from fact-checking on the origin and cure of the disease intertwined with pre-existing political fights. We collect a database on Twitter posts and analyse the topology of the networks of retweeters (users broadcasting again the same elementary piece of information, or tweet) and validate its structure with methods of statistical physics of networks. Furthermore, by using commonly available fact checking software, we assess the reputation of the pieces of news exchanged. By using a combination of theoretical and practical weapons, we are able to track down the flow of misinformation in a snapshot of the Twitter ecosystem. Thanks to the presence of verified users, we can also assign a polarization to the network nodes (users) and see the impact of low-quality information producers and spreaders in the Twitter ecosystem.&#39;],
+ [&#39;A huge amount of potentially dangerous COVID-19 misinformation is appearing online. Here we use machine learning to quantify COVID-19 content among online opponents of establishment health guidance, in particular vaccinations (“anti-vax”). We find that the anti-vax community is developing a less focused debate around COVID-19 than its counterpart, the pro-vaccination (“pro-vax”) community. However, the anti-vax community exhibits a broader range of “flavors” of COVID-19 topics, and hence can appeal to a broader cross-section of individuals seeking COVID-19 guidance online, e.g. individuals wary of a mandatory fast-tracked COVID-19 vaccine or those seeking alternative remedies. Hence the anti-vax community looks better positioned to attract fresh support going forward than the pro-vax community. This is concerning since a widespread lack of adoption of a COVID-19 vaccine will mean the world falls short of providing herd immunity, leaving countries open to future COVID-19 resurgences. We provide a mechanistic model that interprets these results and could help in assessing the likely efficacy of intervention strategies. Our approach is scalable and hence tackles the urgent problem facing social media platforms of having to analyze huge volumes of online health misinformation and disinformation.&#39;],
+ [&#39;BACKGROUND: Although &#34;infodemiological&#34; methods have been used in research on coronavirus disease (COVID-19), an examination of the extent of infodemic moniker (misinformation) use on the internet remains limited. OBJECTIVE: The aim of this paper is to investigate internet search behaviors related to COVID-19 and examine the circulation of infodemic monikers through two platforms-Google and Instagram-during the current global pandemic. METHODS: We have defined infodemic moniker as a term, query, hashtag, or phrase that generates or feeds fake news, misinterpretations, or discriminatory phenomena. Using Google Trends and Instagram hashtags, we explored internet search activities and behaviors related to the COVID-19 pandemic from February 20, 2020, to May 6, 2020. We investigated the names used to identify the virus, health and risk perception, life during the lockdown, and information related to the adoption of COVID-19 infodemic monikers. We computed the average peak volume with a 95% CI for the monikers. RESULTS: The top six COVID-19-related terms searched in Google were &#34;coronavirus,&#34; &#34;corona,&#34; &#34;COVID,&#34; &#34;virus,&#34; &#34;corona virus,&#34; and &#34;COVID-19.&#34; Countries with a higher number of COVID-19 cases had a higher number of COVID-19 queries on Google. The monikers &#34;coronavirus ozone,&#34; &#34;coronavirus laboratory,&#34; &#34;coronavirus 5G,&#34; &#34;coronavirus conspiracy,&#34; and &#34;coronavirus bill gates&#34; were widely circulated on the internet. Searches on &#34;tips and cures&#34; for COVID-19 spiked in relation to the US president speculating about a &#34;miracle cure&#34; and suggesting an injection of disinfectant to treat the virus. Around two thirds (n=48,700,000, 66.1%) of Instagram users used the hashtags &#34;COVID-19&#34; and &#34;coronavirus&#34; to disperse virus-related information. CONCLUSIONS: Globally, there is a growing interest in COVID-19, and numerous infodemic monikers continue to circulate on the internet. Based on our findings, we hope to encourage mass media regulators and health organizers to be vigilant and diminish the use and circulation of these infodemic monikers to decrease the spread of misinformation.&#39;],
+ [&#39;Infodemics, often including rumors, stigma, and conspiracy theories, have been common during the COVID-19 pandemic. Monitoring social media data has been identified as the best method for tracking rumors in real time and as a possible way to dispel misinformation and reduce stigma. However, the detection, assessment, and response to rumors, stigma, and conspiracy theories in real time are a challenge. Therefore, we followed and examined COVID-19-related rumors, stigma, and conspiracy theories circulating on online platforms, including fact-checking agency websites, Facebook, Twitter, and online newspapers, and their impacts on public health. Information was extracted between December 31, 2019 and April 5, 2020, and descriptively analyzed. We performed a content analysis of the news articles to compare and contrast data collected from other sources. We identified 2,311 reports of rumors, stigma, and conspiracy theories in 25 languages from 87 countries. Claims were related to illness, transmission and mortality (24%), control measures (21%), treatment and cure (19%), cause of disease including the origin (15%), violence (1%), and miscellaneous (20%). Of the 2,276 reports for which text ratings were available, 1,856 claims were false (82%). Misinformation fueled by rumors, stigma, and conspiracy theories can have potentially serious implications on the individual and community if prioritized over evidence-based guidelines. Health agencies must track misinformation associated with the COVID-19 in real time, and engage local communities and government stakeholders to debunk misinformation.&#39;]]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Putting-all-together">Putting all together<a class="anchor-link" href="#Putting-all-together"> </a></h2><p>So far, we've built a Faiss index using the misinformation abstract vectors we encoded with a sentence-DistilBERT model. That's helpful but in a real case scenario, we would have to work with unseen data. To query the index with an unseen query and retrieve its most relevant documents, we would have to do the following:</p>
+<ol>
+<li>Encode the query with the same sentence-DistilBERT model we used for the rest of the abstract vectors.</li>
+<li>Change its data type to float32.</li>
+<li>Search the index with the encoded query.</li>
+</ol>
+<p>Here, we will use the introduction of an article published on <a href="https://misinforeview.hks.harvard.edu/article/can-whatsapp-benefit-from-debunked-fact-checked-stories-to-reduce-misinformation/">HKS Misinformation Review</a>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">user_query</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">WhatsApp was alleged to have been widely used to spread misinformation and propaganda </span>
+<span class="s2">during the 2018 elections in Brazil and the 2019 elections in India. Due to the </span>
+<span class="s2">private encrypted nature of the messages on WhatsApp, it is hard to track the dissemination </span>
+<span class="s2">of misinformation at scale. In this work, using public WhatsApp data from Brazil and India, we </span>
+<span class="s2">observe that misinformation has been largely shared on WhatsApp public groups even after they </span>
+<span class="s2">were already fact-checked by popular fact-checking agencies. This represents a significant portion </span>
+<span class="s2">of misinformation spread in both Brazil and India in the groups analyzed. We posit that such </span>
+<span class="s2">misinformation content could be prevented if WhatsApp had a means to flag already fact-checked </span>
+<span class="s2">content. To this end, we propose an architecture that could be implemented by WhatsApp to counter </span>
+<span class="s2">such misinformation. Our proposal respects the current end-to-end encryption architecture on WhatsApp, </span>
+<span class="s2">thus protecting users’ privacy while providing an approach to detect the misinformation that benefits </span>
+<span class="s2">from fact-checking efforts.</span>
+<span class="s2">&quot;&quot;&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># It takes four arguments: </span>
+<span class="c1"># A query, the sentence-level transformer, the Faiss index and the number of requested results</span>
+<span class="n">D</span><span class="p">,</span> <span class="n">I</span> <span class="o">=</span> <span class="n">vector_search</span><span class="p">([</span><span class="n">user_query</span><span class="p">],</span> <span class="n">model</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">num_results</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;L2 distance: </span><span class="si">{</span><span class="n">D</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="se">\n\n</span><span class="s1">MAG paper IDs: </span><span class="si">{</span><span class="n">I</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>L2 distance: [7.384466171264648, 57.3224983215332, 57.3224983215332, 71.48453521728516, 72.06803131103516, 79.13472747802734, 86.0128173828125, 89.91024780273438, 90.76014709472656, 90.76422119140625]
+
+MAG paper IDs: [3047438096, 3021927925, 3037966274, 2889959140, 2791045616, 2943077655, 3014380170, 2967434249, 3028584171, 2990343632]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">id2details</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">I</span><span class="p">,</span> <span class="s1">&#39;original_title&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[[&#39;Can WhatsApp Benefit from Debunked Fact-Checked Stories to Reduce Misinformation?&#39;],
+ [&#39;A Dataset of Fact-Checked Images Shared on WhatsApp During the Brazilian and Indian Elections&#39;],
+ [&#39;A Dataset of Fact-Checked Images Shared on WhatsApp During the Brazilian and Indian Elections&#39;],
+ [&#39;A System for Monitoring Public Political Groups in WhatsApp&#39;],
+ [&#39;Politics of Fake News: How WhatsApp Became a Potent Propaganda Tool in India&#39;],
+ [&#39;Characterizing Attention Cascades in WhatsApp Groups&#39;],
+ [&#39;OS IMPACTOS JURÍDICOS E SOCIAIS DAS FAKE NEWS EM TERRITÓRIO BRASILEIRO&#39;],
+ [&#39;Fake News and Social Media: Indian Perspective&#39;],
+ [&#39;Images and Misinformation in Political Groups: Evidence from WhatsApp in India&#39;],
+ [&#39;Can WhatsApp Counter Misinformation by Limiting Message Forwarding&#39;]]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Change the index from 1 to 0 if you run this on Google Colab</span>
+<span class="n">project_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;notebooks&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">parents</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">project_dir</span><span class="p">)</span>
+
+<span class="c1"># Serialise index and store it as a pickle</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">project_dir</span><span class="si">}</span><span class="s2">/models/faiss_index.pickle&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">h</span><span class="p">:</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">faiss</span><span class="o">.</span><span class="n">serialize_index</span><span class="p">(</span><span class="n">index</span><span class="p">),</span> <span class="n">h</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>/content/vector_engine
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+<script type="application/vnd.jupyter.widget-state+json">
+{"15c5bbc768db41e4bc06c9405539091c": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "1e1408cddd284bc4a4b5484be0561991": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "3e9c24c8488b431fb88a0d045d85b700": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "Batches: 100%", "description_tooltip": null, "layout": "IPY_MODEL_15c5bbc768db41e4bc06c9405539091c", "max": 264, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_f9c22552944b4e2dafe1f98170665293", "value": 264}}, "7a7e927567024c578b33b15000d5e531": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_3e9c24c8488b431fb88a0d045d85b700", "IPY_MODEL_7aaf8a423e7f48bbac24d6970ed4dfe9"], "layout": "IPY_MODEL_da5011a6565e45e2b5d0b37634498648"}}, "7aaf8a423e7f48bbac24d6970ed4dfe9": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_7f1cd9dbb4b742ab8d78e073fb9b0f90", "placeholder": "\u200b", "style": "IPY_MODEL_1e1408cddd284bc4a4b5484be0561991", "value": " 264/264 [00:31&lt;00:00,  8.30it/s]"}}, "7f1cd9dbb4b742ab8d78e073fb9b0f90": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "da5011a6565e45e2b5d0b37634498648": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "f9c22552944b4e2dafe1f98170665293": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}}
+</script>
+
+
+
+  </div><a class="u-url" href="/2021/01/23/vector-search.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

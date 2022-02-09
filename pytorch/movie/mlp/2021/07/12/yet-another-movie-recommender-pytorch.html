@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Yet another Movie Recommender from scratch | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Yet another Movie Recommender from scratch" />
+<meta name="author" content="<a href='https://github.com/HarshdeepGupta/recommender_pytorch'>Harshdeep Gupta</a>" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Building and training Item-popularity and MLP model on movielens dataset in pure pytorch" />
+<meta property="og:description" content="Building and training Item-popularity and MLP model on movielens dataset in pure pytorch" />
+<link rel="canonical" href="https://nb.recohut.com/pytorch/movie/mlp/2021/07/12/yet-another-movie-recommender-pytorch.html" />
+<meta property="og:url" content="https://nb.recohut.com/pytorch/movie/mlp/2021/07/12/yet-another-movie-recommender-pytorch.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-12T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Yet another Movie Recommender from scratch" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"<a href='https://github.com/HarshdeepGupta/recommender_pytorch'>Harshdeep Gupta</a>"},"dateModified":"2021-07-12T00:00:00-05:00","datePublished":"2021-07-12T00:00:00-05:00","description":"Building and training Item-popularity and MLP model on movielens dataset in pure pytorch","headline":"Yet another Movie Recommender from scratch","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/pytorch/movie/mlp/2021/07/12/yet-another-movie-recommender-pytorch.html"},"url":"https://nb.recohut.com/pytorch/movie/mlp/2021/07/12/yet-another-movie-recommender-pytorch.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Yet another Movie Recommender from scratch</h1><p class="page-description">Building and training Item-popularity and MLP model on movielens dataset in pure pytorch</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-12T00:00:00-05:00" itemprop="datePublished">
+        Jul 12, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name"><a href='https://github.com/HarshdeepGupta/recommender_pytorch'>Harshdeep Gupta</a></span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      14 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#PyTorch">PyTorch</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Movie">Movie</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#MLP">MLP</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-12-yet-another-movie-recommender-pytorch.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-12-yet-another-movie-recommender-pytorch.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-12-yet-another-movie-recommender-pytorch.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-12-yet-another-movie-recommender-pytorch.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Setup">Setup </a></li>
+<li class="toc-entry toc-h2"><a href="#Data-Loading">Data Loading </a></li>
+<li class="toc-entry toc-h2"><a href="#Eval-Methods">Eval Methods </a></li>
+<li class="toc-entry toc-h2"><a href="#Eval-Metrics">Eval Metrics </a></li>
+<li class="toc-entry toc-h2"><a href="#Pytorch-Dataset">Pytorch Dataset </a></li>
+<li class="toc-entry toc-h2"><a href="#Utils">Utils </a></li>
+<li class="toc-entry toc-h2"><a href="#Item-Popularity-Model">Item Popularity Model </a></li>
+<li class="toc-entry toc-h2"><a href="#MLP-Model">MLP Model </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-12-yet-another-movie-recommender-pytorch.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">
+<a class="anchor" href="#Setup" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setup<a class="anchor-link" href="#Setup"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">heapq</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="kn">import</span> <span class="n">Variable</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_testRatings</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_testNegatives</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_topk</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="n">use_cuda</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">"cuda:0"</span> <span class="k">if</span> <span class="n">use_cuda</span> <span class="k">else</span> <span class="s2">"cpu"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data-Loading">
+<a class="anchor" href="#Data-Loading" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data Loading<a class="anchor-link" href="#Data-Loading"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">HarshdeepGupta</span><span class="o">/</span><span class="n">recommender_pytorch</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">Data</span><span class="o">/</span><span class="n">movielens</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">rating</span>
+<span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">HarshdeepGupta</span><span class="o">/</span><span class="n">recommender_pytorch</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">Data</span><span class="o">/</span><span class="n">movielens</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">rating</span>
+<span class="err">!</span><span class="n">wget</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">HarshdeepGupta</span><span class="o">/</span><span class="n">recommender_pytorch</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">Data</span><span class="o">/</span><span class="n">u</span><span class="o">.</span><span class="n">data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>--2021-07-12 05:23:32--  https://github.com/HarshdeepGupta/recommender_pytorch/raw/master/Data/movielens.train.rating
+Resolving github.com (github.com)... 140.82.114.3
+Connecting to github.com (github.com)|140.82.114.3|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://raw.githubusercontent.com/HarshdeepGupta/recommender_pytorch/master/Data/movielens.train.rating [following]
+--2021-07-12 05:23:32--  https://raw.githubusercontent.com/HarshdeepGupta/recommender_pytorch/master/Data/movielens.train.rating
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1960426 (1.9M) [text/plain]
+Saving to: ‘movielens.train.rating’
+
+movielens.train.rat 100%[===================&gt;]   1.87M  --.-KB/s    in 0.06s   
+
+2021-07-12 05:23:33 (30.1 MB/s) - ‘movielens.train.rating’ saved [1960426/1960426]
+
+--2021-07-12 05:23:33--  https://github.com/HarshdeepGupta/recommender_pytorch/raw/master/Data/movielens.test.rating
+Resolving github.com (github.com)... 140.82.113.4
+Connecting to github.com (github.com)|140.82.113.4|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://raw.githubusercontent.com/HarshdeepGupta/recommender_pytorch/master/Data/movielens.test.rating [following]
+--2021-07-12 05:23:33--  https://raw.githubusercontent.com/HarshdeepGupta/recommender_pytorch/master/Data/movielens.test.rating
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 18747 (18K) [text/plain]
+Saving to: ‘movielens.test.rating’
+
+movielens.test.rati 100%[===================&gt;]  18.31K  --.-KB/s    in 0s      
+
+2021-07-12 05:23:33 (41.1 MB/s) - ‘movielens.test.rating’ saved [18747/18747]
+
+--2021-07-12 05:23:33--  https://github.com/HarshdeepGupta/recommender_pytorch/raw/master/Data/u.data
+Resolving github.com (github.com)... 140.82.113.3
+Connecting to github.com (github.com)|140.82.113.3|:443... connected.
+HTTP request sent, awaiting response... 302 Found
+Location: https://raw.githubusercontent.com/HarshdeepGupta/recommender_pytorch/master/Data/u.data [following]
+--2021-07-12 05:23:34--  https://raw.githubusercontent.com/HarshdeepGupta/recommender_pytorch/master/Data/u.data
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1979173 (1.9M) [text/plain]
+Saving to: ‘u.data’
+
+u.data              100%[===================&gt;]   1.89M  --.-KB/s    in 0.07s   
+
+2021-07-12 05:23:34 (27.6 MB/s) - ‘u.data’ saved [1979173/1979173]
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Eval-Methods">
+<a class="anchor" href="#Eval-Methods" aria-hidden="true"><span class="octicon octicon-link"></span></a>Eval Methods<a class="anchor-link" href="#Eval-Methods"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">full_dataset</span><span class="p">:</span> <span class="n">MovieLensDataset</span><span class="p">,</span> <span class="n">topK</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Evaluate the performance (Hit_Ratio, NDCG) of top-K recommendation</span>
+<span class="sd">    Return: score of each test rating.</span>
+<span class="sd">    """</span>
+    <span class="k">global</span> <span class="n">_model</span>
+    <span class="k">global</span> <span class="n">_testRatings</span>
+    <span class="k">global</span> <span class="n">_testNegatives</span>
+    <span class="k">global</span> <span class="n">_topk</span>
+    <span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+    <span class="n">_testRatings</span> <span class="o">=</span> <span class="n">full_dataset</span><span class="o">.</span><span class="n">testRatings</span>
+    <span class="n">_testNegatives</span> <span class="o">=</span> <span class="n">full_dataset</span><span class="o">.</span><span class="n">testNegatives</span>
+    <span class="n">_topk</span> <span class="o">=</span> <span class="n">topK</span>
+
+    <span class="n">hits</span><span class="p">,</span> <span class="n">ndcgs</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_testRatings</span><span class="p">)):</span>
+        <span class="p">(</span><span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">)</span> <span class="o">=</span> <span class="n">eval_one_rating</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">full_dataset</span><span class="p">)</span>
+        <span class="n">hits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hr</span><span class="p">)</span>
+        <span class="n">ndcgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ndcg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">hits</span><span class="p">,</span> <span class="n">ndcgs</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">eval_one_rating</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">full_dataset</span><span class="p">:</span> <span class="n">MovieLensDataset</span><span class="p">):</span>
+    <span class="n">rating</span> <span class="o">=</span> <span class="n">_testRatings</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">_testNegatives</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">rating</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">gtItem</span> <span class="o">=</span> <span class="n">rating</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gtItem</span><span class="p">)</span>
+    <span class="c1"># Get prediction scores</span>
+    <span class="n">map_item_score</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">),</span> <span class="n">u</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">'int32'</span><span class="p">)</span>
+
+    <span class="n">feed_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">'user_id'</span><span class="p">:</span> <span class="n">users</span><span class="p">,</span>
+        <span class="s1">'item_id'</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">items</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">predictions</span> <span class="o">=</span> <span class="n">_model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">feed_dict</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">map_item_score</span><span class="p">[</span><span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="c1"># Evaluate top rank list</span>
+    <span class="n">ranklist</span> <span class="o">=</span> <span class="n">heapq</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="n">_topk</span><span class="p">,</span> <span class="n">map_item_score</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">map_item_score</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+    <span class="n">hr</span> <span class="o">=</span> <span class="n">getHitRatio</span><span class="p">(</span><span class="n">ranklist</span><span class="p">,</span> <span class="n">gtItem</span><span class="p">)</span>
+    <span class="n">ndcg</span> <span class="o">=</span> <span class="n">getNDCG</span><span class="p">(</span><span class="n">ranklist</span><span class="p">,</span> <span class="n">gtItem</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Eval-Metrics">
+<a class="anchor" href="#Eval-Metrics" aria-hidden="true"><span class="octicon octicon-link"></span></a>Eval Metrics<a class="anchor-link" href="#Eval-Metrics"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">getHitRatio</span><span class="p">(</span><span class="n">ranklist</span><span class="p">,</span> <span class="n">gtItem</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">ranklist</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="n">gtItem</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="mi">0</span>
+
+
+<span class="k">def</span> <span class="nf">getNDCG</span><span class="p">(</span><span class="n">ranklist</span><span class="p">,</span> <span class="n">gtItem</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ranklist</span><span class="p">)):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">ranklist</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="n">gtItem</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Pytorch-Dataset">
+<a class="anchor" href="#Pytorch-Dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Pytorch Dataset<a class="anchor-link" href="#Pytorch-Dataset"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">MovieLensDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="s1">'Characterizes the dataset for PyTorch, and feeds the (user,item) pairs for training'</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_name</span><span class="p">,</span> <span class="n">num_negatives_train</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">num_negatives_test</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+        <span class="s1">'Load the datasets from disk, and store them in appropriate structures'</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">trainMatrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_rating_file_as_matrix</span><span class="p">(</span>
+            <span class="n">file_name</span> <span class="o">+</span> <span class="s2">".train.rating"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_users</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainMatrix</span><span class="o">.</span><span class="n">shape</span>
+        <span class="c1"># make training set with negative sampling</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ratings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_train_instances</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trainMatrix</span><span class="p">,</span> <span class="n">num_negatives_train</span><span class="p">)</span>
+        <span class="c1"># make testing set with negative sampling</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testRatings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_rating_file_as_list</span><span class="p">(</span>
+            <span class="n">file_name</span> <span class="o">+</span> <span class="s2">".test.rating"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">testNegatives</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_negative_file</span><span class="p">(</span>
+            <span class="n">num_samples</span><span class="o">=</span><span class="n">num_negatives_test</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testRatings</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">testNegatives</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s1">'Denotes the total number of rating in test set'</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_input</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="s1">'Generates one sample of data'</span>
+
+        <span class="c1"># get the train data</span>
+        <span class="n">user_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_input</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">item_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_input</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">rating</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ratings</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">'user_id'</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>
+                <span class="s1">'item_id'</span><span class="p">:</span> <span class="n">item_id</span><span class="p">,</span>
+                <span class="s1">'rating'</span><span class="p">:</span> <span class="n">rating</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">get_train_instances</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">num_negatives</span><span class="p">):</span>
+        <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input</span><span class="p">,</span> <span class="n">ratings</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="ow">in</span> <span class="n">train</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="c1"># positive instance</span>
+            <span class="n">user_input</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+            <span class="n">item_input</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">ratings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># negative instances</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_negatives</span><span class="p">):</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_items</span><span class="p">)</span>
+                <span class="c1"># while train.has_key((u, j)):</span>
+                <span class="k">while</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="n">train</span><span class="p">:</span>
+                    <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_items</span><span class="p">)</span>
+                <span class="n">user_input</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+                <span class="n">item_input</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+                <span class="n">ratings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input</span><span class="p">,</span> <span class="n">ratings</span>
+
+    <span class="k">def</span> <span class="nf">load_rating_file_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="n">ratingList</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">user</span><span class="p">,</span> <span class="n">item</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">ratingList</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">])</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">ratingList</span>
+
+    <span class="k">def</span> <span class="nf">create_negative_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+        <span class="n">negativeList</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">user_item_pair</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">testRatings</span><span class="p">:</span>
+            <span class="n">user</span> <span class="o">=</span> <span class="n">user_item_pair</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="n">user_item_pair</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">negatives</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">):</span>
+                <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_items</span><span class="p">)</span>
+                <span class="k">while</span> <span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainMatrix</span> <span class="ow">or</span> <span class="n">j</span> <span class="o">==</span> <span class="n">item</span><span class="p">:</span>
+                    <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_items</span><span class="p">)</span>
+                <span class="n">negatives</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+            <span class="n">negativeList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">negatives</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">negativeList</span>
+
+    <span class="k">def</span> <span class="nf">load_rating_file_as_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="sd">'''</span>
+<span class="sd">        Read .rating file and Return dok matrix.</span>
+<span class="sd">        The first line of .rating file is: num_users\t num_items</span>
+<span class="sd">        '''</span>
+        <span class="c1"># Get number of users and items</span>
+        <span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">num_users</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_users</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span>
+                <span class="n">num_items</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_items</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="c1"># Construct matrix</span>
+        <span class="n">mat</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">dok_matrix</span><span class="p">((</span><span class="n">num_users</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_items</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">""</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"</span><span class="se">\t</span><span class="s2">"</span><span class="p">)</span>
+                <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">rating</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">rating</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">mat</span><span class="p">[</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">mat</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Utils">
+<a class="anchor" href="#Utils" aria-hidden="true"><span class="octicon octicon-link"></span></a>Utils<a class="anchor-link" href="#Utils"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">train_one_epoch</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch_no</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="s1">'trains the model for one epoch and returns the loss'</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"Epoch = </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch_no</span><span class="p">))</span>
+    <span class="c1"># Training</span>
+    <span class="c1"># get user, item and rating data</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="n">epoch_loss</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># put the model in train mode before training</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="c1"># transfer the data to GPU</span>
+    <span class="k">for</span> <span class="n">feed_dict</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">feed_dict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">feed_dict</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">):</span>
+                <span class="n">feed_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">feed_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span> <span class="o">=</span> <span class="n">device</span><span class="p">)</span>
+        <span class="c1"># get the predictions</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">feed_dict</span><span class="p">)</span>
+        <span class="c1"># print(prediction.shape)</span>
+        <span class="c1"># get the actual targets</span>
+        <span class="n">rating</span> <span class="o">=</span> <span class="n">feed_dict</span><span class="p">[</span><span class="s1">'rating'</span><span class="p">]</span>
+        
+      
+        <span class="c1"># convert to float and change dim from [batch_size] to [batch_size,1]</span>
+        <span class="n">rating</span> <span class="o">=</span> <span class="n">rating</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">prediction</span><span class="o">.</span><span class="n">size</span><span class="p">())</span>  
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_fn</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">rating</span><span class="p">)</span>
+        <span class="c1"># clear the gradients</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="c1"># backpropagate</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="c1"># update weights</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="c1"># accumulate the loss for monitoring</span>
+        <span class="n">epoch_loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+    <span class="n">epoch_loss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Epoch completed </span><span class="si">{:.1f}</span><span class="s2"> s"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t1</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Train Loss: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">epoch_loss</span>
+        
+
+<span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">full_dataset</span> <span class="p">:</span> <span class="n">MovieLensDataset</span><span class="p">,</span> <span class="n">topK</span><span class="p">):</span>
+    <span class="s1">'Test the HR and NDCG for the model @topK'</span>
+    <span class="c1"># put the model in eval mode before testing</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span><span class="s1">'eval'</span><span class="p">):</span>
+        <span class="c1"># print("Putting the model in eval mode")</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="p">(</span><span class="n">hits</span><span class="p">,</span> <span class="n">ndcgs</span><span class="p">)</span> <span class="o">=</span> <span class="n">evaluate_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">full_dataset</span><span class="p">,</span> <span class="n">topK</span><span class="p">)</span>
+    <span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hits</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ndcgs</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Eval: HR = </span><span class="si">%.4f</span><span class="s1">, NDCG = </span><span class="si">%.4f</span><span class="s1"> [</span><span class="si">%.1f</span><span class="s1"> s]'</span> <span class="o">%</span> <span class="p">(</span><span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">,</span> <span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span>
+    
+
+<span class="k">def</span> <span class="nf">plot_statistics</span><span class="p">(</span><span class="n">hr_list</span><span class="p">,</span> <span class="n">ndcg_list</span><span class="p">,</span> <span class="n">loss_list</span><span class="p">,</span> <span class="n">model_alias</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="s1">'plots and saves the figures to a local directory'</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="n">hr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hr_list</span><span class="p">)),</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hr_list</span><span class="p">)])</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">ndcg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ndcg_list</span><span class="p">)),</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ndcg_list</span><span class="p">)])</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">loss_list</span><span class="p">)),</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">loss_list</span><span class="p">)])</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">hr</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">hr</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">linestyle</span><span class="o">=</span><span class="s1">'-'</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">'o'</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s2">"HR"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ndcg</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">ndcg</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">linestyle</span><span class="o">=</span><span class="s1">'-'</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">'v'</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s2">"NDCG"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">loss</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">loss</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span><span class="n">linestyle</span><span class="o">=</span><span class="s1">'-'</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">'s'</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="s2">"Loss"</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">"Epochs"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">"Value"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">path</span><span class="o">+</span><span class="n">model_alias</span><span class="o">+</span><span class="s2">".jpg"</span><span class="p">)</span>
+    <span class="k">return</span>
+
+
+<span class="k">def</span> <span class="nf">get_items_interacted</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">interaction_df</span><span class="p">):</span>
+    <span class="c1"># returns a set of items the user has interacted with</span>
+    <span class="n">userid_mask</span> <span class="o">=</span> <span class="n">interaction_df</span><span class="p">[</span><span class="s1">'userid'</span><span class="p">]</span> <span class="o">==</span> <span class="n">user_id</span>
+    <span class="n">interacted_items</span> <span class="o">=</span> <span class="n">interaction_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">userid_mask</span><span class="p">]</span><span class="o">.</span><span class="n">courseid</span>
+    <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">interacted_items</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">interacted_items</span><span class="p">)</span> <span class="o">==</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span> <span class="k">else</span> <span class="p">[</span><span class="n">interacted_items</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">save_to_csv</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">path</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Saving df to path: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Columns in df are: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
+
+    <span class="n">df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="n">header</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="n">index</span><span class="p">,</span> <span class="n">sep</span> <span class="o">=</span> <span class="n">sep</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Item-Popularity-Model">
+<a class="anchor" href="#Item-Popularity-Model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Item Popularity Model<a class="anchor-link" href="#Item-Popularity-Model"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Run ItemPop"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--path'</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">'?'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'/content/'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Input data path.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--dataset'</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">'?'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'movielens'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Choose a dataset.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--num_neg_test'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Number of negative instances to pair with a positive instance while testing'</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">{})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">ItemPop</span><span class="p">():</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_interaction_matrix</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">dok_matrix</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Simple popularity based recommender system</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__alias__</span> <span class="o">=</span> <span class="s2">"Item Popularity without metadata"</span>
+        <span class="c1"># Sum the occurences of each item to get is popularity, convert to array and </span>
+        <span class="c1"># lose the extra dimension</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item_ratings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">train_interaction_matrix</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feeddict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+        <span class="c1"># returns the prediction score for each (user,item) pair in the input</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">feeddict</span><span class="p">[</span><span class="s1">'item_id'</span><span class="p">]</span>
+        <span class="n">output_scores</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item_ratings</span><span class="p">[</span><span class="n">itemid</span><span class="p">]</span> <span class="k">for</span> <span class="n">itemid</span> <span class="ow">in</span> <span class="n">items</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">output_scores</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_alias</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__alias__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">path</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span>
+<span class="n">num_negatives_test</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">num_neg_test</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Model arguments: </span><span class="si">%s</span><span class="s2"> "</span> <span class="o">%</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+
+<span class="n">topK</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="c1"># Load data</span>
+
+<span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+<span class="n">full_dataset</span> <span class="o">=</span> <span class="n">MovieLensDataset</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">num_negatives_test</span><span class="o">=</span><span class="n">num_negatives_test</span><span class="p">)</span>
+<span class="n">train</span><span class="p">,</span> <span class="n">testRatings</span><span class="p">,</span> <span class="n">testNegatives</span> <span class="o">=</span> <span class="n">full_dataset</span><span class="o">.</span><span class="n">trainMatrix</span><span class="p">,</span> <span class="n">full_dataset</span><span class="o">.</span><span class="n">testRatings</span><span class="p">,</span> <span class="n">full_dataset</span><span class="o">.</span><span class="n">testNegatives</span>
+<span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">shape</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Load data done [</span><span class="si">%.1f</span><span class="s2"> s]. #user=</span><span class="si">%d</span><span class="s2">, #item=</span><span class="si">%d</span><span class="s2">, #train=</span><span class="si">%d</span><span class="s2">, #test=</span><span class="si">%d</span><span class="s2">"</span>
+      <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t1</span><span class="p">,</span> <span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">nnz</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">testRatings</span><span class="p">)))</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ItemPop</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+<span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">full_dataset</span><span class="p">,</span> <span class="n">topK</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Model arguments: Namespace(dataset='movielens', num_neg_test=100, path='/content/') 
+Load data done [4.3 s]. #user=944, #item=1683, #train=99057, #test=943
+Eval: HR = 0.4062, NDCG = 0.2199 [0.1 s]
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(0.4061505832449629, 0.21988638109018463)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="MLP-Model">
+<a class="anchor" href="#MLP-Model" aria-hidden="true"><span class="octicon octicon-link"></span></a>MLP Model<a class="anchor-link" href="#MLP-Model"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Run MLP."</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--path'</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">'?'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'/content/'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Input data path.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--dataset'</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">'?'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'movielens'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Choose a dataset.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--epochs'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Number of epochs.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--batch_size'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Batch size.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--layers'</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">'?'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'[16,32,16,8]'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">"Size of each layer. Note that the first layer is the concatenation of user and item embeddings. So layers[0]/2 is the embedding size."</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--weight_decay'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.00001</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s2">"Regularization for each layer"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--num_neg_train'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Number of negative instances to pair with a positive instance while training'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--num_neg_test'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Number of negative instances to pair with a positive instance while testing'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--lr'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Learning rate.'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--dropout'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Add dropout layer after each dense layer, with p = dropout_prob'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--learner'</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">'?'</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'adam'</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Specify an optimizer: adagrad, adam, rmsprop, sgd'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--verbose'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Show performance per X iterations'</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">'--out'</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                        <span class="n">help</span><span class="o">=</span><span class="s1">'Whether to save the trained model.'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">{})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_users</span><span class="p">,</span> <span class="n">n_items</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="n">dropout</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Simple Feedforward network with Embeddings for users and items</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">layers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">),</span> <span class="s2">"layers[0] must be an even number"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__alias__</span> <span class="o">=</span> <span class="s2">"MLP </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dropout__</span> <span class="o">=</span> <span class="n">dropout</span>
+
+        <span class="c1"># user and item embedding layers</span>
+        <span class="n">embedding_dim</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">layers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_embedding</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">n_users</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item_embedding</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">)</span>
+
+        <span class="c1"># list of weight matrices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_layers</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+        <span class="c1"># hidden dense layers</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">in_size</span><span class="p">,</span> <span class="n">out_size</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">layers</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">layers</span><span class="p">[</span><span class="mi">1</span><span class="p">:])):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fc_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">in_size</span><span class="p">,</span> <span class="n">out_size</span><span class="p">))</span>
+        <span class="c1"># final prediction layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">layers</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feed_dict</span><span class="p">):</span>
+        <span class="n">users</span> <span class="o">=</span> <span class="n">feed_dict</span><span class="p">[</span><span class="s1">'user_id'</span><span class="p">]</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">feed_dict</span><span class="p">[</span><span class="s1">'item_id'</span><span class="p">]</span>
+        <span class="n">user_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_embedding</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>
+        <span class="n">item_embedding</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_embedding</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+        <span class="c1"># concatenate user and item embeddings to form input</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">user_embedding</span><span class="p">,</span> <span class="n">item_embedding</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc_layers</span><span class="p">))):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_layers</span><span class="p">[</span><span class="n">idx</span><span class="p">](</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">,</span>  <span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__dropout__</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">training</span><span class="p">)</span>
+        <span class="n">logit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">rating</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rating</span>
+
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feed_dict</span><span class="p">):</span>
+        <span class="c1"># return the score, inputs and outputs are numpy arrays</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">feed_dict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">feed_dict</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">):</span>
+                <span class="n">feed_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+                    <span class="n">feed_dict</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">output_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward</span><span class="p">(</span><span class="n">feed_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output_scores</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_alias</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__alias__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Device available: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+
+<span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">path</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span>
+<span class="n">layers</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">layers</span><span class="p">)</span>
+<span class="n">weight_decay</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">weight_decay</span>
+<span class="n">num_negatives_train</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">num_neg_train</span>
+<span class="n">num_negatives_test</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">num_neg_test</span>
+<span class="n">dropout</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">dropout</span>
+<span class="n">learner</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">learner</span>
+<span class="n">learning_rate</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">lr</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">batch_size</span>
+<span class="n">epochs</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">epochs</span>
+<span class="n">verbose</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">verbose</span>
+
+<span class="n">topK</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"MLP arguments: </span><span class="si">%s</span><span class="s2"> "</span> <span class="o">%</span> <span class="p">(</span><span class="n">args</span><span class="p">))</span>
+<span class="n">model_out_file</span> <span class="o">=</span> <span class="s1">'</span><span class="si">%s</span><span class="s1">_MLP_</span><span class="si">%s</span><span class="s1">_</span><span class="si">%d</span><span class="s1">.h5'</span> <span class="o">%</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">layers</span><span class="p">,</span> <span class="n">time</span><span class="p">())</span>
+
+<span class="c1"># Load data</span>
+
+<span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+<span class="n">full_dataset</span> <span class="o">=</span> <span class="n">MovieLensDataset</span><span class="p">(</span>
+    <span class="n">path</span> <span class="o">+</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">num_negatives_train</span><span class="o">=</span><span class="n">num_negatives_train</span><span class="p">,</span> <span class="n">num_negatives_test</span><span class="o">=</span><span class="n">num_negatives_test</span><span class="p">)</span>
+<span class="n">train</span><span class="p">,</span> <span class="n">testRatings</span><span class="p">,</span> <span class="n">testNegatives</span> <span class="o">=</span> <span class="n">full_dataset</span><span class="o">.</span><span class="n">trainMatrix</span><span class="p">,</span> <span class="n">full_dataset</span><span class="o">.</span><span class="n">testRatings</span><span class="p">,</span> <span class="n">full_dataset</span><span class="o">.</span><span class="n">testNegatives</span>
+<span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">shape</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Load data done [</span><span class="si">%.1f</span><span class="s2"> s]. #user=</span><span class="si">%d</span><span class="s2">, #item=</span><span class="si">%d</span><span class="s2">, #train=</span><span class="si">%d</span><span class="s2">, #test=</span><span class="si">%d</span><span class="s2">"</span>
+      <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t1</span><span class="p">,</span> <span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">nnz</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">testRatings</span><span class="p">)))</span>
+
+<span class="n">training_data_generator</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+    <span class="n">full_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Build model</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span><span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span><span class="p">,</span> <span class="n">layers</span><span class="o">=</span><span class="n">layers</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="n">dropout</span><span class="p">)</span>
+<span class="c1"># Transfer the model to GPU, if one is available</span>
+<span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+<span class="n">loss_fn</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">BCELoss</span><span class="p">()</span>
+<span class="c1"># Use Adam optimizer</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">weight_decay</span><span class="o">=</span><span class="n">weight_decay</span><span class="p">)</span>
+
+<span class="c1"># Record performance</span>
+<span class="n">hr_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">ndcg_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">BCE_loss_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># Check Init performance</span>
+<span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">full_dataset</span><span class="p">,</span> <span class="n">topK</span><span class="p">)</span>
+<span class="n">hr_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hr</span><span class="p">)</span>
+<span class="n">ndcg_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ndcg</span><span class="p">)</span>
+<span class="n">BCE_loss_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># do the epochs now</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+    <span class="n">epoch_loss</span> <span class="o">=</span> <span class="n">train_one_epoch</span><span class="p">(</span> <span class="n">model</span><span class="p">,</span> <span class="n">training_data_generator</span><span class="p">,</span> <span class="n">loss_fn</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="n">verbose</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span> <span class="o">=</span> <span class="n">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">full_dataset</span><span class="p">,</span> <span class="n">topK</span><span class="p">)</span>
+        <span class="n">hr_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hr</span><span class="p">)</span>
+        <span class="n">ndcg_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ndcg</span><span class="p">)</span>
+        <span class="n">BCE_loss_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hr</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">hr_list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">out</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model_out_file</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"hr for epochs: "</span><span class="p">,</span> <span class="n">hr_list</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ndcg for epochs: "</span><span class="p">,</span> <span class="n">ndcg_list</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"loss for epochs: "</span><span class="p">,</span> <span class="n">BCE_loss_list</span><span class="p">)</span>
+<span class="n">plot_statistics</span><span class="p">(</span><span class="n">hr_list</span><span class="p">,</span> <span class="n">ndcg_list</span><span class="p">,</span> <span class="n">BCE_loss_list</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">get_alias</span><span class="p">(),</span> <span class="s2">"/content"</span><span class="p">)</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">"metrics"</span><span class="p">,</span> <span class="s1">'wb'</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">hr_list</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">ndcg_list</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span>
+
+<span class="n">best_iter</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hr_list</span><span class="p">))</span>
+<span class="n">best_hr</span> <span class="o">=</span> <span class="n">hr_list</span><span class="p">[</span><span class="n">best_iter</span><span class="p">]</span>
+<span class="n">best_ndcg</span> <span class="o">=</span> <span class="n">ndcg_list</span><span class="p">[</span><span class="n">best_iter</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"End. Best Iteration </span><span class="si">%d</span><span class="s2">:  HR = </span><span class="si">%.4f</span><span class="s2">, NDCG = </span><span class="si">%.4f</span><span class="s2">. "</span> <span class="o">%</span>
+      <span class="p">(</span><span class="n">best_iter</span><span class="p">,</span> <span class="n">best_hr</span><span class="p">,</span> <span class="n">best_ndcg</span><span class="p">))</span>
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">out</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"The best MLP model is saved to </span><span class="si">%s</span><span class="s2">"</span> <span class="o">%</span><span class="p">(</span><span class="n">model_out_file</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Device available: cpu
+MLP arguments: Namespace(batch_size=256, dataset='movielens', dropout=0, epochs=30, layers='[16,32,16,8]', learner='adam', lr=0.001, num_neg_test=100, num_neg_train=4, out=1, path='/content/', verbose=1, weight_decay=1e-05) 
+Load data done [3.8 s]. #user=944, #item=1683, #train=99057, #test=943
+MLP(
+  (user_embedding): Embedding(944, 8)
+  (item_embedding): Embedding(1683, 8)
+  (fc_layers): ModuleList(
+    (0): Linear(in_features=16, out_features=32, bias=True)
+    (1): Linear(in_features=32, out_features=16, bias=True)
+    (2): Linear(in_features=16, out_features=8, bias=True)
+  )
+  (output_layer): Linear(in_features=8, out_features=1, bias=True)
+)
+Eval: HR = 0.0848, NDCG = 0.0386 [0.6 s]
+Epoch = 0
+Epoch completed 5.8 s
+Train Loss: 0.4429853802195507
+Eval: HR = 0.3945, NDCG = 0.2187 [0.6 s]
+Epoch = 1
+Epoch completed 5.6 s
+Train Loss: 0.3646208482657292
+Eval: HR = 0.3818, NDCG = 0.2133 [0.6 s]
+Epoch = 2
+Epoch completed 5.6 s
+Train Loss: 0.35764367812979747
+Eval: HR = 0.3924, NDCG = 0.2137 [0.6 s]
+Epoch = 3
+Epoch completed 5.7 s
+Train Loss: 0.35384849094297227
+Eval: HR = 0.3796, NDCG = 0.2103 [0.6 s]
+Epoch = 4
+Epoch completed 5.7 s
+Train Loss: 0.35072445729290175
+Eval: HR = 0.3818, NDCG = 0.2143 [0.6 s]
+Epoch = 5
+Epoch completed 5.8 s
+Train Loss: 0.3481164647319212
+Eval: HR = 0.3881, NDCG = 0.2171 [0.7 s]
+Epoch = 6
+Epoch completed 5.8 s
+Train Loss: 0.3454590990638856
+Eval: HR = 0.4157, NDCG = 0.2292 [0.6 s]
+Epoch = 7
+Epoch completed 5.8 s
+Train Loss: 0.3422531268162321
+Eval: HR = 0.4231, NDCG = 0.2371 [0.6 s]
+Epoch = 8
+Epoch completed 5.8 s
+Train Loss: 0.3384355346053762
+Eval: HR = 0.4443, NDCG = 0.2508 [0.6 s]
+Epoch = 9
+Epoch completed 5.8 s
+Train Loss: 0.3335341374156395
+Eval: HR = 0.4677, NDCG = 0.2598 [0.6 s]
+Epoch = 10
+Epoch completed 5.8 s
+Train Loss: 0.3280563016347491
+Eval: HR = 0.4719, NDCG = 0.2652 [0.6 s]
+Epoch = 11
+Epoch completed 5.7 s
+Train Loss: 0.3223747977760719
+Eval: HR = 0.4995, NDCG = 0.2748 [0.6 s]
+Epoch = 12
+Epoch completed 5.8 s
+Train Loss: 0.3164166678753934
+Eval: HR = 0.5090, NDCG = 0.2817 [0.6 s]
+Epoch = 13
+Epoch completed 5.7 s
+Train Loss: 0.31102338709726507
+Eval: HR = 0.5143, NDCG = 0.2829 [0.6 s]
+Epoch = 14
+Epoch completed 5.7 s
+Train Loss: 0.30582732322604156
+Eval: HR = 0.5175, NDCG = 0.2908 [0.6 s]
+Epoch = 15
+Epoch completed 5.6 s
+Train Loss: 0.3016319169092548
+Eval: HR = 0.5429, NDCG = 0.2963 [0.6 s]
+Epoch = 16
+Epoch completed 5.7 s
+Train Loss: 0.2980319341254789
+Eval: HR = 0.5493, NDCG = 0.2978 [0.6 s]
+Epoch = 17
+Epoch completed 5.7 s
+Train Loss: 0.29476294266469105
+Eval: HR = 0.5504, NDCG = 0.3014 [0.6 s]
+Epoch = 18
+Epoch completed 5.6 s
+Train Loss: 0.2921119521985682
+Eval: HR = 0.5589, NDCG = 0.3108 [0.6 s]
+Epoch = 19
+Epoch completed 5.8 s
+Train Loss: 0.28990745035406845
+Eval: HR = 0.5620, NDCG = 0.3092 [0.6 s]
+Epoch = 20
+Epoch completed 5.7 s
+Train Loss: 0.2876521824250234
+Eval: HR = 0.5514, NDCG = 0.3097 [0.6 s]
+Epoch = 21
+Epoch completed 5.6 s
+Train Loss: 0.2858751243245078
+Eval: HR = 0.5578, NDCG = 0.3122 [0.6 s]
+Epoch = 22
+Epoch completed 5.6 s
+Train Loss: 0.2843063232125546
+Eval: HR = 0.5567, NDCG = 0.3043 [0.6 s]
+Epoch = 23
+Epoch completed 5.6 s
+Train Loss: 0.28271066885277896
+Eval: HR = 0.5663, NDCG = 0.3141 [0.6 s]
+Epoch = 24
+Epoch completed 5.6 s
+Train Loss: 0.2813221255630178
+Eval: HR = 0.5610, NDCG = 0.3070 [0.6 s]
+Epoch = 25
+Epoch completed 5.7 s
+Train Loss: 0.28002421261420235
+Eval: HR = 0.5610, NDCG = 0.3110 [0.6 s]
+Epoch = 26
+Epoch completed 5.9 s
+Train Loss: 0.27882074906998516
+Eval: HR = 0.5610, NDCG = 0.3095 [0.6 s]
+Epoch = 27
+Epoch completed 5.8 s
+Train Loss: 0.27783915350449484
+Eval: HR = 0.5663, NDCG = 0.3115 [0.6 s]
+Epoch = 28
+Epoch completed 5.7 s
+Train Loss: 0.2768868865122783
+Eval: HR = 0.5631, NDCG = 0.3109 [0.6 s]
+Epoch = 29
+Epoch completed 5.8 s
+Train Loss: 0.2760479487343968
+Eval: HR = 0.5631, NDCG = 0.3092 [0.6 s]
+hr for epochs:  [0.08483563096500531, 0.3944856839872747, 0.38176033934252385, 0.39236479321314954, 0.3796394485683987, 0.38176033934252385, 0.38812301166489926, 0.41569459172852596, 0.42311770943796395, 0.4443266171792153, 0.4676564156945917, 0.471898197242842, 0.49946977730646874, 0.5090137857900318, 0.5143160127253447, 0.5174973488865323, 0.542948038176034, 0.5493107104984093, 0.5503711558854719, 0.5588547189819725, 0.5620360551431601, 0.5514316012725344, 0.5577942735949099, 0.5567338282078473, 0.5662778366914104, 0.5609756097560976, 0.5609756097560976, 0.5609756097560976, 0.5662778366914104, 0.5630965005302226, 0.5630965005302226]
+ndcg for epochs:  [0.03855482836637224, 0.2186689741068423, 0.21325592738572174, 0.21374918741658008, 0.21033736603276898, 0.21431768576892837, 0.21714573069782853, 0.2292039485312514, 0.23708514689275148, 0.2507826695009706, 0.2598176007060155, 0.2652029648171546, 0.2747717153150814, 0.2817258947342069, 0.28289172403583096, 0.2907608027818361, 0.29626902860751664, 0.29775495439534627, 0.3014327139896777, 0.31075028453364517, 0.30917060839326094, 0.3096903348455541, 0.31217614966561463, 0.3043410687051171, 0.314059797472155, 0.3070033682048637, 0.31104383409268926, 0.3094572048871119, 0.3115140344405953, 0.31090220293994014, 0.3092050624323008]
+loss for epochs:  [1, 0.4429853802195507, 0.3646208482657292, 0.35764367812979747, 0.35384849094297227, 0.35072445729290175, 0.3481164647319212, 0.3454590990638856, 0.3422531268162321, 0.3384355346053762, 0.3335341374156395, 0.3280563016347491, 0.3223747977760719, 0.3164166678753934, 0.31102338709726507, 0.30582732322604156, 0.3016319169092548, 0.2980319341254789, 0.29476294266469105, 0.2921119521985682, 0.28990745035406845, 0.2876521824250234, 0.2858751243245078, 0.2843063232125546, 0.28271066885277896, 0.2813221255630178, 0.28002421261420235, 0.27882074906998516, 0.27783915350449484, 0.2768868865122783, 0.2760479487343968]
+End. Best Iteration 24:  HR = 0.5663, NDCG = 0.3141. 
+The best MLP model is saved to movielens_MLP_[16,32,16,8]_1626069383.h5
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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OBwOrr32Wq699tp26yN3le16BDo0pJRqlpIDE88DcVg/oxQEADIyMpg1axaPPPJIyDIvvvgib7zxBrNnzyYpKYkLL7yQSy+9lLq6OgCKiop4/vnnGTlyJHl5efzud7+jsbERgJqami71JoKxXSDI8GZQVltGvS/+C0YrpXqAaVfBsG/CtOjceA10+eWXs3fv3lbb7rrrrubpo0888QTLli0jOzsbgJtuuons7GzGjBnD2LFjOf3005t7Bw8//DDFxcXNQWHGjBncfvvtUamnrdJQAzz32XP84YM/8N+z/svA5OhFf6VU/Gkaaoumoe6A5htSSqnW7BcI/E8X67MESillsW8g0CmkSikF2DEQ6NCQUkq1YrtA4HV58Tg92iNQSik/2wUCESHTm6n3CJRSys92gQD0oTKlVOxE62nf7mS7FBNg5RvaVbkr3tVQSsXRCc+eEHRkINOTyYqzV3R/heLInj0CHRpSyvZCtQGxaBvWrl3LN7/5TcaPH8/3v/999u3bB8DChQsZM2YM48eP55xzzgHgrbfeYuLEiUycOJFJkyaxf//+qNenLdv2CPbV7MNnfDjElrFQqT7vtpW38WnJp1363Qv+HTxR3GEZh3H1lM6novjJT37Cvffey7Rp07j++uu54YYbuPvuu7n11lvZunUriYmJlJaWAtaKZvfddx9Tp06loqICj8fTpXPoDFu2gpneTBpNI2W1ZfGuilKqjysrK6O0tJRp06YB8NOf/pS3334bgPHjx3PeeefxxBNP4HJZ1+VTp05l3rx5LFy4kNLS0ubtsWTLHkHgQ2X9Pf3jXBulVCx0dOU+btG4kJ89dspj0a5OUK+++ipvv/02r7zyCjfffDPr169n/vz5nHbaaSxdupSpU6fy+uuvc9hhh8W0HrbtEYCmmVBKxV5aWhr9+/fnnXfeAeAf//gH06ZNw+fzsX37dk488URuu+02ysrKqKiooKCggHHjxnH11Vdz1FFH8emnXRve6gxb9giaFrHXKaRK2VemJ/ikkaYRg66qqqpiyJAhze/nzZvHokWLuOSSS6iqquLggw/mscceo7GxkR/96EeUlZVhjOH//u//SE9P57rrrmP58uU4HA6OOOIITj311AOqTyRiGghE5BTgHsAJPGyMubXN58OARUC6v8x8Y8zSWNYJNN+QUoqYTRH1+XxBt3/wwQfttr37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%0A">
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/pytorch/movie/mlp/2021/07/12/yet-another-movie-recommender-pytorch.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

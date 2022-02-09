@@ -1,0 +1,2327 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Retail Product Recommendation with Negative Implicit Feedback | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Retail Product Recommendation with Negative Implicit Feedback" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="A tutorial to demonstrate the process of training and evaluating various recommender models on a online retail store data. Along with the positive feedbacks like view, add-to-cart, we also have a negative event ‘remove-from-cart’." />
+<meta property="og:description" content="A tutorial to demonstrate the process of training and evaluating various recommender models on a online retail store data. Along with the positive feedbacks like view, add-to-cart, we also have a negative event ‘remove-from-cart’." />
+<link rel="canonical" href="https://nb.recohut.com/retail/2021/04/25/Recommender-Implicit-Negative-Feedback.html" />
+<meta property="og:url" content="https://nb.recohut.com/retail/2021/04/25/Recommender-Implicit-Negative-Feedback.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-04-25T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Retail Product Recommendation with Negative Implicit Feedback" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-04-25T00:00:00-05:00","datePublished":"2021-04-25T00:00:00-05:00","description":"A tutorial to demonstrate the process of training and evaluating various recommender models on a online retail store data. Along with the positive feedbacks like view, add-to-cart, we also have a negative event ‘remove-from-cart’.","headline":"Retail Product Recommendation with Negative Implicit Feedback","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/retail/2021/04/25/Recommender-Implicit-Negative-Feedback.html"},"url":"https://nb.recohut.com/retail/2021/04/25/Recommender-Implicit-Negative-Feedback.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Retail Product Recommendation with Negative Implicit Feedback</h1><p class="page-description">A tutorial to demonstrate the process of training and evaluating various recommender models on a online retail store data. Along with the positive feedbacks like view, add-to-cart, we also have a negative event 'remove-from-cart'.</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-04-25T00:00:00-05:00" itemprop="datePublished">
+        Apr 25, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      6 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#retail">retail</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-04-25-Recommender-Implicit-Negative-Feedback.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-04-25-Recommender-Implicit-Negative-Feedback.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-04-25-Recommender-Implicit-Negative-Feedback.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-04-25-Recommender-Implicit-Negative-Feedback.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Data-Loading">Data Loading </a></li>
+<li class="toc-entry toc-h2"><a href="#Wrangling">Wrangling </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Removing-Duplicates">Removing Duplicates </a></li>
+<li class="toc-entry toc-h3"><a href="#Label-Encoding">Label Encoding </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Exploration">Exploration </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#User-Interactions">User Interactions </a></li>
+<li class="toc-entry toc-h3"><a href="#Add-to-cart-Event-Counts">Add-to-cart Event Counts </a></li>
+<li class="toc-entry toc-h3"><a href="#Purchase-Event-Counts">Purchase Event Counts </a></li>
+<li class="toc-entry toc-h3"><a href="#Item-Interactions">Item Interactions </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Rule-based-Approaches">Rule-based Approaches </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Top-N-Trending-Products">Top-N Trending Products </a></li>
+<li class="toc-entry toc-h3"><a href="#Top-N-Least-Viewed-Items">Top-N Least Viewed Items </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h1"><a href="#Data-Transformation">Data Transformation </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#A.-Count">A. Count </a></li>
+<li class="toc-entry toc-h3"><a href="#B.-Weighted-Count">B. Weighted Count </a></li>
+<li class="toc-entry toc-h3"><a href="#C.-Time-dependent-Count">C. Time dependent Count </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h1"><a href="#Train-Test-Split">Train Test Split </a></li>
+<li class="toc-entry toc-h1"><a href="#Experiments">Experiments </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Item-Popularity-Recomendation-Model">Item Popularity Recomendation Model </a></li>
+<li class="toc-entry toc-h3"><a href="#Cornac-BPR-Model">Cornac BPR Model </a></li>
+<li class="toc-entry toc-h3"><a href="#SARS-Model">SARS Model </a></li>
+<li class="toc-entry toc-h3"><a href="#Spotlight">Spotlight </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#Implicit-Factorization-Model">Implicit Factorization Model </a></li>
+<li class="toc-entry toc-h4"><a href="#CNN-Pooling-Sequence-Model">CNN Pooling Sequence Model </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#FastAI-CollabLearner">FastAI CollabLearner </a></li>
+</ul>
+</li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-04-25-Recommender-Implicit-Negative-Feedback.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data-Loading">
+<a class="anchor" href="#Data-Loading" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data Loading<a class="anchor-link" href="#Data-Loading"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'rawdata.csv'</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+                 <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'event'</span><span class="p">,</span><span class="s1">'userid'</span><span class="p">,</span><span class="s1">'itemid'</span><span class="p">,</span><span class="s1">'timestamp'</span><span class="p">],</span>
+                 <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="s1">'category'</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="s1">'category'</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="s1">'category'</span><span class="p">},</span>
+                 <span class="n">parse_dates</span><span class="o">=</span><span class="p">[</span><span class="s1">'timestamp'</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>event</th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>view_item</td>
+      <td>2763227</td>
+      <td>11056</td>
+      <td>2020-01-13 16:05:31.244000+00:00</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>add_to_cart</td>
+      <td>2828666</td>
+      <td>14441</td>
+      <td>2020-01-13 22:36:38.680000+00:00</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>view_item</td>
+      <td>0620225789</td>
+      <td>14377</td>
+      <td>2020-01-14 10:54:41.886000+00:00</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>view_item</td>
+      <td>0620225789</td>
+      <td>14377</td>
+      <td>2020-01-14 10:54:47.692000+00:00</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>add_to_cart</td>
+      <td>0620225789</td>
+      <td>14377</td>
+      <td>2020-01-14 10:54:48.479000+00:00</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;class 'pandas.core.frame.DataFrame'&gt;
+RangeIndex: 99998 entries, 0 to 99997
+Data columns (total 4 columns):
+event        99998 non-null category
+userid       99998 non-null category
+itemid       99998 non-null category
+timestamp    99998 non-null datetime64[ns, UTC]
+dtypes: category(3), datetime64[ns, UTC](1)
+memory usage: 1.7 MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Wrangling">
+<a class="anchor" href="#Wrangling" aria-hidden="true"><span class="octicon octicon-link"></span></a>Wrangling<a class="anchor-link" href="#Wrangling"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Removing-Duplicates">
+<a class="anchor" href="#Removing-Duplicates" aria-hidden="true"><span class="octicon octicon-link"></span></a>Removing Duplicates<a class="anchor-link" href="#Removing-Duplicates"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Label-Encoding">
+<a class="anchor" href="#Label-Encoding" aria-hidden="true"><span class="octicon octicon-link"></span></a>Label Encoding<a class="anchor-link" href="#Label-Encoding"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">userid_encoder</span> <span class="o">=</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">LabelEncoder</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">userid</span> <span class="o">=</span> <span class="n">userid_encoder</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">userid</span><span class="p">)</span>
+
+<span class="c1"># itemid normalization</span>
+<span class="n">itemid_encoder</span> <span class="o">=</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">LabelEncoder</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">itemid</span> <span class="o">=</span> <span class="n">itemid_encoder</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">itemid</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Exploration">
+<a class="anchor" href="#Exploration" aria-hidden="true"><span class="octicon octicon-link"></span></a>Exploration<a class="anchor-link" href="#Exploration"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>count</th>
+      <th>mean</th>
+      <th>std</th>
+      <th>min</th>
+      <th>25%</th>
+      <th>50%</th>
+      <th>75%</th>
+      <th>max</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>userid</th>
+      <td>99432.0</td>
+      <td>4682.814677</td>
+      <td>3011.178734</td>
+      <td>0.0</td>
+      <td>2507.0</td>
+      <td>3687.0</td>
+      <td>6866.0</td>
+      <td>11476.0</td>
+    </tr>
+    <tr>
+      <th>itemid</th>
+      <td>99432.0</td>
+      <td>1344.579964</td>
+      <td>769.627122</td>
+      <td>0.0</td>
+      <td>643.0</td>
+      <td>1356.0</td>
+      <td>1997.0</td>
+      <td>2633.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="n">exclude</span><span class="o">=</span><span class="s1">'int'</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>count</th>
+      <th>unique</th>
+      <th>top</th>
+      <th>freq</th>
+      <th>first</th>
+      <th>last</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>event</th>
+      <td>99432</td>
+      <td>5</td>
+      <td>begin_checkout</td>
+      <td>41459</td>
+      <td>NaT</td>
+      <td>NaT</td>
+    </tr>
+    <tr>
+      <th>timestamp</th>
+      <td>99432</td>
+      <td>61372</td>
+      <td>2020-01-16 04:21:49.377000+00:00</td>
+      <td>25</td>
+      <td>2020-01-13 16:05:31.244000+00:00</td>
+      <td>2020-03-10 13:02:21.376000+00:00</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>Timedelta('56 days 20:56:50.132000')</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>begin_checkout      41459
+view_item           35397
+purchase             9969
+add_to_cart          7745
+remove_from_cart     4862
+Name: event, dtype: int64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">event</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">/</span><span class="n">df</span><span class="o">.</span><span class="n">userid</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>begin_checkout      3.612355
+view_item           3.084168
+purchase            0.868607
+add_to_cart         0.674828
+remove_from_cart    0.423630
+Name: event, dtype: float64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="User-Interactions">
+<a class="anchor" href="#User-Interactions" aria-hidden="true"><span class="octicon octicon-link"></span></a>User Interactions<a class="anchor-link" href="#User-Interactions"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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%0A">
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Add-to-cart-Event-Counts">
+<a class="anchor" href="#Add-to-cart-Event-Counts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Add-to-cart Event Counts<a class="anchor-link" href="#Add-to-cart-Event-Counts"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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%0A">
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Purchase-Event-Counts">
+<a class="anchor" href="#Purchase-Event-Counts" aria-hidden="true"><span class="octicon octicon-link"></span></a>Purchase Event Counts<a class="anchor-link" href="#Purchase-Event-Counts"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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%0A">
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Item-Interactions">
+<a class="anchor" href="#Item-Interactions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Item Interactions<a class="anchor-link" href="#Item-Interactions"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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%0A">
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Rule-based-Approaches">
+<a class="anchor" href="#Rule-based-Approaches" aria-hidden="true"><span class="octicon octicon-link"></span></a>Rule-based Approaches<a class="anchor-link" href="#Rule-based-Approaches"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Top-N-Trending-Products">
+<a class="anchor" href="#Top-N-Trending-Products" aria-hidden="true"><span class="octicon octicon-link"></span></a>Top-N Trending Products<a class="anchor-link" href="#Top-N-Trending-Products"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">top_trending</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">timeperiod</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+  <span class="n">start</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">timestamp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">pd</span><span class="o">.</span><span class="n">Timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">timeperiod</span><span class="p">))</span>
+  <span class="n">end</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">timestamp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">microsecond</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+  <span class="n">trending_items</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="n">start</span><span class="p">,</span><span class="n">end</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">event</span><span class="o">==</span><span class="s1">'view_item'</span><span class="p">)),:]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">'timestamp'</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">trending_items</span><span class="o">.</span><span class="n">itemid</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">index</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">user_current_time</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="p">[</span><span class="mi">100</span><span class="p">]</span>
+<span class="n">top_trending</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="n">user_current_time</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>Int64Index([2241, 972, 393, 1118, 126], dtype='int64')</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Top-N-Least-Viewed-Items">
+<a class="anchor" href="#Top-N-Least-Viewed-Items" aria-hidden="true"><span class="octicon octicon-link"></span></a>Top-N Least Viewed Items<a class="anchor-link" href="#Top-N-Least-Viewed-Items"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">least_n_items</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+  <span class="n">temp1</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">event</span><span class="o">==</span><span class="s1">'view_item'</span><span class="p">]</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">'itemid'</span><span class="p">])[</span><span class="s1">'event'</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+  <span class="n">temp2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">'itemid'</span><span class="p">)</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+  <span class="n">item_ids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">temp1</span><span class="p">,</span><span class="n">temp2</span><span class="p">,</span><span class="n">on</span><span class="o">=</span><span class="s1">'itemid'</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s1">'event'</span><span class="p">,</span> <span class="s1">'timestamp'</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">[</span><span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[:</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="s1">'itemid'</span><span class="p">]</span>
+  <span class="k">return</span> <span class="n">itemid_encoder</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">item_ids</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">least_n_items</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array(['15742', '16052', '16443', '16074', '16424', '11574', '11465', '16033', '11711', '16013'], dtype=object)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Data-Transformation">
+<a class="anchor" href="#Data-Transformation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data Transformation<a class="anchor-link" href="#Data-Transformation"> </a>
+</h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Many times there are no explicit ratings or preferences given by users, that is, the interactions are usually implicit. This
+information may reflect users' preference towards the items in an implicit manner.</p>
+<p>Option 1 - Simple Count: The most simple technique is to count times of interactions between user and item for
+producing affinity scores.</p>
+<p>Option 2 - Weighted Count: It is useful to consider the types of different interactions as weights in the count
+aggregation. For example, assuming weights of the three differen types, "click", "add", and "purchase", are 1, 2, and 3, respectively.</p>
+<p>Option 3 - Time-dependent Count: In many scenarios, time dependency plays a critical role in preparing dataset for
+building a collaborative filtering model that captures user interests drift over time. One of the common techniques for
+achieving time dependent count is to add a time decay factor in the counting.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="A.-Count">
+<a class="anchor" href="#A.-Count" aria-hidden="true"><span class="octicon octicon-link"></span></a>A. Count<a class="anchor-link" href="#A.-Count"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data_count</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">'userid'</span><span class="p">,</span> <span class="s1">'itemid'</span><span class="p">])</span><span class="o">.</span><span class="n">agg</span><span class="p">({</span><span class="s1">'timestamp'</span><span class="p">:</span> <span class="s1">'count'</span><span class="p">})</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">data_count</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'userid'</span><span class="p">,</span> <span class="s1">'itemid'</span><span class="p">,</span> <span class="s1">'affinity'</span><span class="p">]</span>
+<span class="n">data_count</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>affinity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>328</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>1122</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>1204</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>1271</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>1821</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="B.-Weighted-Count">
+<a class="anchor" href="#B.-Weighted-Count" aria-hidden="true"><span class="octicon octicon-link"></span></a>B. Weighted Count<a class="anchor-link" href="#B.-Weighted-Count"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data_w</span><span class="p">[</span><span class="s1">'weight'</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_w</span><span class="p">[</span><span class="s1">'event'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">affinity_weights</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+<span class="n">data_wcount</span> <span class="o">=</span> <span class="n">data_w</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">'userid'</span><span class="p">,</span> <span class="s1">'itemid'</span><span class="p">])[</span><span class="s1">'weight'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">data_wcount</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'userid'</span><span class="p">,</span> <span class="s1">'itemid'</span><span class="p">,</span> <span class="s1">'affinity'</span><span class="p">]</span>
+<span class="n">data_wcount</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>affinity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>328</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>1122</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>1204</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>1271</td>
+      <td>6</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>1821</td>
+      <td>6</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="C.-Time-dependent-Count">
+<a class="anchor" href="#C.-Time-dependent-Count" aria-hidden="true"><span class="octicon octicon-link"></span></a>C. Time dependent Count<a class="anchor-link" href="#C.-Time-dependent-Count"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data_wt</span> <span class="o">=</span> <span class="n">data_w</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">'userid'</span><span class="p">,</span> <span class="s1">'itemid'</span><span class="p">])[</span><span class="s1">'timedecay'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">data_wt</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'userid'</span><span class="p">,</span> <span class="s1">'itemid'</span><span class="p">,</span> <span class="s1">'affinity'</span><span class="p">]</span>
+<span class="n">data_wt</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>affinity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>328</td>
+      <td>0.117590</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>1122</td>
+      <td>0.120232</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>1204</td>
+      <td>0.120232</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>1271</td>
+      <td>0.120232</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>1821</td>
+      <td>0.120232</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Train-Test-Split">
+<a class="anchor" href="#Train-Test-Split" aria-hidden="true"><span class="octicon octicon-link"></span></a>Train Test Split<a class="anchor-link" href="#Train-Test-Split"> </a>
+</h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Option 1 - Random Split: Random split simply takes in a data set and outputs the splits of the data, given the split
+ratios</p>
+<p>Option 2 - Chronological split: Chronogically splitting method takes in a dataset and splits it on timestamp</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">data_w</span><span class="p">[[</span><span class="s1">'userid'</span><span class="p">,</span><span class="s1">'itemid'</span><span class="p">,</span><span class="s1">'timedecay'</span><span class="p">,</span><span class="s1">'timestamp'</span><span class="p">]]</span>
+
+<span class="n">col</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">'col_user'</span><span class="p">:</span> <span class="s1">'userid'</span><span class="p">,</span>
+  <span class="s1">'col_item'</span><span class="p">:</span> <span class="s1">'itemid'</span><span class="p">,</span>
+  <span class="s1">'col_rating'</span><span class="p">:</span> <span class="s1">'timedecay'</span><span class="p">,</span>
+  <span class="s1">'col_timestamp'</span><span class="p">:</span> <span class="s1">'timestamp'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">col3</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">'col_user'</span><span class="p">:</span> <span class="s1">'userid'</span><span class="p">,</span>
+  <span class="s1">'col_item'</span><span class="p">:</span> <span class="s1">'itemid'</span><span class="p">,</span>
+  <span class="s1">'col_timestamp'</span><span class="p">:</span> <span class="s1">'timestamp'</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">python_chrono_split</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">min_rating</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> 
+                                  <span class="n">filter_by</span><span class="o">=</span><span class="s1">'user'</span><span class="p">,</span> <span class="o">**</span><span class="n">col3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">train</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">train</span><span class="o">.</span><span class="n">userid</span><span class="o">==</span><span class="mi">7</span><span class="p">,:]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>timedecay</th>
+      <th>timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>16679</th>
+      <td>7</td>
+      <td>1464</td>
+      <td>0.019174</td>
+      <td>2020-01-16 06:42:31.341000+00:00</td>
+    </tr>
+    <tr>
+      <th>16691</th>
+      <td>7</td>
+      <td>1464</td>
+      <td>0.019174</td>
+      <td>2020-01-16 06:43:29.482000+00:00</td>
+    </tr>
+    <tr>
+      <th>16692</th>
+      <td>7</td>
+      <td>2109</td>
+      <td>0.019174</td>
+      <td>2020-01-16 06:43:42.262000+00:00</td>
+    </tr>
+    <tr>
+      <th>16694</th>
+      <td>7</td>
+      <td>1464</td>
+      <td>0.019174</td>
+      <td>2020-01-16 06:43:57.961000+00:00</td>
+    </tr>
+    <tr>
+      <th>16805</th>
+      <td>7</td>
+      <td>201</td>
+      <td>0.019174</td>
+      <td>2020-01-16 06:45:55.261000+00:00</td>
+    </tr>
+    <tr>
+      <th>16890</th>
+      <td>7</td>
+      <td>2570</td>
+      <td>0.019174</td>
+      <td>2020-01-16 06:54:12.315000+00:00</td>
+    </tr>
+    <tr>
+      <th>16999</th>
+      <td>7</td>
+      <td>2570</td>
+      <td>0.019174</td>
+      <td>2020-01-16 06:54:29.130000+00:00</td>
+    </tr>
+    <tr>
+      <th>17000</th>
+      <td>7</td>
+      <td>2570</td>
+      <td>0.057522</td>
+      <td>2020-01-16 06:54:35.097000+00:00</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">test</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">test</span><span class="o">.</span><span class="n">userid</span><span class="o">==</span><span class="mi">7</span><span class="p">,:]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>timedecay</th>
+      <th>timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>17001</th>
+      <td>7</td>
+      <td>1464</td>
+      <td>0.019174</td>
+      <td>2020-01-16 06:54:41.415000+00:00</td>
+    </tr>
+    <tr>
+      <th>17003</th>
+      <td>7</td>
+      <td>1464</td>
+      <td>0.057522</td>
+      <td>2020-01-16 06:54:44.195000+00:00</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Experiments">
+<a class="anchor" href="#Experiments" aria-hidden="true"><span class="octicon octicon-link"></span></a>Experiments<a class="anchor-link" href="#Experiments"> </a>
+</h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Item-Popularity-Recomendation-Model">
+<a class="anchor" href="#Item-Popularity-Recomendation-Model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Item Popularity Recomendation Model<a class="anchor-link" href="#Item-Popularity-Recomendation-Model"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">baseline_recommendations</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">item_counts</span><span class="p">,</span> <span class="n">users_items_remove_seen</span><span class="p">,</span> 
+                                    <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">'itemid'</span><span class="p">],</span> <span class="n">how</span><span class="o">=</span><span class="s1">'inner'</span><span class="p">)</span>
+<span class="n">baseline_recommendations</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>itemid</th>
+      <th>count</th>
+      <th>userid</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>2564</td>
+      <td>461</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2564</td>
+      <td>461</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2564</td>
+      <td>461</td>
+      <td>73</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2564</td>
+      <td>461</td>
+      <td>75</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2564</td>
+      <td>461</td>
+      <td>113</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"MAP:</span><span class="se">\t</span><span class="si">%f</span><span class="s2">"</span> <span class="o">%</span> <span class="n">eval_map</span><span class="p">,</span>
+      <span class="s2">"NDCG@K:</span><span class="se">\t</span><span class="si">%f</span><span class="s2">"</span> <span class="o">%</span> <span class="n">eval_ndcg</span><span class="p">,</span>
+      <span class="s2">"Precision@K:</span><span class="se">\t</span><span class="si">%f</span><span class="s2">"</span> <span class="o">%</span> <span class="n">eval_precision</span><span class="p">,</span>
+      <span class="s2">"Recall@K:</span><span class="se">\t</span><span class="si">%f</span><span class="s2">"</span> <span class="o">%</span> <span class="n">eval_recall</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>MAP:	0.005334
+NDCG@K:	0.010356
+Precision@K:	0.007092
+Recall@K:	0.011395
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Cornac-BPR-Model">
+<a class="anchor" href="#Cornac-BPR-Model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cornac BPR Model<a class="anchor-link" href="#Cornac-BPR-Model"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">all_predictions</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userid</th>
+      <th>itemid</th>
+      <th>prediction</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>51214</th>
+      <td>7</td>
+      <td>2551</td>
+      <td>-0.438445</td>
+    </tr>
+    <tr>
+      <th>51215</th>
+      <td>7</td>
+      <td>481</td>
+      <td>2.522187</td>
+    </tr>
+    <tr>
+      <th>51216</th>
+      <td>7</td>
+      <td>1185</td>
+      <td>2.406107</td>
+    </tr>
+    <tr>
+      <th>51217</th>
+      <td>7</td>
+      <td>1766</td>
+      <td>1.112975</td>
+    </tr>
+    <tr>
+      <th>51218</th>
+      <td>7</td>
+      <td>1359</td>
+      <td>2.083620</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>MAP:	0.004738
+NDCG:	0.009597
+Precision@K:	0.006601
+Recall@K:	0.010597
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="SARS-Model">
+<a class="anchor" href="#SARS-Model" aria-hidden="true"><span class="octicon octicon-link"></span></a>SARS Model<a class="anchor-link" href="#SARS-Model"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">reco_utils.recommender.sar.sar_singlenode</span> <span class="kn">import</span> <span class="n">SARSingleNode</span>
+
+<span class="n">TOP_K</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">header</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"col_user"</span><span class="p">:</span> <span class="s2">"userid"</span><span class="p">,</span>
+    <span class="s2">"col_item"</span><span class="p">:</span> <span class="s2">"itemid"</span><span class="p">,</span>
+    <span class="s2">"col_rating"</span><span class="p">:</span> <span class="s2">"timedecay"</span><span class="p">,</span>
+    <span class="s2">"col_timestamp"</span><span class="p">:</span> <span class="s2">"timestamp"</span><span class="p">,</span>
+    <span class="s2">"col_prediction"</span><span class="p">:</span> <span class="s2">"prediction"</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">SARSingleNode</span><span class="p">(</span>
+    <span class="n">similarity_type</span><span class="o">=</span><span class="s2">"jaccard"</span><span class="p">,</span> 
+    <span class="n">time_decay_coefficient</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
+    <span class="n">time_now</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+    <span class="n">timedecay_formula</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+    <span class="o">**</span><span class="n">header</span>
+<span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Model:
+Top K:		 10
+MAP:		 0.024426
+NDCG:		 0.032738
+Precision@K:	 0.019258
+Recall@K:	 0.036009
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Spotlight">
+<a class="anchor" href="#Spotlight" aria-hidden="true"><span class="octicon octicon-link"></span></a>Spotlight<a class="anchor-link" href="#Spotlight"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Implicit-Factorization-Model">
+<a class="anchor" href="#Implicit-Factorization-Model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Implicit Factorization Model<a class="anchor-link" href="#Implicit-Factorization-Model"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">interactions</span> <span class="o">=</span> <span class="n">Interactions</span><span class="p">(</span><span class="n">user_ids</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">userid</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int32'</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                            <span class="n">item_ids</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">itemid</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int32'</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                            <span class="n">timestamps</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int32'</span><span class="p">),</span>
+                            <span class="n">num_users</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">userid</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span>
+                            <span class="n">num_items</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">itemid</span><span class="o">.</span><span class="n">nunique</span><span class="p">())</span>
+
+<span class="n">train_user</span><span class="p">,</span> <span class="n">test_user</span> <span class="o">=</span> <span class="n">random_train_test_split</span><span class="p">(</span><span class="n">interactions</span><span class="p">,</span> <span class="n">test_percentage</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ImplicitFactorizationModel</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">'bpr'</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> 
+                                   <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">l2</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> 
+                                   <span class="n">optimizer_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">use_cuda</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                                   <span class="n">representation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sparse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                                   <span class="n">num_negative_samples</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_user</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">pr</span> <span class="o">=</span> <span class="n">precision_recall_score</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test</span><span class="o">=</span><span class="n">test_user</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="n">train_user</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Pricison@10 is </span><span class="si">{:.3f}</span><span class="s1"> and Recall@10 is </span><span class="si">{:.3f}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">pr</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Epoch 0: loss 0.26659833122392174
+Epoch 1: loss 0.06129162273462562
+Epoch 2: loss 0.022607273167640066
+Epoch 3: loss 0.013953083943443858
+Epoch 4: loss 0.01050195922488137
+Epoch 5: loss 0.009170394043447121
+Epoch 6: loss 0.008144461540834697
+Epoch 7: loss 0.007209992620171649
+Epoch 8: loss 0.00663076309035038
+Epoch 9: loss 0.006706491189820159
+Pricison@10 is 0.007 and Recall@10 is 0.050
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Implicit Factorization Model with Grid Search</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="CNN-Pooling-Sequence-Model">
+<a class="anchor" href="#CNN-Pooling-Sequence-Model" aria-hidden="true"><span class="octicon octicon-link"></span></a>CNN Pooling Sequence Model<a class="anchor-link" href="#CNN-Pooling-Sequence-Model"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p></p>
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">interactions</span> <span class="o">=</span> <span class="n">Interactions</span><span class="p">(</span><span class="n">user_ids</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">userid</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int32'</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                            <span class="n">item_ids</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">itemid</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int32'</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+                            <span class="n">timestamps</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int32'</span><span class="p">))</span>
+
+<span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">random_train_test_split</span><span class="p">(</span><span class="n">interactions</span><span class="p">,</span> <span class="n">test_percentage</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">train_seq</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">to_sequence</span><span class="p">(</span><span class="n">max_sequence_length</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">test_seq</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">to_sequence</span><span class="p">(</span><span class="n">max_sequence_length</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ImplicitSequenceModel</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">'bpr'</span><span class="p">,</span> <span class="n">representation</span><span class="o">=</span><span class="s1">'pooling'</span><span class="p">,</span> 
+                              <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">n_iter</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> 
+                              <span class="n">l2</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">optimizer_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                              <span class="n">use_cuda</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sparse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_negative_samples</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_seq</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">mrr_seq</span> <span class="o">=</span> <span class="n">sequence_mrr_score</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_seq</span><span class="p">)</span>
+<span class="n">mrr_seq</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+    </details>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Epoch 0: loss 0.4226887328702895
+Epoch 1: loss 0.23515070266410953
+Epoch 2: loss 0.16919970976524665
+Epoch 3: loss 0.1425025990751923
+Epoch 4: loss 0.12612225017586692
+Epoch 5: loss 0.11565039795441706
+Epoch 6: loss 0.10787886735357222
+Epoch 7: loss 0.10086931410383006
+Epoch 8: loss 0.09461003749585542
+Epoch 9: loss 0.09128284808553633
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0.10435609591957387</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="FastAI-CollabLearner">
+<a class="anchor" href="#FastAI-CollabLearner" aria-hidden="true"><span class="octicon octicon-link"></span></a>FastAI CollabLearner<a class="anchor-link" href="#FastAI-CollabLearner"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">fit_one_cycle</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">5e-6</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>epoch</th>
+      <th>train_loss</th>
+      <th>valid_loss</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>2.054070</td>
+      <td>2.029182</td>
+      <td>00:20</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>EmbeddingDotBias
+======================================================================
+Layer (type)         Output Shape         Param #    Trainable 
+======================================================================
+Embedding            [50]                 534,000    True      
+______________________________________________________________________
+Embedding            [50]                 129,150    True      
+______________________________________________________________________
+Embedding            [1]                  10,680     True      
+______________________________________________________________________
+Embedding            [1]                  2,583      True      
+______________________________________________________________________
+
+Total params: 676,413
+Total trainable params: 676,413
+Total non-trainable params: 0
+Optimized with 'torch.optim.adam.Adam', betas=(0.9, 0.99)
+Using true weight decay as discussed in https://www.fast.ai/2018/07/02/adam-weight-decay/ 
+Loss function : FlattenedLoss
+======================================================================
+Callbacks functions applied </pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">learn</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>epoch</th>
+      <th>train_loss</th>
+      <th>valid_loss</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>0</td>
+      <td>1.770657</td>
+      <td>1.751797</td>
+      <td>00:18</td>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>1.410351</td>
+      <td>1.528533</td>
+      <td>00:17</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>1.153979</td>
+      <td>1.399136</td>
+      <td>00:17</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>0.911953</td>
+      <td>1.326476</td>
+      <td>00:17</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>0.784223</td>
+      <td>1.279517</td>
+      <td>00:17</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>0.695546</td>
+      <td>1.248469</td>
+      <td>00:17</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>0.637151</td>
+      <td>1.230954</td>
+      <td>00:18</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>0.600011</td>
+      <td>1.216617</td>
+      <td>00:18</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>0.573309</td>
+      <td>1.209507</td>
+      <td>00:18</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>0.571132</td>
+      <td>1.204903</td>
+      <td>00:18</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+<script type="application/vnd.jupyter.widget-state+json">
+{"1b3df8a975e8479690d9b23df9db5271": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "925673dfcae74e57bb8bba183e1442fb": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "9a928c20fe8a474a870a42f92995f7a7": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HTMLModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HTMLView", "description": "", "description_tooltip": null, "layout": "IPY_MODEL_c4bd4f149a00418ab9321a8fc76aa4b8", "placeholder": "\u200b", "style": "IPY_MODEL_ac36e1c7b8c54cc1bb8e2dbf5642b745", "value": " 100/100 [00:05&lt;00:00, 19.89it/s, correct=78.60%, skipped=0.73%]"}}, "ac36e1c7b8c54cc1bb8e2dbf5642b745": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "DescriptionStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "description_width": ""}}, "c4bd4f149a00418ab9321a8fc76aa4b8": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_model_module": "@jupyter-widgets/base", "_model_module_version": "1.2.0", "_model_name": "LayoutModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "LayoutView", "align_content": null, "align_items": null, "align_self": null, "border": null, "bottom": null, "display": null, "flex": null, "flex_flow": null, "grid_area": null, "grid_auto_columns": null, "grid_auto_flow": null, "grid_auto_rows": null, "grid_column": null, "grid_gap": null, "grid_row": null, "grid_template_areas": null, "grid_template_columns": null, "grid_template_rows": null, "height": null, "justify_content": null, "justify_items": null, "left": null, "margin": null, "max_height": null, "max_width": null, "min_height": null, "min_width": null, "object_fit": null, "object_position": null, "order": null, "overflow": null, "overflow_x": null, "overflow_y": null, "padding": null, "right": null, "top": null, "visibility": null, "width": null}}, "d3706039787a45d9a4005e8ca1fa9dbd": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "ProgressStyleModel", "_view_count": null, "_view_module": "@jupyter-widgets/base", "_view_module_version": "1.2.0", "_view_name": "StyleView", "bar_color": null, "description_width": "initial"}}, "eac0651563a24e698eb8203b1f8e4b68": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "HBoxModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "HBoxView", "box_style": "", "children": ["IPY_MODEL_f7bfd6ea4bfb4d1ca7e846ec8db49fb9", "IPY_MODEL_9a928c20fe8a474a870a42f92995f7a7"], "layout": "IPY_MODEL_1b3df8a975e8479690d9b23df9db5271"}}, "f7bfd6ea4bfb4d1ca7e846ec8db49fb9": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_dom_classes": [], "_model_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_model_name": "FloatProgressModel", "_view_count": null, "_view_module": "@jupyter-widgets/controls", "_view_module_version": "1.5.0", "_view_name": "ProgressView", "bar_style": "success", "description": "100%", "description_tooltip": null, "layout": "IPY_MODEL_925673dfcae74e57bb8bba183e1442fb", "max": 100, "min": 0, "orientation": "horizontal", "style": "IPY_MODEL_d3706039787a45d9a4005e8ca1fa9dbd", "value": 100}}}
+</script>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/retail/2021/04/25/Recommender-Implicit-Negative-Feedback.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

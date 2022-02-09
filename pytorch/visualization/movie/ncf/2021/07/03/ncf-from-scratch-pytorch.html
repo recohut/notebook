@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>NCF from scratch in pytorch | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="NCF from scratch in pytorch" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Building neural collaborative filtering model from scratch in pytorch and plotting movielens rating matrix before and after rating prediction" />
+<meta property="og:description" content="Building neural collaborative filtering model from scratch in pytorch and plotting movielens rating matrix before and after rating prediction" />
+<link rel="canonical" href="https://nb.recohut.com/pytorch/visualization/movie/ncf/2021/07/03/ncf-from-scratch-pytorch.html" />
+<meta property="og:url" content="https://nb.recohut.com/pytorch/visualization/movie/ncf/2021/07/03/ncf-from-scratch-pytorch.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-03T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="NCF from scratch in pytorch" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-07-03T00:00:00-05:00","datePublished":"2021-07-03T00:00:00-05:00","description":"Building neural collaborative filtering model from scratch in pytorch and plotting movielens rating matrix before and after rating prediction","headline":"NCF from scratch in pytorch","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/pytorch/visualization/movie/ncf/2021/07/03/ncf-from-scratch-pytorch.html"},"url":"https://nb.recohut.com/pytorch/visualization/movie/ncf/2021/07/03/ncf-from-scratch-pytorch.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">NCF from scratch in pytorch</h1><p class="page-description">Building neural collaborative filtering model from scratch in pytorch and plotting movielens rating matrix before and after rating prediction</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-03T00:00:00-05:00" itemprop="datePublished">
+        Jul 3, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      4 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#Pytorch">Pytorch</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Visualization">Visualization</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Movie">Movie</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#NCF">NCF</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-03-ncf-from-scratch-pytorch.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-03-ncf-from-scratch-pytorch.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-03-ncf-from-scratch-pytorch.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-03-ncf-from-scratch-pytorch.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-03-ncf-from-scratch-pytorch.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">TensorDataset</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">rnames</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;movie_id&#39;</span><span class="p">,</span> <span class="s1">&#39;rating&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">]</span>
+<span class="n">ratings</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="s1">&#39;u1.base&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">rnames</span><span class="p">)</span>
+<span class="n">ratings</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_id</th>
+      <th>movie_id</th>
+      <th>rating</th>
+      <th>timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1</td>
+      <td>5</td>
+      <td>874965758</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>2</td>
+      <td>3</td>
+      <td>876893171</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>3</td>
+      <td>4</td>
+      <td>878542960</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>4</td>
+      <td>3</td>
+      <td>876893119</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>5</td>
+      <td>3</td>
+      <td>889751712</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>1</td>
+      <td>7</td>
+      <td>4</td>
+      <td>875071561</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>1</td>
+      <td>8</td>
+      <td>1</td>
+      <td>875072484</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>1</td>
+      <td>9</td>
+      <td>5</td>
+      <td>878543541</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>1</td>
+      <td>11</td>
+      <td>2</td>
+      <td>875072262</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>1</td>
+      <td>13</td>
+      <td>5</td>
+      <td>875071805</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>1</td>
+      <td>15</td>
+      <td>5</td>
+      <td>875071608</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>1</td>
+      <td>16</td>
+      <td>5</td>
+      <td>878543541</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>1</td>
+      <td>18</td>
+      <td>4</td>
+      <td>887432020</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>1</td>
+      <td>19</td>
+      <td>5</td>
+      <td>875071515</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>1</td>
+      <td>21</td>
+      <td>1</td>
+      <td>878542772</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>1</td>
+      <td>22</td>
+      <td>4</td>
+      <td>875072404</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>1</td>
+      <td>25</td>
+      <td>4</td>
+      <td>875071805</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>1</td>
+      <td>26</td>
+      <td>3</td>
+      <td>875072442</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>1</td>
+      <td>28</td>
+      <td>4</td>
+      <td>875072173</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>1</td>
+      <td>29</td>
+      <td>1</td>
+      <td>878542869</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>1</td>
+      <td>30</td>
+      <td>3</td>
+      <td>878542515</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>1</td>
+      <td>32</td>
+      <td>5</td>
+      <td>888732909</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>1</td>
+      <td>34</td>
+      <td>2</td>
+      <td>878542869</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>1</td>
+      <td>35</td>
+      <td>1</td>
+      <td>878542420</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>1</td>
+      <td>37</td>
+      <td>2</td>
+      <td>878543030</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>1</td>
+      <td>38</td>
+      <td>3</td>
+      <td>878543075</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>1</td>
+      <td>40</td>
+      <td>3</td>
+      <td>876893230</td>
+    </tr>
+    <tr>
+      <th>27</th>
+      <td>1</td>
+      <td>41</td>
+      <td>2</td>
+      <td>876892818</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>1</td>
+      <td>42</td>
+      <td>5</td>
+      <td>876892425</td>
+    </tr>
+    <tr>
+      <th>29</th>
+      <td>1</td>
+      <td>43</td>
+      <td>4</td>
+      <td>878542869</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>79970</th>
+      <td>943</td>
+      <td>720</td>
+      <td>1</td>
+      <td>888640048</td>
+    </tr>
+    <tr>
+      <th>79971</th>
+      <td>943</td>
+      <td>721</td>
+      <td>5</td>
+      <td>888639660</td>
+    </tr>
+    <tr>
+      <th>79972</th>
+      <td>943</td>
+      <td>722</td>
+      <td>3</td>
+      <td>888640208</td>
+    </tr>
+    <tr>
+      <th>79973</th>
+      <td>943</td>
+      <td>724</td>
+      <td>1</td>
+      <td>888639478</td>
+    </tr>
+    <tr>
+      <th>79974</th>
+      <td>943</td>
+      <td>732</td>
+      <td>4</td>
+      <td>888639789</td>
+    </tr>
+    <tr>
+      <th>79975</th>
+      <td>943</td>
+      <td>739</td>
+      <td>4</td>
+      <td>888639929</td>
+    </tr>
+    <tr>
+      <th>79976</th>
+      <td>943</td>
+      <td>756</td>
+      <td>2</td>
+      <td>875502146</td>
+    </tr>
+    <tr>
+      <th>79977</th>
+      <td>943</td>
+      <td>763</td>
+      <td>4</td>
+      <td>875501813</td>
+    </tr>
+    <tr>
+      <th>79978</th>
+      <td>943</td>
+      <td>765</td>
+      <td>3</td>
+      <td>888640227</td>
+    </tr>
+    <tr>
+      <th>79979</th>
+      <td>943</td>
+      <td>785</td>
+      <td>2</td>
+      <td>888640088</td>
+    </tr>
+    <tr>
+      <th>79980</th>
+      <td>943</td>
+      <td>794</td>
+      <td>3</td>
+      <td>888640143</td>
+    </tr>
+    <tr>
+      <th>79981</th>
+      <td>943</td>
+      <td>796</td>
+      <td>3</td>
+      <td>888640311</td>
+    </tr>
+    <tr>
+      <th>79982</th>
+      <td>943</td>
+      <td>808</td>
+      <td>4</td>
+      <td>888639868</td>
+    </tr>
+    <tr>
+      <th>79983</th>
+      <td>943</td>
+      <td>816</td>
+      <td>4</td>
+      <td>888640186</td>
+    </tr>
+    <tr>
+      <th>79984</th>
+      <td>943</td>
+      <td>824</td>
+      <td>4</td>
+      <td>875502483</td>
+    </tr>
+    <tr>
+      <th>79985</th>
+      <td>943</td>
+      <td>825</td>
+      <td>3</td>
+      <td>875502283</td>
+    </tr>
+    <tr>
+      <th>79986</th>
+      <td>943</td>
+      <td>831</td>
+      <td>2</td>
+      <td>875502283</td>
+    </tr>
+    <tr>
+      <th>79987</th>
+      <td>943</td>
+      <td>840</td>
+      <td>4</td>
+      <td>888693104</td>
+    </tr>
+    <tr>
+      <th>79988</th>
+      <td>943</td>
+      <td>928</td>
+      <td>5</td>
+      <td>875502074</td>
+    </tr>
+    <tr>
+      <th>79989</th>
+      <td>943</td>
+      <td>941</td>
+      <td>1</td>
+      <td>888639725</td>
+    </tr>
+    <tr>
+      <th>79990</th>
+      <td>943</td>
+      <td>943</td>
+      <td>5</td>
+      <td>888639614</td>
+    </tr>
+    <tr>
+      <th>79991</th>
+      <td>943</td>
+      <td>1011</td>
+      <td>2</td>
+      <td>875502560</td>
+    </tr>
+    <tr>
+      <th>79992</th>
+      <td>943</td>
+      <td>1028</td>
+      <td>2</td>
+      <td>875502096</td>
+    </tr>
+    <tr>
+      <th>79993</th>
+      <td>943</td>
+      <td>1044</td>
+      <td>3</td>
+      <td>888639903</td>
+    </tr>
+    <tr>
+      <th>79994</th>
+      <td>943</td>
+      <td>1047</td>
+      <td>2</td>
+      <td>875502146</td>
+    </tr>
+    <tr>
+      <th>79995</th>
+      <td>943</td>
+      <td>1067</td>
+      <td>2</td>
+      <td>875501756</td>
+    </tr>
+    <tr>
+      <th>79996</th>
+      <td>943</td>
+      <td>1074</td>
+      <td>4</td>
+      <td>888640250</td>
+    </tr>
+    <tr>
+      <th>79997</th>
+      <td>943</td>
+      <td>1188</td>
+      <td>3</td>
+      <td>888640250</td>
+    </tr>
+    <tr>
+      <th>79998</th>
+      <td>943</td>
+      <td>1228</td>
+      <td>3</td>
+      <td>888640275</td>
+    </tr>
+    <tr>
+      <th>79999</th>
+      <td>943</td>
+      <td>1330</td>
+      <td>3</td>
+      <td>888692465</td>
+    </tr>
+  </tbody>
+</table>
+<p>80000 rows × 4 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">M</span> <span class="o">=</span> <span class="mi">1682</span> <span class="c1">#number of movies</span>
+<span class="n">N</span> <span class="o">=</span> <span class="mi">943</span> <span class="c1">#number of users</span>
+
+<span class="n">R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">M</span><span class="p">,</span><span class="n">N</span><span class="p">))</span> <span class="c1">#datamatrix</span>
+
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ratings</span><span class="p">)):</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[</span><span class="s1">&#39;movie_id&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[</span><span class="s1">&#39;rating&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+    <span class="n">R</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+<span class="nb">print</span> <span class="n">R</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[[1. 1. 0. ... 1. 0. 0.]
+ [1. 0. 0. ... 0. 0. 1.]
+ [1. 0. 0. ... 0. 0. 0.]
+ ...
+ [0. 0. 0. ... 0. 0. 0.]
+ [0. 0. 0. ... 0. 0. 0.]
+ [0. 0. 0. ... 0. 0. 0.]]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">Data</span> <span class="o">=</span> <span class="n">R</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span><span class="mi">5</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span> <span class="c1">#Sample from original data matrix</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">Data</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span><span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s1">&#39;binary&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Users&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Movies&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+" />
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">M</span><span class="o">*</span><span class="n">N</span><span class="p">,</span><span class="n">M</span><span class="o">+</span><span class="n">N</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">M</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="n">x_train</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">N</span><span class="o">+</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">x_train</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">N</span><span class="o">+</span><span class="n">j</span><span class="p">,</span><span class="n">j</span><span class="o">+</span><span class="n">M</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">x_train</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([[1., 0., 0., ..., 0., 0., 0.],
+       [1., 0., 0., ..., 0., 0., 0.],
+       [1., 0., 0., ..., 0., 0., 0.],
+       ...,
+       [0., 0., 0., ..., 1., 0., 0.],
+       [0., 0., 0., ..., 0., 1., 0.],
+       [0., 0., 0., ..., 0., 0., 1.]])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">y_train</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">M</span><span class="o">*</span><span class="n">N</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="nb">print</span> <span class="n">y_train</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[1. 1. 0. ... 0. 0. 0.]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">x_train</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">(</span><span class="n">y_train</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_m</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">M</span><span class="p">,</span><span class="mi">64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear_u</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="mi">64</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span><span class="mi">32</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span><span class="mi">16</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">linear3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">x_m</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="n">M</span><span class="p">]</span>
+        <span class="n">x_u</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span><span class="n">M</span><span class="p">:</span><span class="n">M</span><span class="o">+</span><span class="n">N</span><span class="p">]</span>
+        <span class="n">x_m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_m</span><span class="p">(</span><span class="n">x_m</span><span class="p">)</span>
+        <span class="n">x_u</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linear_u</span><span class="p">(</span><span class="n">x_u</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">x_m</span><span class="p">,</span><span class="n">x_u</span><span class="p">),</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linear1</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linear2</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">linear3</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">net</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Net(
+  (linear_m): Linear(in_features=1682, out_features=64, bias=True)
+  (linear_u): Linear(in_features=943, out_features=64, bias=True)
+  (linear1): Linear(in_features=128, out_features=32, bias=True)
+  (linear2): Linear(in_features=32, out_features=16, bias=True)
+  (linear3): Linear(in_features=16, out_features=1, bias=True)
+)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">out</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tensor([0.5633, 0.5632, 0.5631,  ..., 0.5629, 0.5629, 0.5638],
+       grad_fn=&lt;SqueezeBackward0&gt;)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="c1">#gerek kalmıyor. cross_entropy de aynı şekilde softmax istemiyor </span>
+<span class="n">loss_func</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">binary_cross_entropy</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">loss_func</span><span class="p">(</span><span class="n">net</span><span class="p">(</span><span class="n">x_train</span><span class="p">),</span> <span class="n">y_train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>tensor(0.8163, grad_fn=&lt;BinaryCrossEntropyBackward&gt;)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">train_ds</span> <span class="o">=</span> <span class="n">TensorDataset</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<span class="n">train_dl</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">optim</span>
+<span class="k">def</span> <span class="nf">get_model</span><span class="p">():</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Net</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">model</span><span class="p">,</span> <span class="n">opt</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">xb</span><span class="p">,</span> <span class="n">yb</span> <span class="ow">in</span> <span class="n">train_dl</span><span class="p">:</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">xb</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_func</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">yb</span><span class="p">)</span>
+
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">opt</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">loss_func</span><span class="p">(</span><span class="n">model</span><span class="p">(</span><span class="n">x_train</span><span class="p">),</span> <span class="n">y_train</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tensor(0.6071, grad_fn=&lt;BinaryCrossEntropyBackward&gt;)
+tensor(0.2671, grad_fn=&lt;BinaryCrossEntropyBackward&gt;)
+tensor(0.0290, grad_fn=&lt;BinaryCrossEntropyBackward&gt;)
+tensor(0.0433, grad_fn=&lt;BinaryCrossEntropyBackward&gt;)
+tensor(0.0727, grad_fn=&lt;BinaryCrossEntropyBackward&gt;)
+tensor(0.1391, grad_fn=&lt;BinaryCrossEntropyBackward&gt;)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">pred</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">R_pred</span> <span class="o">=</span> <span class="n">pred</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">M</span><span class="p">,</span><span class="n">N</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">Data</span> <span class="o">=</span> <span class="n">R_pred</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">20</span><span class="p">,</span><span class="mi">5</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span> <span class="c1">#Sample from original data matrix</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">Data</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span><span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">set_cmap</span><span class="p">(</span><span class="s1">&#39;binary&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Users&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Movies&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+" />
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/pytorch/visualization/movie/ncf/2021/07/03/ncf-from-scratch-pytorch.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

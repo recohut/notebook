@@ -1,0 +1,4617 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Movie Recommender System | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Movie Recommender System" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Content-based and collaborative recommendation methods on MovieLens" />
+<meta property="og:description" content="Content-based and collaborative recommendation methods on MovieLens" />
+<link rel="canonical" href="https://nb.recohut.com/movie/2021/06/24/movie-recommender-system.html" />
+<meta property="og:url" content="https://nb.recohut.com/movie/2021/06/24/movie-recommender-system.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-24T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Movie Recommender System" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-24T00:00:00-05:00","datePublished":"2021-06-24T00:00:00-05:00","description":"Content-based and collaborative recommendation methods on MovieLens","headline":"Movie Recommender System","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/movie/2021/06/24/movie-recommender-system.html"},"url":"https://nb.recohut.com/movie/2021/06/24/movie-recommender-system.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Movie Recommender System</h1><p class="page-description">Content-based and collaborative recommendation methods on MovieLens</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-24T00:00:00-05:00" itemprop="datePublished">
+        Jun 24, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      24 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#movie">movie</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-24-movie-recommender-system.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-24-movie-recommender-system.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-24-movie-recommender-system.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-24-movie-recommender-system.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Load-data">Load data </a></li>
+<li class="toc-entry toc-h2"><a href="#Clean-data">Clean data </a></li>
+<li class="toc-entry toc-h2"><a href="#Content-based-Recommender">Content-based Recommender </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Preprocess-data">Preprocess data </a></li>
+<li class="toc-entry toc-h3"><a href="#Vectorize-using-TF-IDF">Vectorize using TF-IDF </a></li>
+<li class="toc-entry toc-h3"><a href="#Cosine-similarity-matrix">Cosine similarity matrix </a></li>
+<li class="toc-entry toc-h3"><a href="#Get-recommendations">Get recommendations </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Collaborative-Filtering">Collaborative Filtering </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Item-based-Recommender">Item-based Recommender </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#User-Item-matrix">User-Item matrix </a></li>
+<li class="toc-entry toc-h4"><a href="#Mean-rating-of-each-movie">Mean rating of each movie </a></li>
+<li class="toc-entry toc-h4"><a href="#Use-k-nearest-neighbors-to-predict-score">Use k nearest neighbors to predict score </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h3"><a href="#Model-based-Recommender">Model-based Recommender </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#User-Item-matrix">User-Item matrix </a></li>
+<li class="toc-entry toc-h4"><a href="#SVD-Decomposition:-Low-rank-factorization">SVD Decomposition: Low rank factorization </a></li>
+<li class="toc-entry toc-h4"><a href="#Predict-score">Predict score </a></li>
+<li class="toc-entry toc-h4"><a href="#Evaluate-model">Evaluate model </a>
+<ul>
+<li class="toc-entry toc-h5"><a href="#Evaluate-with-different-value-k">Evaluate with different value k </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h4"><a href="#Recommend-movies">Recommend movies </a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-24-movie-recommender-system.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Load-data">
+<a class="anchor" href="#Load-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Load data<a class="anchor-link" href="#Load-data"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">mkdir</span> <span class="s1">'/content/data'</span>
+
+<span class="kn">from</span> <span class="nn">google_drive_downloader</span> <span class="kn">import</span> <span class="n">GoogleDriveDownloader</span> <span class="k">as</span> <span class="n">gdd</span>
+
+<span class="n">gdd</span><span class="o">.</span><span class="n">download_file_from_google_drive</span><span class="p">(</span><span class="n">file_id</span><span class="o">=</span><span class="s1">'1Of9rK8ds1a1iyl1jFnf_7oRgPB-8bfdK'</span><span class="p">,</span>
+                                    <span class="n">dest_path</span><span class="o">=</span><span class="s1">'/content/data/data.zip'</span><span class="p">,</span>
+                                    <span class="n">unzip</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Downloading 1Of9rK8ds1a1iyl1jFnf_7oRgPB-8bfdK into /content/data/data.zip... Done.
+Unzipping...Done.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Clean-data">
+<a class="anchor" href="#Clean-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Clean data<a class="anchor-link" href="#Clean-data"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">ast</span> <span class="kn">import</span> <span class="n">literal_eval</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">md</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"/content/data/imdb/movies_metadata.csv"</span><span class="p">)</span>
+<span class="n">credits</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'/content/data/imdb/credits.csv'</span><span class="p">)</span>
+<span class="n">keywords</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'/content/data/imdb/keywords.csv'</span><span class="p">)</span>
+<span class="n">links_small</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'/content/data/imdb/links_small.csv'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">md</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>adult</th>
+      <th>belongs_to_collection</th>
+      <th>budget</th>
+      <th>genres</th>
+      <th>homepage</th>
+      <th>id</th>
+      <th>imdb_id</th>
+      <th>original_language</th>
+      <th>original_title</th>
+      <th>overview</th>
+      <th>popularity</th>
+      <th>poster_path</th>
+      <th>production_companies</th>
+      <th>production_countries</th>
+      <th>release_date</th>
+      <th>revenue</th>
+      <th>runtime</th>
+      <th>spoken_languages</th>
+      <th>status</th>
+      <th>tagline</th>
+      <th>title</th>
+      <th>video</th>
+      <th>vote_average</th>
+      <th>vote_count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>False</td>
+      <td>{'id': 10194, 'name': 'Toy Story Collection', ...</td>
+      <td>30000000</td>
+      <td>[{'id': 16, 'name': 'Animation'}, {'id': 35, '...</td>
+      <td>http://toystory.disney.com/toy-story</td>
+      <td>862</td>
+      <td>tt0114709</td>
+      <td>en</td>
+      <td>Toy Story</td>
+      <td>Led by Woody, Andy's toys live happily in his ...</td>
+      <td>21.9469</td>
+      <td>/rhIRbceoE9lR4veEXuwCC2wARtG.jpg</td>
+      <td>[{'name': 'Pixar Animation Studios', 'id': 3}]</td>
+      <td>[{'iso_3166_1': 'US', 'name': 'United States o...</td>
+      <td>1995-10-30</td>
+      <td>373554033.0</td>
+      <td>81.0</td>
+      <td>[{'iso_639_1': 'en', 'name': 'English'}]</td>
+      <td>Released</td>
+      <td>NaN</td>
+      <td>Toy Story</td>
+      <td>False</td>
+      <td>7.7</td>
+      <td>5415.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>False</td>
+      <td>NaN</td>
+      <td>65000000</td>
+      <td>[{'id': 12, 'name': 'Adventure'}, {'id': 14, '...</td>
+      <td>NaN</td>
+      <td>8844</td>
+      <td>tt0113497</td>
+      <td>en</td>
+      <td>Jumanji</td>
+      <td>When siblings Judy and Peter discover an encha...</td>
+      <td>17.0155</td>
+      <td>/vzmL6fP7aPKNKPRTFnZmiUfciyV.jpg</td>
+      <td>[{'name': 'TriStar Pictures', 'id': 559}, {'na...</td>
+      <td>[{'iso_3166_1': 'US', 'name': 'United States o...</td>
+      <td>1995-12-15</td>
+      <td>262797249.0</td>
+      <td>104.0</td>
+      <td>[{'iso_639_1': 'en', 'name': 'English'}, {'iso...</td>
+      <td>Released</td>
+      <td>Roll the dice and unleash the excitement!</td>
+      <td>Jumanji</td>
+      <td>False</td>
+      <td>6.9</td>
+      <td>2413.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>False</td>
+      <td>{'id': 119050, 'name': 'Grumpy Old Men Collect...</td>
+      <td>0</td>
+      <td>[{'id': 10749, 'name': 'Romance'}, {'id': 35, ...</td>
+      <td>NaN</td>
+      <td>15602</td>
+      <td>tt0113228</td>
+      <td>en</td>
+      <td>Grumpier Old Men</td>
+      <td>A family wedding reignites the ancient feud be...</td>
+      <td>11.7129</td>
+      <td>/6ksm1sjKMFLbO7UY2i6G1ju9SML.jpg</td>
+      <td>[{'name': 'Warner Bros.', 'id': 6194}, {'name'...</td>
+      <td>[{'iso_3166_1': 'US', 'name': 'United States o...</td>
+      <td>1995-12-22</td>
+      <td>0.0</td>
+      <td>101.0</td>
+      <td>[{'iso_639_1': 'en', 'name': 'English'}]</td>
+      <td>Released</td>
+      <td>Still Yelling. Still Fighting. Still Ready for...</td>
+      <td>Grumpier Old Men</td>
+      <td>False</td>
+      <td>6.5</td>
+      <td>92.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>False</td>
+      <td>NaN</td>
+      <td>16000000</td>
+      <td>[{'id': 35, 'name': 'Comedy'}, {'id': 18, 'nam...</td>
+      <td>NaN</td>
+      <td>31357</td>
+      <td>tt0114885</td>
+      <td>en</td>
+      <td>Waiting to Exhale</td>
+      <td>Cheated on, mistreated and stepped on, the wom...</td>
+      <td>3.85949</td>
+      <td>/16XOMpEaLWkrcPqSQqhTmeJuqQl.jpg</td>
+      <td>[{'name': 'Twentieth Century Fox Film Corporat...</td>
+      <td>[{'iso_3166_1': 'US', 'name': 'United States o...</td>
+      <td>1995-12-22</td>
+      <td>81452156.0</td>
+      <td>127.0</td>
+      <td>[{'iso_639_1': 'en', 'name': 'English'}]</td>
+      <td>Released</td>
+      <td>Friends are the people who let you be yourself...</td>
+      <td>Waiting to Exhale</td>
+      <td>False</td>
+      <td>6.1</td>
+      <td>34.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>False</td>
+      <td>{'id': 96871, 'name': 'Father of the Bride Col...</td>
+      <td>0</td>
+      <td>[{'id': 35, 'name': 'Comedy'}]</td>
+      <td>NaN</td>
+      <td>11862</td>
+      <td>tt0113041</td>
+      <td>en</td>
+      <td>Father of the Bride Part II</td>
+      <td>Just when George Banks has recovered from his ...</td>
+      <td>8.38752</td>
+      <td>/e64sOI48hQXyru7naBFyssKFxVd.jpg</td>
+      <td>[{'name': 'Sandollar Productions', 'id': 5842}...</td>
+      <td>[{'iso_3166_1': 'US', 'name': 'United States o...</td>
+      <td>1995-02-10</td>
+      <td>76578911.0</td>
+      <td>106.0</td>
+      <td>[{'iso_639_1': 'en', 'name': 'English'}]</td>
+      <td>Released</td>
+      <td>Just When His World Is Back To Normal... He's ...</td>
+      <td>Father of the Bride Part II</td>
+      <td>False</td>
+      <td>5.7</td>
+      <td>173.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">links_small</span> <span class="o">=</span> <span class="n">links_small</span><span class="p">[</span><span class="n">links_small</span><span class="p">[</span><span class="s1">'tmdbId'</span><span class="p">]</span><span class="o">.</span><span class="n">notnull</span><span class="p">()][</span><span class="s1">'tmdbId'</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)</span>
+
+<span class="n">md</span><span class="p">[</span><span class="s1">'year'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">md</span><span class="p">[</span><span class="s1">'release_date'</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s1">'coerce'</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'-'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+<span class="n">md</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">'genres'</span><span class="p">]</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">'genres'</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s1">'[]'</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">literal_eval</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[])</span>
+<span class="n">md</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="mi">19730</span><span class="p">,</span> <span class="mi">29503</span><span class="p">,</span> <span class="mi">35587</span><span class="p">])</span>
+<span class="n">keywords</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">'id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">keywords</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)</span>
+<span class="n">credits</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">'id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">credits</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)</span>
+<span class="n">md</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">'id'</span><span class="p">]</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'int'</span><span class="p">)</span>
+
+<span class="n">md</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">credits</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">'id'</span><span class="p">)</span>
+<span class="n">md</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">keywords</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">'id'</span><span class="p">)</span>
+
+<span class="n">smd</span> <span class="o">=</span> <span class="n">md</span><span class="p">[</span><span class="n">md</span><span class="p">[</span><span class="s1">'id'</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">links_small</span><span class="p">)]</span>
+
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">'tagline'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'tagline'</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s1">''</span><span class="p">)</span>
+
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'cast'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'cast'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">literal_eval</span><span class="p">)</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'crew'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'crew'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">literal_eval</span><span class="p">)</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'keywords'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'keywords'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">literal_eval</span><span class="p">)</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'cast_size'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'cast'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'crew_size'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'crew'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">get_director</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span><span class="p">[</span><span class="s1">'job'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'Director'</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">i</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'director'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'crew'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">get_director</span><span class="p">)</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'cast'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'cast'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[])</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'cast'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'cast'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;=</span><span class="mi">3</span> <span class="k">else</span> <span class="n">x</span><span class="p">)</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'keywords'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'keywords'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[])</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">smd</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s1">'keywords'</span><span class="p">]),</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">'keyword'</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">s</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">filter_keywords</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">words</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="n">words</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">words</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'keywords'</span><span class="p">]</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[</span><span class="s1">'keywords'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">filter_keywords</span><span class="p">)</span>
+<span class="n">smd</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span> <span class="o">=</span><span class="s2">"title"</span><span class="p">,</span>
+                     <span class="n">keep</span> <span class="o">=</span> <span class="s1">'first'</span><span class="p">,</span> <span class="n">inplace</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">out_df</span> <span class="o">=</span> <span class="n">smd</span><span class="p">[[</span><span class="s1">'id'</span><span class="p">,</span> <span class="s1">'title'</span><span class="p">,</span> <span class="s1">'year'</span><span class="p">,</span> <span class="s1">'director'</span><span class="p">,</span> <span class="s1">'cast'</span><span class="p">,</span>  <span class="s1">'genres'</span><span class="p">,</span> <span class="s1">'vote_count'</span><span class="p">,</span> <span class="s1">'vote_average'</span><span class="p">,</span>  <span class="s1">'overview'</span><span class="p">,</span> <span class="s1">'keywords'</span><span class="p">]]</span>
+<span class="n">out_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="n">out_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">'super_clean_data.csv'</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">out_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>title</th>
+      <th>year</th>
+      <th>director</th>
+      <th>cast</th>
+      <th>genres</th>
+      <th>vote_count</th>
+      <th>vote_average</th>
+      <th>overview</th>
+      <th>keywords</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>862</td>
+      <td>Toy Story</td>
+      <td>1995</td>
+      <td>John Lasseter</td>
+      <td>[Tom Hanks, Tim Allen, Don Rickles]</td>
+      <td>[Animation, Comedy, Family]</td>
+      <td>5415.0</td>
+      <td>7.7</td>
+      <td>Led by Woody, Andy's toys live happily in his ...</td>
+      <td>[jealousy, toy, boy, friendship, friends, riva...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8844</td>
+      <td>Jumanji</td>
+      <td>1995</td>
+      <td>Joe Johnston</td>
+      <td>[Robin Williams, Jonathan Hyde, Kirsten Dunst]</td>
+      <td>[Adventure, Fantasy, Family]</td>
+      <td>2413.0</td>
+      <td>6.9</td>
+      <td>When siblings Judy and Peter discover an encha...</td>
+      <td>[board game, disappearance, based on children'...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>15602</td>
+      <td>Grumpier Old Men</td>
+      <td>1995</td>
+      <td>Howard Deutch</td>
+      <td>[Walter Matthau, Jack Lemmon, Ann-Margret]</td>
+      <td>[Romance, Comedy]</td>
+      <td>92.0</td>
+      <td>6.5</td>
+      <td>A family wedding reignites the ancient feud be...</td>
+      <td>[fishing, best friend, duringcreditsstinger]</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>31357</td>
+      <td>Waiting to Exhale</td>
+      <td>1995</td>
+      <td>Forest Whitaker</td>
+      <td>[Whitney Houston, Angela Bassett, Loretta Devine]</td>
+      <td>[Comedy, Drama, Romance]</td>
+      <td>34.0</td>
+      <td>6.1</td>
+      <td>Cheated on, mistreated and stepped on, the wom...</td>
+      <td>[based on novel, interracial relationship, sin...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>11862</td>
+      <td>Father of the Bride Part II</td>
+      <td>1995</td>
+      <td>Charles Shyer</td>
+      <td>[Steve Martin, Diane Keaton, Martin Short]</td>
+      <td>[Comedy]</td>
+      <td>173.0</td>
+      <td>5.7</td>
+      <td>Just when George Banks has recovered from his ...</td>
+      <td>[baby, midlife crisis, confidence, aging, daug...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Content-based-Recommender">
+<a class="anchor" href="#Content-based-Recommender" aria-hidden="true"><span class="octicon octicon-link"></span></a>Content-based Recommender<a class="anchor-link" href="#Content-based-Recommender"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">ast</span> <span class="kn">import</span> <span class="n">literal_eval</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_extraction.text</span> <span class="kn">import</span> <span class="n">TfidfVectorizer</span><span class="p">,</span> <span class="n">CountVectorizer</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">linear_kernel</span><span class="p">,</span> <span class="n">cosine_similarity</span>
+<span class="kn">from</span> <span class="nn">nltk.stem.snowball</span> <span class="kn">import</span> <span class="n">SnowballStemmer</span>
+<span class="kn">from</span> <span class="nn">nltk.stem.wordnet</span> <span class="kn">import</span> <span class="n">WordNetLemmatizer</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">ori_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">'/content/super_clean_data.csv'</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">ori_df</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>title</th>
+      <th>year</th>
+      <th>director</th>
+      <th>cast</th>
+      <th>genres</th>
+      <th>vote_count</th>
+      <th>vote_average</th>
+      <th>overview</th>
+      <th>keywords</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>862</td>
+      <td>Toy Story</td>
+      <td>1995</td>
+      <td>John Lasseter</td>
+      <td>['Tom Hanks', 'Tim Allen', 'Don Rickles']</td>
+      <td>['Animation', 'Comedy', 'Family']</td>
+      <td>5415.0</td>
+      <td>7.7</td>
+      <td>Led by Woody, Andy's toys live happily in his ...</td>
+      <td>['jealousy', 'toy', 'boy', 'friendship', 'frie...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8844</td>
+      <td>Jumanji</td>
+      <td>1995</td>
+      <td>Joe Johnston</td>
+      <td>['Robin Williams', 'Jonathan Hyde', 'Kirsten D...</td>
+      <td>['Adventure', 'Fantasy', 'Family']</td>
+      <td>2413.0</td>
+      <td>6.9</td>
+      <td>When siblings Judy and Peter discover an encha...</td>
+      <td>['board game', 'disappearance', "based on chil...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>15602</td>
+      <td>Grumpier Old Men</td>
+      <td>1995</td>
+      <td>Howard Deutch</td>
+      <td>['Walter Matthau', 'Jack Lemmon', 'Ann-Margret']</td>
+      <td>['Romance', 'Comedy']</td>
+      <td>92.0</td>
+      <td>6.5</td>
+      <td>A family wedding reignites the ancient feud be...</td>
+      <td>['fishing', 'best friend', 'duringcreditssting...</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>31357</td>
+      <td>Waiting to Exhale</td>
+      <td>1995</td>
+      <td>Forest Whitaker</td>
+      <td>['Whitney Houston', 'Angela Bassett', 'Loretta...</td>
+      <td>['Comedy', 'Drama', 'Romance']</td>
+      <td>34.0</td>
+      <td>6.1</td>
+      <td>Cheated on, mistreated and stepped on, the wom...</td>
+      <td>['based on novel', 'interracial relationship',...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>11862</td>
+      <td>Father of the Bride Part II</td>
+      <td>1995</td>
+      <td>Charles Shyer</td>
+      <td>['Steve Martin', 'Diane Keaton', 'Martin Short']</td>
+      <td>['Comedy']</td>
+      <td>173.0</td>
+      <td>5.7</td>
+      <td>Just when George Banks has recovered from his ...</td>
+      <td>['baby', 'midlife crisis', 'confidence', 'agin...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"No of records: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>No of records: 8809
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Preprocess-data">
+<a class="anchor" href="#Preprocess-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Preprocess data<a class="anchor-link" href="#Preprocess-data"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'cast'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'cast'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">literal_eval</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'genres'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'genres'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">literal_eval</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'keywords'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'keywords'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">literal_eval</span><span class="p">)</span>
+
+<span class="n">stemmer</span> <span class="o">=</span> <span class="n">SnowballStemmer</span><span class="p">(</span><span class="s1">'english'</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">preprocess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">remove_spaces</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stemming</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+            <span class="n">token</span> <span class="o">=</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">remove_spaces</span><span class="p">,</span> <span class="n">stemming</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">token</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        
+        <span class="n">y</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># Lower all words</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">lower</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="c1"># Remove spaces (for person's name)</span>
+        <span class="k">if</span> <span class="n">remove_spaces</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">" "</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+
+        <span class="c1"># Remove digits</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="s1">''</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">y</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()])</span>
+
+        <span class="c1"># Stemming words</span>
+        <span class="k">if</span> <span class="n">stemming</span><span class="p">:</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">stemmer</span><span class="o">.</span><span class="n">stem</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">&lt;=</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">y</span>
+
+
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'cast'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'cast'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">remove_spaces</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'director'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'director'</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">'str'</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">remove_spaces</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">'title'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'title'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stemming</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">'overview'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'overview'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">preprocess</span><span class="p">(</span><span class="nb">str</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">stemming</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">'genres'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'genres'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stemming</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">'keywords'</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'keywords'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">preprocess</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">stemming</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>title</th>
+      <th>year</th>
+      <th>director</th>
+      <th>cast</th>
+      <th>genres</th>
+      <th>vote_count</th>
+      <th>vote_average</th>
+      <th>overview</th>
+      <th>keywords</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>862</td>
+      <td>toy stori</td>
+      <td>1995</td>
+      <td>johnlasseter</td>
+      <td>[tomhanks, timallen, donrickles]</td>
+      <td>[anim, comedi, famili]</td>
+      <td>5415.0</td>
+      <td>7.7</td>
+      <td>[led, by, woody,, andi, toy, live, happili, in...</td>
+      <td>[jealousi, toy, boy, friendship, friend, rival...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8844</td>
+      <td>jumanji</td>
+      <td>1995</td>
+      <td>joejohnston</td>
+      <td>[robinwilliams, jonathanhyde, kirstendunst]</td>
+      <td>[adventur, fantasi, famili]</td>
+      <td>2413.0</td>
+      <td>6.9</td>
+      <td>[when, sibl, judi, and, peter, discov, an, enc...</td>
+      <td>[board gam, disappear, based on children's boo...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>15602</td>
+      <td>grumpier old men</td>
+      <td>1995</td>
+      <td>howarddeutch</td>
+      <td>[waltermatthau, jacklemmon, ann-margret]</td>
+      <td>[romanc, comedi]</td>
+      <td>92.0</td>
+      <td>6.5</td>
+      <td>[famili, wed, reignit, the, ancient, feud, bet...</td>
+      <td>[fish, best friend, duringcreditssting]</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>31357</td>
+      <td>waiting to exhal</td>
+      <td>1995</td>
+      <td>forestwhitaker</td>
+      <td>[whitneyhouston, angelabassett, lorettadevine]</td>
+      <td>[comedi, drama, romanc]</td>
+      <td>34.0</td>
+      <td>6.1</td>
+      <td>[cheat, on,, mistreat, and, step, on,, the, wo...</td>
+      <td>[based on novel, interracial relationship, sin...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>11862</td>
+      <td>father of the bride part ii</td>
+      <td>1995</td>
+      <td>charlesshyer</td>
+      <td>[stevemartin, dianekeaton, martinshort]</td>
+      <td>[comedi]</td>
+      <td>173.0</td>
+      <td>5.7</td>
+      <td>[just, when, georg, bank, has, recov, from, hi...</td>
+      <td>[babi, midlife crisi, confid, age, daughter, m...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(8809, 10)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Vectorize-using-TF-IDF">
+<a class="anchor" href="#Vectorize-using-TF-IDF" aria-hidden="true"><span class="octicon octicon-link"></span></a>Vectorize using TF-IDF<a class="anchor-link" href="#Vectorize-using-TF-IDF"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">dictionary</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="p">[</span><span class="n">row</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">director</span><span class="p">]</span> <span class="o">+</span> <span class="n">row</span><span class="o">.</span><span class="n">cast</span> <span class="o">+</span> <span class="n">row</span><span class="o">.</span><span class="n">genres</span> <span class="o">+</span> <span class="n">row</span><span class="o">.</span><span class="n">keywords</span>
+    <span class="n">string</span> <span class="o">=</span> <span class="s1">' '</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">j</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">item</span> <span class="k">if</span> <span class="n">j</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">])</span>
+    <span class="n">dictionary</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+
+
+<span class="n">tf</span> <span class="o">=</span> <span class="n">TfidfVectorizer</span><span class="p">(</span><span class="n">analyzer</span><span class="o">=</span><span class="s1">'word'</span><span class="p">,</span><span class="n">min_df</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">stop_words</span><span class="o">=</span><span class="s1">'english'</span><span class="p">)</span>
+<span class="n">tfidf_matrix</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">dictionary</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tfidf_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">get_feature_names</span><span class="p">()[:</span><span class="mi">10</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(8809, 11312)
+['aaliyah', 'aamirkhan', 'aaronabrams', 'aaroneckhart', 'aarontaylor', 'abandon', 'abandoned', 'abbaskiarostami', 'abbiecornish', 'abbott']
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Cosine-similarity-matrix">
+<a class="anchor" href="#Cosine-similarity-matrix" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cosine similarity matrix<a class="anchor-link" href="#Cosine-similarity-matrix"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">cosine_sim</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">tfidf_matrix</span><span class="p">,</span> <span class="n">tfidf_matrix</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Get-recommendations">
+<a class="anchor" href="#Get-recommendations" aria-hidden="true"><span class="octicon octicon-link"></span></a>Get recommendations<a class="anchor-link" href="#Get-recommendations"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">get_recommendations</span><span class="p">(</span><span class="n">query_title</span><span class="p">,</span> <span class="n">cosine_sim</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">top_k</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+    <span class="n">titles</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'title'</span><span class="p">]</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="p">[</span><span class="s1">'title'</span><span class="p">])</span>
+
+    <span class="c1"># query_title = preprocess(query_title)</span>
+    <span class="n">query_idx</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">query_title</span><span class="p">]</span>
+
+    <span class="c1"># Get similarity score of current movie with others</span>
+    <span class="n">sim_scores</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">cosine_sim</span><span class="p">[</span><span class="n">query_idx</span><span class="p">]))</span>
+
+    <span class="c1"># Sort scores and get top k</span>
+    <span class="n">sim_scores</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sim_scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sim_scores</span> <span class="o">=</span> <span class="n">sim_scores</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">top_k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">movie_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sim_scores</span><span class="p">]</span>
+    <span class="n">movie_scores</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sim_scores</span><span class="p">]</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">titles</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">movie_indices</span><span class="p">]</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+    <span class="n">result</span><span class="p">[</span><span class="s1">'matching_score'</span><span class="p">]</span> <span class="o">=</span> <span class="n">movie_scores</span>
+    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">get_recommendations</span><span class="p">(</span><span class="s2">"The Dark Knight"</span><span class="p">,</span> <span class="n">cosine_sim</span><span class="p">,</span> <span class="n">ori_df</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>title</th>
+      <th>matching_score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>6001</th>
+      <td>Batman Begins</td>
+      <td>0.485814</td>
+    </tr>
+    <tr>
+      <th>7699</th>
+      <td>The Dark Knight Rises</td>
+      <td>0.481957</td>
+    </tr>
+    <tr>
+      <th>1110</th>
+      <td>Batman Returns</td>
+      <td>0.440829</td>
+    </tr>
+    <tr>
+      <th>7355</th>
+      <td>Batman: Under the Red Hood</td>
+      <td>0.414155</td>
+    </tr>
+    <tr>
+      <th>1236</th>
+      <td>Batman &amp; Robin</td>
+      <td>0.356176</td>
+    </tr>
+    <tr>
+      <th>524</th>
+      <td>Batman</td>
+      <td>0.353583</td>
+    </tr>
+    <tr>
+      <th>8641</th>
+      <td>Batman v Superman: Dawn of Justice</td>
+      <td>0.331215</td>
+    </tr>
+    <tr>
+      <th>7989</th>
+      <td>Batman: The Dark Knight Returns, Part 2</td>
+      <td>0.312213</td>
+    </tr>
+    <tr>
+      <th>132</th>
+      <td>Batman Forever</td>
+      <td>0.301016</td>
+    </tr>
+    <tr>
+      <th>2548</th>
+      <td>Batman: Mask of the Phantasm</td>
+      <td>0.297825</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Collaborative-Filtering">
+<a class="anchor" href="#Collaborative-Filtering" aria-hidden="true"><span class="octicon octicon-link"></span></a>Collaborative Filtering<a class="anchor-link" href="#Collaborative-Filtering"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Item-based-Recommender">
+<a class="anchor" href="#Item-based-Recommender" aria-hidden="true"><span class="octicon octicon-link"></span></a>Item-based Recommender<a class="anchor-link" href="#Item-based-Recommender"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">ast</span> <span class="kn">import</span> <span class="n">literal_eval</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">cosine_similarity</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">ratings</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"/content/data/imdb/ratings_small.csv"</span><span class="p">)</span>
+<span class="n">ratings</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>movieId</th>
+      <th>rating</th>
+      <th>timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>31</td>
+      <td>2.5</td>
+      <td>1260759144</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>1029</td>
+      <td>3.0</td>
+      <td>1260759179</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>1061</td>
+      <td>3.0</td>
+      <td>1260759182</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>1129</td>
+      <td>2.0</td>
+      <td>1260759185</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>1172</td>
+      <td>4.0</td>
+      <td>1260759205</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">movie_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"/content/super_clean_data.csv"</span><span class="p">)</span>
+<span class="n">movie_id_title</span> <span class="o">=</span> <span class="n">movie_data</span><span class="p">[[</span><span class="s1">'id'</span><span class="p">,</span> <span class="s1">'title'</span><span class="p">]]</span>
+<span class="n">movie_id_title</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>title</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>862</td>
+      <td>Toy Story</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8844</td>
+      <td>Jumanji</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>15602</td>
+      <td>Grumpier Old Men</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>31357</td>
+      <td>Waiting to Exhale</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>11862</td>
+      <td>Father of the Bride Part II</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">top_ratings</span> <span class="o">=</span> <span class="n">movie_data</span><span class="p">[[</span><span class="s1">'title'</span><span class="p">,</span> <span class="s1">'vote_count'</span><span class="p">]]</span>
+<span class="n">top_ratings</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">'vote_count'</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>title</th>
+      <th>vote_count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>7346</th>
+      <td>Inception</td>
+      <td>14075.0</td>
+    </tr>
+    <tr>
+      <th>6726</th>
+      <td>The Dark Knight</td>
+      <td>12269.0</td>
+    </tr>
+    <tr>
+      <th>7198</th>
+      <td>Avatar</td>
+      <td>12114.0</td>
+    </tr>
+    <tr>
+      <th>8495</th>
+      <td>Deadpool</td>
+      <td>11444.0</td>
+    </tr>
+    <tr>
+      <th>8258</th>
+      <td>Interstellar</td>
+      <td>11187.0</td>
+    </tr>
+    <tr>
+      <th>7966</th>
+      <td>Django Unchained</td>
+      <td>10297.0</td>
+    </tr>
+    <tr>
+      <th>8354</th>
+      <td>Guardians of the Galaxy</td>
+      <td>10014.0</td>
+    </tr>
+    <tr>
+      <th>2343</th>
+      <td>Fight Club</td>
+      <td>9678.0</td>
+    </tr>
+    <tr>
+      <th>7697</th>
+      <td>The Hunger Games</td>
+      <td>9634.0</td>
+    </tr>
+    <tr>
+      <th>8490</th>
+      <td>Mad Max: Fury Road</td>
+      <td>9629.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">new_ratings</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">movie_id_title</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">'movieId'</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s1">'id'</span><span class="p">)</span>
+<span class="n">new_ratings</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>movieId</th>
+      <th>rating</th>
+      <th>timestamp</th>
+      <th>id</th>
+      <th>title</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1371</td>
+      <td>2.5</td>
+      <td>1260759135</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>4</td>
+      <td>1371</td>
+      <td>4.0</td>
+      <td>949810302</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>7</td>
+      <td>1371</td>
+      <td>3.0</td>
+      <td>851869160</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>19</td>
+      <td>1371</td>
+      <td>4.0</td>
+      <td>855193404</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>21</td>
+      <td>1371</td>
+      <td>3.0</td>
+      <td>853852263</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="User-Item-matrix">
+<a class="anchor" href="#User-Item-matrix" aria-hidden="true"><span class="octicon octicon-link"></span></a>User-Item matrix<a class="anchor-link" href="#User-Item-matrix"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">ui_matrix</span> <span class="o">=</span> <span class="n">new_ratings</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="s1">'userId'</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span><span class="s1">'title'</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="s1">'rating'</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">ui_matrix</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>title</th>
+      <th>...And God Created Woman</th>
+      <th>10 Items or Less</th>
+      <th>10 Things I Hate About You</th>
+      <th>10,000 BC</th>
+      <th>11'09''01 - September 11</th>
+      <th>12 Angry Men</th>
+      <th>13 Tzameti</th>
+      <th>1408</th>
+      <th>15 Minutes</th>
+      <th>16 Blocks</th>
+      <th>1984</th>
+      <th>20,000 Leagues Under the Sea</th>
+      <th>2001: A Space Odyssey</th>
+      <th>2010</th>
+      <th>2046</th>
+      <th>21 Grams</th>
+      <th>24 Hour Party People</th>
+      <th>25th Hour</th>
+      <th>28 Days Later</th>
+      <th>28 Weeks Later</th>
+      <th>3 Ninjas: High Noon at Mega Mountain</th>
+      <th>3-Iron</th>
+      <th>300</th>
+      <th>4 Months, 3 Weeks and 2 Days</th>
+      <th>40 Days and 40 Nights</th>
+      <th>42nd Street</th>
+      <th>48 Hrs.</th>
+      <th>50 First Dates</th>
+      <th>54</th>
+      <th>8 Mile</th>
+      <th>8 Women</th>
+      <th>88 Minutes</th>
+      <th>8½</th>
+      <th>A Beautiful Mind</th>
+      <th>A Bridge Too Far</th>
+      <th>A Brief History of Time</th>
+      <th>A Chorus Line</th>
+      <th>A Christmas Carol</th>
+      <th>A Christmas Story</th>
+      <th>A Clockwork Orange</th>
+      <th>...</th>
+      <th>We're No Angels</th>
+      <th>Wee Willie Winkie</th>
+      <th>Weekend at Bernie's</th>
+      <th>Westworld</th>
+      <th>Wet Hot American Summer</th>
+      <th>Whale Rider</th>
+      <th>What Lies Beneath</th>
+      <th>What Women Want</th>
+      <th>What's Eating Gilbert Grape</th>
+      <th>What's New Pussycat?</th>
+      <th>When Harry Met Sally...</th>
+      <th>While You Were Sleeping</th>
+      <th>White Lightning</th>
+      <th>Wilbur Wants to Kill Himself</th>
+      <th>Wild Orchid</th>
+      <th>Wild Strawberries</th>
+      <th>Wild Things</th>
+      <th>Wild Wild West</th>
+      <th>Wild at Heart</th>
+      <th>Willy Wonka &amp; the Chocolate Factory</th>
+      <th>Wings of Desire</th>
+      <th>Women on the Verge of a Nervous Breakdown</th>
+      <th>Working Girl</th>
+      <th>World Trade Center</th>
+      <th>X-Men Origins: Wolverine</th>
+      <th>Y Tu Mamá También</th>
+      <th>Yankee Doodle Dandy</th>
+      <th>You Only Live Twice</th>
+      <th>You, Me and Dupree</th>
+      <th>Young Frankenstein</th>
+      <th>Z</th>
+      <th>Zardoz</th>
+      <th>Zatoichi</th>
+      <th>Zazie dans le métro</th>
+      <th>Zodiac</th>
+      <th>Zombie Flesh Eaters</th>
+      <th>Zombie Holocaust</th>
+      <th>eXistenZ</th>
+      <th>xXx</th>
+      <th>¡Three Amigos!</th>
+    </tr>
+    <tr>
+      <th>userId</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>4.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 1507 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">movie_title</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">columns</span>
+<span class="n">index_movies</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">movie_title</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">movie_title</span><span class="p">))))</span>
+<span class="n">movie_indices</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">movie_title</span><span class="p">)),</span> <span class="n">index</span><span class="o">=</span><span class="n">movie_title</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">movie_indices</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>title
+...And God Created Woman         0
+10 Items or Less                 1
+10 Things I Hate About You       2
+10,000 BC                        3
+11'09''01 - September 11         4
+                              ... 
+Zombie Flesh Eaters           1502
+Zombie Holocaust              1503
+eXistenZ                      1504
+xXx                           1505
+¡Three Amigos!                1506
+Length: 1507, dtype: int64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Mean-rating-of-each-movie">
+<a class="anchor" href="#Mean-rating-of-each-movie" aria-hidden="true"><span class="octicon octicon-link"></span></a>Mean rating of each movie<a class="anchor-link" href="#Mean-rating-of-each-movie"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">sum_ratings</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">num_ratings</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="p">[</span><span class="n">ui_matrix</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+<span class="n">mean_ratings</span> <span class="o">=</span> <span class="n">sum_ratings</span><span class="o">/</span><span class="n">num_ratings</span>
+<span class="n">mean_ratings</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>title
+...And God Created Woman      4.000000
+10 Items or Less              4.318182
+10 Things I Hate About You    2.642857
+10,000 BC                     3.833333
+11'09''01 - September 11      2.000000
+dtype: float64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Use-k-nearest-neighbors-to-predict-score">
+<a class="anchor" href="#Use-k-nearest-neighbors-to-predict-score" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use k nearest neighbors to predict score<a class="anchor-link" href="#Use-k-nearest-neighbors-to-predict-score"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">predict_score</span><span class="p">(</span><span class="n">ui_matrix</span><span class="p">,</span> <span class="n">user_name</span><span class="p">,</span> <span class="n">movie_name</span><span class="p">,</span> <span class="n">mean_ratings</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    
+    <span class="n">movie_id</span> <span class="o">=</span> <span class="n">movie_indices</span><span class="p">[</span><span class="n">movie_name</span><span class="p">]</span>
+    <span class="n">ui_matrix_</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+    <span class="n">cosine_sim</span> <span class="o">=</span> <span class="n">cosine_similarity</span><span class="p">(</span><span class="n">ui_matrix_</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ui_matrix_</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+    <span class="c1"># nearest neighbors</span>
+    <span class="n">sim_scores</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">cosine_sim</span><span class="p">[</span><span class="n">movie_id</span><span class="p">]))</span>
+    
+    <span class="c1"># Sort scores and get top k</span>
+    <span class="n">sim_scores</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sim_scores</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sim_scores</span> <span class="o">=</span> <span class="n">sim_scores</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># print(f"Nearest movies of {movie_name}:", end='')</span>
+    <span class="c1"># nearest_neighor_movies = [index_movies[i[0]] for i in sim_scores]</span>
+    <span class="c1"># print(nearest_neighor_movies)</span>
+
+    <span class="n">r_ui</span> <span class="o">=</span> <span class="n">mean_ratings</span><span class="p">[</span><span class="n">movie_name</span><span class="p">]</span>
+
+    <span class="n">total_scores</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">sim_scores</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">movie_j</span><span class="p">,</span> <span class="n">score_ij</span> <span class="ow">in</span> <span class="n">sim_scores</span><span class="p">:</span>
+        <span class="n">r_uj</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">user_name</span><span class="p">,</span> <span class="n">index_movies</span><span class="p">[</span><span class="n">movie_j</span><span class="p">]]</span>
+        <span class="n">rmean_j</span> <span class="o">=</span> <span class="n">mean_ratings</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">movie_j</span><span class="p">]</span>
+        <span class="n">r_ui</span> <span class="o">+=</span> <span class="p">((</span><span class="n">score_ij</span><span class="o">*</span><span class="p">(</span><span class="n">r_uj</span> <span class="o">-</span> <span class="n">rmean_j</span><span class="p">))</span><span class="o">/</span><span class="n">total_scores</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">r_ui</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_id</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">movie_name</span> <span class="o">=</span> <span class="s2">"Young Frankenstein"</span>
+<span class="n">num_neighbors</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="n">score_4yf</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">user_id</span><span class="p">,</span> <span class="n">movie_name</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"True real rating of user </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2"> for movie </span><span class="si">{</span><span class="n">movie_name</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">score_4yf</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">pred_4yf</span> <span class="o">=</span> <span class="n">predict_score</span><span class="p">(</span><span class="n">ui_matrix</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">movie_name</span><span class="p">,</span> <span class="n">mean_ratings</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">num_neighbors</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"True predicted rating of </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2"> for movie </span><span class="si">{</span><span class="n">movie_name</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">pred_4yf</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>True real rating of user 4 for movie Young Frankenstein is 5.0
+True predicted rating of 4 for movie Young Frankenstein is 4.536436084266795
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Model-based-Recommender">
+<a class="anchor" href="#Model-based-Recommender" aria-hidden="true"><span class="octicon octicon-link"></span></a>Model-based Recommender<a class="anchor-link" href="#Model-based-Recommender"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">ast</span> <span class="kn">import</span> <span class="n">literal_eval</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">csr_matrix</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse.linalg</span> <span class="kn">import</span> <span class="n">svds</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">cosine_similarity</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">ratings</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"/content/data/imdb/ratings_small.csv"</span><span class="p">)</span>
+<span class="n">ratings</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>movieId</th>
+      <th>rating</th>
+      <th>timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>31</td>
+      <td>2.5</td>
+      <td>1260759144</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>1029</td>
+      <td>3.0</td>
+      <td>1260759179</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>1061</td>
+      <td>3.0</td>
+      <td>1260759182</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>1129</td>
+      <td>2.0</td>
+      <td>1260759185</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>1172</td>
+      <td>4.0</td>
+      <td>1260759205</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">movie_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"/content/super_clean_data.csv"</span><span class="p">)</span>
+<span class="n">movie_id_title</span> <span class="o">=</span> <span class="n">movie_data</span><span class="p">[[</span><span class="s1">'id'</span><span class="p">,</span> <span class="s1">'title'</span><span class="p">]]</span>
+<span class="n">movie_id_title</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>id</th>
+      <th>title</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>862</td>
+      <td>Toy Story</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>8844</td>
+      <td>Jumanji</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>15602</td>
+      <td>Grumpier Old Men</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>31357</td>
+      <td>Waiting to Exhale</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>11862</td>
+      <td>Father of the Bride Part II</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">new_ratings</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">movie_id_title</span><span class="p">,</span> <span class="n">left_on</span><span class="o">=</span><span class="s1">'movieId'</span><span class="p">,</span> <span class="n">right_on</span><span class="o">=</span><span class="s1">'id'</span><span class="p">)</span>
+<span class="n">new_ratings</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>movieId</th>
+      <th>rating</th>
+      <th>timestamp</th>
+      <th>id</th>
+      <th>title</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1371</td>
+      <td>2.5</td>
+      <td>1260759135</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>4</td>
+      <td>1371</td>
+      <td>4.0</td>
+      <td>949810302</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>7</td>
+      <td>1371</td>
+      <td>3.0</td>
+      <td>851869160</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>19</td>
+      <td>1371</td>
+      <td>4.0</td>
+      <td>855193404</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>21</td>
+      <td>1371</td>
+      <td>3.0</td>
+      <td>853852263</td>
+      <td>1371</td>
+      <td>Rocky III</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="User-Item-matrix">
+<a class="anchor" href="#User-Item-matrix" aria-hidden="true"><span class="octicon octicon-link"></span></a>User-Item matrix<a class="anchor-link" href="#User-Item-matrix"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">ui_matrix</span> <span class="o">=</span> <span class="n">new_ratings</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="s1">'userId'</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span><span class="s1">'title'</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="s1">'rating'</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">ui_matrix</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>title</th>
+      <th>...And God Created Woman</th>
+      <th>10 Items or Less</th>
+      <th>10 Things I Hate About You</th>
+      <th>10,000 BC</th>
+      <th>11'09''01 - September 11</th>
+      <th>12 Angry Men</th>
+      <th>13 Tzameti</th>
+      <th>1408</th>
+      <th>15 Minutes</th>
+      <th>16 Blocks</th>
+      <th>1984</th>
+      <th>20,000 Leagues Under the Sea</th>
+      <th>2001: A Space Odyssey</th>
+      <th>2010</th>
+      <th>2046</th>
+      <th>21 Grams</th>
+      <th>24 Hour Party People</th>
+      <th>25th Hour</th>
+      <th>28 Days Later</th>
+      <th>28 Weeks Later</th>
+      <th>3 Ninjas: High Noon at Mega Mountain</th>
+      <th>3-Iron</th>
+      <th>300</th>
+      <th>4 Months, 3 Weeks and 2 Days</th>
+      <th>40 Days and 40 Nights</th>
+      <th>42nd Street</th>
+      <th>48 Hrs.</th>
+      <th>50 First Dates</th>
+      <th>54</th>
+      <th>8 Mile</th>
+      <th>8 Women</th>
+      <th>88 Minutes</th>
+      <th>8½</th>
+      <th>A Beautiful Mind</th>
+      <th>A Bridge Too Far</th>
+      <th>A Brief History of Time</th>
+      <th>A Chorus Line</th>
+      <th>A Christmas Carol</th>
+      <th>A Christmas Story</th>
+      <th>A Clockwork Orange</th>
+      <th>...</th>
+      <th>We're No Angels</th>
+      <th>Wee Willie Winkie</th>
+      <th>Weekend at Bernie's</th>
+      <th>Westworld</th>
+      <th>Wet Hot American Summer</th>
+      <th>Whale Rider</th>
+      <th>What Lies Beneath</th>
+      <th>What Women Want</th>
+      <th>What's Eating Gilbert Grape</th>
+      <th>What's New Pussycat?</th>
+      <th>When Harry Met Sally...</th>
+      <th>While You Were Sleeping</th>
+      <th>White Lightning</th>
+      <th>Wilbur Wants to Kill Himself</th>
+      <th>Wild Orchid</th>
+      <th>Wild Strawberries</th>
+      <th>Wild Things</th>
+      <th>Wild Wild West</th>
+      <th>Wild at Heart</th>
+      <th>Willy Wonka &amp; the Chocolate Factory</th>
+      <th>Wings of Desire</th>
+      <th>Women on the Verge of a Nervous Breakdown</th>
+      <th>Working Girl</th>
+      <th>World Trade Center</th>
+      <th>X-Men Origins: Wolverine</th>
+      <th>Y Tu Mamá También</th>
+      <th>Yankee Doodle Dandy</th>
+      <th>You Only Live Twice</th>
+      <th>You, Me and Dupree</th>
+      <th>Young Frankenstein</th>
+      <th>Z</th>
+      <th>Zardoz</th>
+      <th>Zatoichi</th>
+      <th>Zazie dans le métro</th>
+      <th>Zodiac</th>
+      <th>Zombie Flesh Eaters</th>
+      <th>Zombie Holocaust</th>
+      <th>eXistenZ</th>
+      <th>xXx</th>
+      <th>¡Three Amigos!</th>
+    </tr>
+    <tr>
+      <th>userId</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>3.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>4.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 1507 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="SVD-Decomposition:-Low-rank-factorization">
+<a class="anchor" href="#SVD-Decomposition:-Low-rank-factorization" aria-hidden="true"><span class="octicon octicon-link"></span></a>SVD Decomposition: Low rank factorization<a class="anchor-link" href="#SVD-Decomposition:-Low-rank-factorization"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">U</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">svds</span><span class="p">(</span><span class="n">ui_matrix</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">600</span><span class="p">)</span>
+
+<span class="c1"># Construct diagonal array in SVD</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"X = U * sigma * Vt"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">ui_matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> = </span><span class="si">{</span><span class="n">U</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> * </span><span class="si">{</span><span class="n">sigma</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> * </span><span class="si">{</span><span class="n">Vt</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>X = U * sigma * Vt
+(671, 1507) = (671, 600) * (600, 600) * (600, 1507)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">all_user_predicted_ratings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">Vt</span><span class="p">)</span> 
+
+<span class="c1"># Convert predicted ratings to dataframe</span>
+<span class="n">pred_ui_matrix</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">all_user_predicted_ratings</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">pred_ui_matrix</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>title</th>
+      <th>...And God Created Woman</th>
+      <th>10 Items or Less</th>
+      <th>10 Things I Hate About You</th>
+      <th>10,000 BC</th>
+      <th>11'09''01 - September 11</th>
+      <th>12 Angry Men</th>
+      <th>13 Tzameti</th>
+      <th>1408</th>
+      <th>15 Minutes</th>
+      <th>16 Blocks</th>
+      <th>1984</th>
+      <th>20,000 Leagues Under the Sea</th>
+      <th>2001: A Space Odyssey</th>
+      <th>2010</th>
+      <th>2046</th>
+      <th>21 Grams</th>
+      <th>24 Hour Party People</th>
+      <th>25th Hour</th>
+      <th>28 Days Later</th>
+      <th>28 Weeks Later</th>
+      <th>3 Ninjas: High Noon at Mega Mountain</th>
+      <th>3-Iron</th>
+      <th>300</th>
+      <th>4 Months, 3 Weeks and 2 Days</th>
+      <th>40 Days and 40 Nights</th>
+      <th>42nd Street</th>
+      <th>48 Hrs.</th>
+      <th>50 First Dates</th>
+      <th>54</th>
+      <th>8 Mile</th>
+      <th>8 Women</th>
+      <th>88 Minutes</th>
+      <th>8½</th>
+      <th>A Beautiful Mind</th>
+      <th>A Bridge Too Far</th>
+      <th>A Brief History of Time</th>
+      <th>A Chorus Line</th>
+      <th>A Christmas Carol</th>
+      <th>A Christmas Story</th>
+      <th>A Clockwork Orange</th>
+      <th>...</th>
+      <th>We're No Angels</th>
+      <th>Wee Willie Winkie</th>
+      <th>Weekend at Bernie's</th>
+      <th>Westworld</th>
+      <th>Wet Hot American Summer</th>
+      <th>Whale Rider</th>
+      <th>What Lies Beneath</th>
+      <th>What Women Want</th>
+      <th>What's Eating Gilbert Grape</th>
+      <th>What's New Pussycat?</th>
+      <th>When Harry Met Sally...</th>
+      <th>While You Were Sleeping</th>
+      <th>White Lightning</th>
+      <th>Wilbur Wants to Kill Himself</th>
+      <th>Wild Orchid</th>
+      <th>Wild Strawberries</th>
+      <th>Wild Things</th>
+      <th>Wild Wild West</th>
+      <th>Wild at Heart</th>
+      <th>Willy Wonka &amp; the Chocolate Factory</th>
+      <th>Wings of Desire</th>
+      <th>Women on the Verge of a Nervous Breakdown</th>
+      <th>Working Girl</th>
+      <th>World Trade Center</th>
+      <th>X-Men Origins: Wolverine</th>
+      <th>Y Tu Mamá También</th>
+      <th>Yankee Doodle Dandy</th>
+      <th>You Only Live Twice</th>
+      <th>You, Me and Dupree</th>
+      <th>Young Frankenstein</th>
+      <th>Z</th>
+      <th>Zardoz</th>
+      <th>Zatoichi</th>
+      <th>Zazie dans le métro</th>
+      <th>Zodiac</th>
+      <th>Zombie Flesh Eaters</th>
+      <th>Zombie Holocaust</th>
+      <th>eXistenZ</th>
+      <th>xXx</th>
+      <th>¡Three Amigos!</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>-0.001824</td>
+      <td>-0.013060</td>
+      <td>-0.033895</td>
+      <td>-0.013552</td>
+      <td>0.004857</td>
+      <td>-0.012065</td>
+      <td>-0.000022</td>
+      <td>0.000269</td>
+      <td>-0.004589</td>
+      <td>0.004969</td>
+      <td>-0.003875</td>
+      <td>0.013477</td>
+      <td>0.013752</td>
+      <td>0.011222</td>
+      <td>0.012818</td>
+      <td>-0.009012</td>
+      <td>-0.020127</td>
+      <td>0.042934</td>
+      <td>-0.031099</td>
+      <td>0.012655</td>
+      <td>0.054123</td>
+      <td>-0.024107</td>
+      <td>-0.026365</td>
+      <td>-0.003498</td>
+      <td>-0.022653</td>
+      <td>-0.027189</td>
+      <td>0.008024</td>
+      <td>-0.001322</td>
+      <td>0.013068</td>
+      <td>-0.013028</td>
+      <td>0.017011</td>
+      <td>0.002759</td>
+      <td>0.014413</td>
+      <td>0.013653</td>
+      <td>-0.026469</td>
+      <td>-0.010153</td>
+      <td>-0.005941</td>
+      <td>-0.001596</td>
+      <td>-0.023442</td>
+      <td>0.002015</td>
+      <td>...</td>
+      <td>0.015940</td>
+      <td>-0.005563</td>
+      <td>-0.005438</td>
+      <td>0.008858</td>
+      <td>-0.024222</td>
+      <td>0.014146</td>
+      <td>0.000161</td>
+      <td>0.015496</td>
+      <td>-0.019740</td>
+      <td>-0.027203</td>
+      <td>0.030003</td>
+      <td>-0.023383</td>
+      <td>-0.000592</td>
+      <td>0.045767</td>
+      <td>0.000778</td>
+      <td>-0.000484</td>
+      <td>-0.000592</td>
+      <td>0.004268</td>
+      <td>-0.004704</td>
+      <td>-0.007675</td>
+      <td>-0.024220</td>
+      <td>0.000549</td>
+      <td>-0.000714</td>
+      <td>-0.002366</td>
+      <td>-0.025210</td>
+      <td>-0.017727</td>
+      <td>0.001921</td>
+      <td>0.037743</td>
+      <td>-0.002958</td>
+      <td>0.025668</td>
+      <td>-0.023090</td>
+      <td>-0.007190</td>
+      <td>-0.009860</td>
+      <td>0.014233</td>
+      <td>-0.007925</td>
+      <td>-0.001824</td>
+      <td>0.007435</td>
+      <td>0.005727</td>
+      <td>0.032049</td>
+      <td>-0.001824</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.000129</td>
+      <td>0.001134</td>
+      <td>-0.008600</td>
+      <td>0.000020</td>
+      <td>-0.000762</td>
+      <td>-0.000976</td>
+      <td>-0.000613</td>
+      <td>0.000226</td>
+      <td>-0.003114</td>
+      <td>-0.002803</td>
+      <td>-0.004658</td>
+      <td>0.003607</td>
+      <td>3.000631</td>
+      <td>-0.008710</td>
+      <td>-0.003879</td>
+      <td>0.000968</td>
+      <td>-0.005763</td>
+      <td>-0.010756</td>
+      <td>0.007939</td>
+      <td>0.004862</td>
+      <td>-0.010943</td>
+      <td>0.004860</td>
+      <td>-0.007617</td>
+      <td>0.004192</td>
+      <td>0.002618</td>
+      <td>-0.003913</td>
+      <td>5.002450</td>
+      <td>-0.004750</td>
+      <td>-0.003433</td>
+      <td>-0.005846</td>
+      <td>0.009835</td>
+      <td>-0.002012</td>
+      <td>-0.004078</td>
+      <td>0.000428</td>
+      <td>0.001261</td>
+      <td>-0.005249</td>
+      <td>0.003851</td>
+      <td>0.000112</td>
+      <td>-0.001250</td>
+      <td>3.001976</td>
+      <td>...</td>
+      <td>0.005772</td>
+      <td>0.009581</td>
+      <td>-0.000734</td>
+      <td>-0.002152</td>
+      <td>0.001686</td>
+      <td>-0.004267</td>
+      <td>0.000136</td>
+      <td>0.010982</td>
+      <td>-0.008346</td>
+      <td>-0.004466</td>
+      <td>0.002400</td>
+      <td>-0.001375</td>
+      <td>0.000421</td>
+      <td>-0.005288</td>
+      <td>-0.002587</td>
+      <td>0.000511</td>
+      <td>0.000421</td>
+      <td>-0.002068</td>
+      <td>-0.004027</td>
+      <td>-0.015801</td>
+      <td>2.983212</td>
+      <td>-0.003270</td>
+      <td>-0.004966</td>
+      <td>-0.002685</td>
+      <td>-0.000776</td>
+      <td>-0.003705</td>
+      <td>0.004641</td>
+      <td>-0.005497</td>
+      <td>0.002104</td>
+      <td>-0.004162</td>
+      <td>-0.000941</td>
+      <td>-0.001363</td>
+      <td>-0.001132</td>
+      <td>0.008294</td>
+      <td>0.008796</td>
+      <td>0.000129</td>
+      <td>0.000413</td>
+      <td>0.005353</td>
+      <td>-0.004449</td>
+      <td>0.000129</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>-0.001568</td>
+      <td>0.006566</td>
+      <td>0.010625</td>
+      <td>0.003151</td>
+      <td>0.000703</td>
+      <td>-0.004763</td>
+      <td>0.010966</td>
+      <td>-0.000694</td>
+      <td>0.010081</td>
+      <td>0.003523</td>
+      <td>-0.002820</td>
+      <td>-0.002801</td>
+      <td>-0.004074</td>
+      <td>0.008589</td>
+      <td>0.001497</td>
+      <td>0.000330</td>
+      <td>-0.005924</td>
+      <td>0.034418</td>
+      <td>0.009179</td>
+      <td>0.012273</td>
+      <td>-0.007749</td>
+      <td>0.004134</td>
+      <td>2.995466</td>
+      <td>-0.010105</td>
+      <td>-0.014541</td>
+      <td>0.023826</td>
+      <td>-0.003370</td>
+      <td>-0.009107</td>
+      <td>-0.019250</td>
+      <td>-0.002713</td>
+      <td>-0.006548</td>
+      <td>-0.004856</td>
+      <td>0.000565</td>
+      <td>0.001734</td>
+      <td>0.002098</td>
+      <td>0.004429</td>
+      <td>0.002977</td>
+      <td>-0.001372</td>
+      <td>-0.000830</td>
+      <td>-0.006322</td>
+      <td>...</td>
+      <td>0.001373</td>
+      <td>0.007726</td>
+      <td>-0.003889</td>
+      <td>0.002632</td>
+      <td>-0.010117</td>
+      <td>0.004854</td>
+      <td>-0.000416</td>
+      <td>-0.004237</td>
+      <td>0.005208</td>
+      <td>-0.006135</td>
+      <td>0.011015</td>
+      <td>-0.010989</td>
+      <td>0.001371</td>
+      <td>0.003792</td>
+      <td>-0.003643</td>
+      <td>0.001093</td>
+      <td>0.001371</td>
+      <td>0.000146</td>
+      <td>-0.010245</td>
+      <td>-0.006419</td>
+      <td>0.001102</td>
+      <td>0.008358</td>
+      <td>0.009910</td>
+      <td>-0.005380</td>
+      <td>-0.003788</td>
+      <td>-0.000763</td>
+      <td>0.013707</td>
+      <td>-0.013706</td>
+      <td>0.006854</td>
+      <td>-0.015675</td>
+      <td>0.000117</td>
+      <td>-0.002435</td>
+      <td>0.001743</td>
+      <td>0.010452</td>
+      <td>0.001461</td>
+      <td>-0.001568</td>
+      <td>-0.011326</td>
+      <td>-0.006301</td>
+      <td>0.037546</td>
+      <td>-0.001568</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.000069</td>
+      <td>-0.000763</td>
+      <td>0.000295</td>
+      <td>-0.000120</td>
+      <td>-0.000070</td>
+      <td>0.000221</td>
+      <td>0.002347</td>
+      <td>-0.000402</td>
+      <td>-0.001041</td>
+      <td>0.000013</td>
+      <td>0.000809</td>
+      <td>3.001269</td>
+      <td>-0.001037</td>
+      <td>-0.000350</td>
+      <td>0.000132</td>
+      <td>0.000484</td>
+      <td>0.003686</td>
+      <td>0.001672</td>
+      <td>0.001112</td>
+      <td>0.003251</td>
+      <td>-0.000800</td>
+      <td>0.001585</td>
+      <td>0.000797</td>
+      <td>0.000490</td>
+      <td>-0.000074</td>
+      <td>0.000591</td>
+      <td>0.000903</td>
+      <td>0.000279</td>
+      <td>0.000714</td>
+      <td>-0.002858</td>
+      <td>-0.004140</td>
+      <td>0.000037</td>
+      <td>-0.000014</td>
+      <td>0.001072</td>
+      <td>0.000213</td>
+      <td>-0.000086</td>
+      <td>-0.000377</td>
+      <td>0.000060</td>
+      <td>-0.001010</td>
+      <td>3.000108</td>
+      <td>...</td>
+      <td>0.001424</td>
+      <td>0.000359</td>
+      <td>0.000977</td>
+      <td>0.000118</td>
+      <td>-0.000275</td>
+      <td>-0.000855</td>
+      <td>-0.000241</td>
+      <td>0.000135</td>
+      <td>0.001576</td>
+      <td>-0.003887</td>
+      <td>0.000471</td>
+      <td>5.000850</td>
+      <td>0.000055</td>
+      <td>-0.000892</td>
+      <td>-0.000401</td>
+      <td>-0.000106</td>
+      <td>0.000055</td>
+      <td>0.000377</td>
+      <td>0.001500</td>
+      <td>-0.001851</td>
+      <td>-0.001674</td>
+      <td>0.000856</td>
+      <td>0.001208</td>
+      <td>0.000508</td>
+      <td>5.001748</td>
+      <td>-0.002642</td>
+      <td>0.001109</td>
+      <td>0.000711</td>
+      <td>0.000274</td>
+      <td>5.002635</td>
+      <td>0.001322</td>
+      <td>-0.000358</td>
+      <td>-0.001849</td>
+      <td>0.002430</td>
+      <td>-0.001812</td>
+      <td>0.000069</td>
+      <td>-0.000984</td>
+      <td>-0.001734</td>
+      <td>-0.000685</td>
+      <td>0.000069</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.001009</td>
+      <td>-0.013957</td>
+      <td>0.004684</td>
+      <td>0.012933</td>
+      <td>-0.001736</td>
+      <td>-0.006671</td>
+      <td>0.008866</td>
+      <td>0.001190</td>
+      <td>-0.006246</td>
+      <td>-0.003815</td>
+      <td>-0.004334</td>
+      <td>-0.004912</td>
+      <td>0.003550</td>
+      <td>0.003713</td>
+      <td>0.006218</td>
+      <td>0.003416</td>
+      <td>0.000768</td>
+      <td>0.007745</td>
+      <td>0.000413</td>
+      <td>-0.011054</td>
+      <td>0.022180</td>
+      <td>0.009233</td>
+      <td>0.011858</td>
+      <td>0.010177</td>
+      <td>0.019144</td>
+      <td>-0.006177</td>
+      <td>4.006056</td>
+      <td>-0.008547</td>
+      <td>0.006804</td>
+      <td>0.022210</td>
+      <td>0.003406</td>
+      <td>0.008908</td>
+      <td>-0.005508</td>
+      <td>-0.001427</td>
+      <td>0.004392</td>
+      <td>-0.002720</td>
+      <td>0.000666</td>
+      <td>0.000883</td>
+      <td>-0.001619</td>
+      <td>0.005126</td>
+      <td>...</td>
+      <td>0.008611</td>
+      <td>0.009241</td>
+      <td>0.002093</td>
+      <td>-0.001518</td>
+      <td>0.004747</td>
+      <td>-0.007432</td>
+      <td>0.000714</td>
+      <td>0.003251</td>
+      <td>0.002103</td>
+      <td>-0.008819</td>
+      <td>0.011644</td>
+      <td>0.012056</td>
+      <td>0.000178</td>
+      <td>-0.002500</td>
+      <td>0.001012</td>
+      <td>0.000655</td>
+      <td>0.000178</td>
+      <td>-0.003458</td>
+      <td>-0.005620</td>
+      <td>0.019083</td>
+      <td>-0.009199</td>
+      <td>-0.002224</td>
+      <td>0.004117</td>
+      <td>-0.004041</td>
+      <td>0.011687</td>
+      <td>0.003228</td>
+      <td>-0.009085</td>
+      <td>0.027037</td>
+      <td>0.000892</td>
+      <td>0.011536</td>
+      <td>-0.007103</td>
+      <td>-0.007682</td>
+      <td>-0.005607</td>
+      <td>0.010577</td>
+      <td>0.007031</td>
+      <td>0.001009</td>
+      <td>-0.008779</td>
+      <td>0.016566</td>
+      <td>-0.026467</td>
+      <td>0.001009</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 1507 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Predict-score">
+<a class="anchor" href="#Predict-score" aria-hidden="true"><span class="octicon octicon-link"></span></a>Predict score<a class="anchor-link" href="#Predict-score"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">predict_score</span><span class="p">(</span><span class="n">pred_ui_matrix</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">movie_name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pred_ui_matrix</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">user_id</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">movie_name</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_id</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">movie_name</span> <span class="o">=</span> <span class="s2">"Young Frankenstein"</span>
+
+<span class="n">score_4yf</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">user_id</span><span class="p">,</span> <span class="n">movie_name</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"True real rating of user </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2"> for movie </span><span class="si">{</span><span class="n">movie_name</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">score_4yf</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">pred_4yf</span> <span class="o">=</span> <span class="n">predict_score</span><span class="p">(</span><span class="n">pred_ui_matrix</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">movie_name</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"True predicted rating of </span><span class="si">{</span><span class="n">user_id</span><span class="si">}</span><span class="s2"> for movie </span><span class="si">{</span><span class="n">movie_name</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">pred_4yf</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>True real rating of user 4 for movie Young Frankenstein is 5.0
+True predicted rating of 4 for movie Young Frankenstein is 5.002634544369512
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Evaluate-model">
+<a class="anchor" href="#Evaluate-model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Evaluate model<a class="anchor-link" href="#Evaluate-model"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">rmse_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">ui_matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">pred_ui_matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">rmse_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'Avg_actual_ratings'</span><span class="p">,</span> <span class="s1">'Avg_predicted_ratings'</span><span class="p">]</span>
+<span class="n">rmse_df</span><span class="p">[</span><span class="s1">'item_index'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">rmse_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">rmse_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Avg_actual_ratings</th>
+      <th>Avg_predicted_ratings</th>
+      <th>item_index</th>
+    </tr>
+    <tr>
+      <th>title</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>...And God Created Woman</th>
+      <td>0.005961</td>
+      <td>0.005959</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <th>10 Items or Less</th>
+      <td>0.070790</td>
+      <td>0.070839</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>10 Things I Hate About You</th>
+      <td>0.027571</td>
+      <td>0.027423</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>10,000 BC</th>
+      <td>0.017139</td>
+      <td>0.017420</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>11'09''01 - September 11</th>
+      <td>0.002981</td>
+      <td>0.002937</td>
+      <td>4</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">RMSE</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((((</span><span class="n">rmse_df</span><span class="o">.</span><span class="n">Avg_actual_ratings</span> <span class="o">-</span> <span class="n">rmse_df</span><span class="o">.</span><span class="n">Avg_predicted_ratings</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mi">5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'RMSE SVD Model = </span><span class="si">{</span><span class="n">RMSE</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>RMSE SVD Model = 0.00023
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h5 id="Evaluate-with-different-value-k">
+<a class="anchor" href="#Evaluate-with-different-value-k" aria-hidden="true"><span class="octicon octicon-link"></span></a>Evaluate with different value k<a class="anchor-link" href="#Evaluate-with-different-value-k"> </a>
+</h5>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">600</span><span class="p">]:</span>
+
+    <span class="c1"># Singular Value Decomposition</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">svds</span><span class="p">(</span><span class="n">ui_matrix</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="n">i</span><span class="p">)</span>
+
+    <span class="c1"># Construct diagonal array in SVD</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+
+    <span class="c1"># Low-rank matrix</span>
+    <span class="n">all_user_predicted_ratings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">Vt</span><span class="p">)</span> 
+
+    <span class="c1"># Convert predicted ratings to dataframe</span>
+    <span class="n">pred_ui_matrix</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">all_user_predicted_ratings</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+
+    <span class="n">rmse_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">ui_matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">pred_ui_matrix</span><span class="o">.</span><span class="n">mean</span><span class="p">()],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">rmse_df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'Avg_actual_ratings'</span><span class="p">,</span> <span class="s1">'Avg_predicted_ratings'</span><span class="p">]</span>
+    <span class="n">rmse_df</span><span class="p">[</span><span class="s1">'item_index'</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">rmse_df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">RMSE</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((((</span><span class="n">rmse_df</span><span class="o">.</span><span class="n">Avg_actual_ratings</span> <span class="o">-</span> <span class="n">rmse_df</span><span class="o">.</span><span class="n">Avg_predicted_ratings</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'RMSE with value k = </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> : </span><span class="si">{</span><span class="n">RMSE</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>RMSE with value k = 10 : 0.01127
+RMSE with value k = 100 : 0.00652
+RMSE with value k = 300 : 0.00263
+RMSE with value k = 500 : 0.00074
+RMSE with value k = 600 : 0.00023
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Recommend-movies">
+<a class="anchor" href="#Recommend-movies" aria-hidden="true"><span class="octicon octicon-link"></span></a>Recommend movies<a class="anchor-link" href="#Recommend-movies"> </a>
+</h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">recommend_items</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">ui_matrix</span><span class="p">,</span> <span class="n">pred_ui_matrix</span><span class="p">,</span> <span class="n">num_recommendations</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+
+    <span class="c1"># Get and sort the user's ratings</span>
+    <span class="n">sorted_user_ratings</span> <span class="o">=</span> <span class="n">ui_matrix</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1">#sorted_user_ratings</span>
+    <span class="n">sorted_user_predictions</span> <span class="o">=</span> <span class="n">pred_ui_matrix</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">user_id</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1">#sorted_user_predictions</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">sorted_user_ratings</span><span class="p">,</span> <span class="n">sorted_user_predictions</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">temp</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">'Recommended Items'</span>
+    <span class="n">temp</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'user_ratings'</span><span class="p">,</span> <span class="s1">'user_predictions'</span><span class="p">]</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">temp</span><span class="o">.</span><span class="n">user_ratings</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>   
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">'user_predictions'</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Below are the recommended items for user(user_id = </span><span class="si">{}</span><span class="s1">):</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="n">num_recommendations</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommend_items</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">ui_matrix</span><span class="p">,</span> <span class="n">pred_ui_matrix</span><span class="p">,</span> <span class="n">num_recommendations</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+Below are the recommended items for user(user_id = 4):
+
+                              user_ratings  user_predictions
+Recommended Items                                           
+Shaun of the Dead                      0.0          0.007939
+The Curse of the Were-Rabbit           0.0          0.006702
+Little Buddha                          0.0          0.006153
+Two Girls and a Guy                    0.0          0.005301
+Flashdance                             0.0          0.005178
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/movie/2021/06/24/movie-recommender-system.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

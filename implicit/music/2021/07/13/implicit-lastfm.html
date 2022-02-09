@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Comparing Implicit Models on LastFM Music Data | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Comparing Implicit Models on LastFM Music Data" />
+<meta name="author" content="<a href='https://github.com/david-cortes'>David Cortes</a>" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Fitting ALS, BPR, PoissonMF, and HPFRec models on LastFM-250K music dataset" />
+<meta property="og:description" content="Fitting ALS, BPR, PoissonMF, and HPFRec models on LastFM-250K music dataset" />
+<link rel="canonical" href="https://nb.recohut.com/implicit/music/2021/07/13/implicit-lastfm.html" />
+<meta property="og:url" content="https://nb.recohut.com/implicit/music/2021/07/13/implicit-lastfm.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-13T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Comparing Implicit Models on LastFM Music Data" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"<a href='https://github.com/david-cortes'>David Cortes</a>"},"dateModified":"2021-07-13T00:00:00-05:00","datePublished":"2021-07-13T00:00:00-05:00","description":"Fitting ALS, BPR, PoissonMF, and HPFRec models on LastFM-250K music dataset","headline":"Comparing Implicit Models on LastFM Music Data","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/implicit/music/2021/07/13/implicit-lastfm.html"},"url":"https://nb.recohut.com/implicit/music/2021/07/13/implicit-lastfm.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Comparing Implicit Models on LastFM Music Data</h1><p class="page-description">Fitting ALS, BPR, PoissonMF, and HPFRec models on LastFM-250K music dataset</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-13T00:00:00-05:00" itemprop="datePublished">
+        Jul 13, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name"><a href='https://github.com/david-cortes'>David Cortes</a></span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      5 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#Implicit">Implicit</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Music">Music</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-13-implicit-lastfm.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-13-implicit-lastfm.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-13-implicit-lastfm.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-13-implicit-lastfm.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h2"><a href="#Installation">Installation </a></li>
+<li class="toc-entry toc-h2"><a href="#Data-Load">Data Load </a>
+<ul>
+<li class="toc-entry toc-h3"><a href="#Download-Alternative-1">Download Alternative 1 </a></li>
+<li class="toc-entry toc-h3"><a href="#Download-Alternative-2">Download Alternative 2 </a></li>
+<li class="toc-entry toc-h3"><a href="#Train/Test-Split">Train/Test Split </a></li>
+<li class="toc-entry toc-h3"><a href="#Util-function-to-print-ranking-metrics">Util function to print ranking metrics </a></li>
+<li class="toc-entry toc-h3"><a href="#PoisMF">PoisMF </a></li>
+<li class="toc-entry toc-h3"><a href="#Ranking-and-Prediction">Ranking and Prediction </a></li>
+<li class="toc-entry toc-h3"><a href="#Sparse-Matrix">Sparse Matrix </a></li>
+<li class="toc-entry toc-h3"><a href="#ALS">ALS </a></li>
+<li class="toc-entry toc-h3"><a href="#BPR">BPR </a></li>
+<li class="toc-entry toc-h3"><a href="#HPF">HPF </a></li>
+</ul>
+</li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-13-implicit-lastfm.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Installation">
+<a class="anchor" href="#Installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation<a class="anchor-link" href="#Installation"> </a>
+</h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">coo_matrix</span><span class="p">,</span> <span class="n">csr_matrix</span><span class="p">,</span> <span class="n">csc_matrix</span>
+
+<span class="kn">from</span> <span class="nn">poismf</span> <span class="kn">import</span> <span class="n">PoisMF</span>
+<span class="kn">from</span> <span class="nn">implicit.als</span> <span class="kn">import</span> <span class="n">AlternatingLeastSquares</span>
+<span class="kn">from</span> <span class="nn">implicit.bpr</span> <span class="kn">import</span> <span class="n">BayesianPersonalizedRanking</span>
+<span class="kn">from</span> <span class="nn">hpfrec</span> <span class="kn">import</span> <span class="n">HPF</span> <span class="c1">### &lt;- Bayesian version</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data-Load">
+<a class="anchor" href="#Data-Load" aria-hidden="true"><span class="octicon octicon-link"></span></a>Data Load<a class="anchor-link" href="#Data-Load"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Download-Alternative-1">
+<a class="anchor" href="#Download-Alternative-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Download Alternative 1<a class="anchor-link" href="#Download-Alternative-1"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="o">-</span><span class="n">U</span> <span class="n">kaggle</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">upgrade</span> <span class="o">--</span><span class="n">force</span><span class="o">-</span><span class="n">reinstall</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">deps</span> <span class="n">kaggle</span>
+<span class="err">!</span><span class="n">mkdir</span> <span class="o">~/.</span><span class="n">kaggle</span>
+<span class="err">!</span><span class="n">cp</span> <span class="o">/</span><span class="n">content</span><span class="o">/</span><span class="n">drive</span><span class="o">/</span><span class="n">MyDrive</span><span class="o">/</span><span class="n">kaggle</span><span class="o">.</span><span class="n">json</span> <span class="o">~/.</span><span class="n">kaggle</span><span class="o">/</span>
+<span class="err">!</span><span class="n">chmod</span> <span class="mi">600</span> <span class="o">~/.</span><span class="n">kaggle</span><span class="o">/</span><span class="n">kaggle</span><span class="o">.</span><span class="n">json</span>
+<span class="err">!</span><span class="n">kaggle</span> <span class="n">datasets</span> <span class="n">download</span> <span class="o">-</span><span class="n">d</span> <span class="n">neferfufi</span><span class="o">/</span><span class="n">lastfm</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">unzip</span> <span class="n">lastfm</span><span class="o">.</span><span class="n">zip</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Download-Alternative-2">
+<a class="anchor" href="#Download-Alternative-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Download Alternative 2<a class="anchor-link" href="#Download-Alternative-2"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">mtg</span><span class="o">.</span><span class="n">upf</span><span class="o">.</span><span class="n">edu</span><span class="o">/</span><span class="n">static</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">last</span><span class="o">.</span><span class="n">fm</span><span class="o">/</span><span class="n">lastfm</span><span class="o">-</span><span class="n">dataset</span><span class="o">-</span><span class="mi">360</span><span class="n">K</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lfm</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_table</span><span class="p">(</span><span class="s1">'usersha1-artmbid-artname-plays.tsv'</span><span class="p">,</span>
+                           <span class="n">sep</span><span class="o">=</span><span class="s1">'</span><span class="se">\t</span><span class="s1">'</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">'UserId'</span><span class="p">,</span><span class="s1">'ItemId'</span><span class="p">,</span> <span class="s1">'Artist'</span><span class="p">,</span><span class="s1">'Count'</span><span class="p">])</span>
+<span class="n">lfm</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'UserId'</span><span class="p">,</span> <span class="s1">'ItemId'</span><span class="p">,</span> <span class="s1">'Artist'</span><span class="p">,</span> <span class="s1">'Count'</span><span class="p">]</span>
+<span class="n">lfm</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>UserId</th>
+      <th>ItemId</th>
+      <th>Artist</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>00000c289a1829a808ac09c00daf10bc3c4e223b</td>
+      <td>3bd73256-3905-4f3a-97e2-8b341527f805</td>
+      <td>betty blowtorch</td>
+      <td>2137</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>00000c289a1829a808ac09c00daf10bc3c4e223b</td>
+      <td>f2fb0ff0-5679-42ec-a55c-15109ce6e320</td>
+      <td>die Ärzte</td>
+      <td>1099</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>00000c289a1829a808ac09c00daf10bc3c4e223b</td>
+      <td>b3ae82c2-e60b-4551-a76d-6620f1b456aa</td>
+      <td>melissa etheridge</td>
+      <td>897</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lfm</span> <span class="o">=</span> <span class="n">lfm</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">'Artist'</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">lfm</span> <span class="o">=</span> <span class="n">lfm</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">lfm</span><span class="o">.</span><span class="n">Count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">lfm</span><span class="p">[</span><span class="s1">'UserId'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">lfm</span><span class="o">.</span><span class="n">UserId</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+<span class="n">lfm</span><span class="p">[</span><span class="s1">'ItemId'</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">lfm</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+<span class="n">lfm</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>UserId</th>
+      <th>ItemId</th>
+      <th>Count</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>0</td>
+      <td>37425</td>
+      <td>2137</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0</td>
+      <td>152039</td>
+      <td>1099</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0</td>
+      <td>112365</td>
+      <td>897</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lfm</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s1">'all'</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>count</th>
+      <th>mean</th>
+      <th>std</th>
+      <th>min</th>
+      <th>25%</th>
+      <th>50%</th>
+      <th>75%</th>
+      <th>max</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>UserId</th>
+      <td>17535654.0</td>
+      <td>179403.114983</td>
+      <td>103588.710665</td>
+      <td>0.0</td>
+      <td>89699.0</td>
+      <td>179375.0</td>
+      <td>269103.0</td>
+      <td>358867.0</td>
+    </tr>
+    <tr>
+      <th>ItemId</th>
+      <td>17535654.0</td>
+      <td>79521.347201</td>
+      <td>46907.281826</td>
+      <td>-1.0</td>
+      <td>39162.0</td>
+      <td>81989.0</td>
+      <td>118607.0</td>
+      <td>160111.0</td>
+    </tr>
+    <tr>
+      <th>Count</th>
+      <td>17535654.0</td>
+      <td>215.193173</td>
+      <td>614.481470</td>
+      <td>1.0</td>
+      <td>35.0</td>
+      <td>94.0</td>
+      <td>224.0</td>
+      <td>419157.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Train/Test-Split">
+<a class="anchor" href="#Train/Test-Split" aria-hidden="true"><span class="octicon octicon-link"></span></a>Train/Test Split<a class="anchor-link" href="#Train/Test-Split"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="n">df_train</span><span class="p">,</span> <span class="n">df_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">lfm</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=.</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">df_train</span> <span class="o">=</span> <span class="n">df_train</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">users_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">UserId</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+<span class="n">items_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+<span class="n">df_test</span> <span class="o">=</span> <span class="n">df_test</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_test</span><span class="o">.</span><span class="n">UserId</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">users_train</span><span class="p">)</span> <span class="o">&amp;</span>
+                      <span class="n">df_test</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">items_train</span><span class="p">)]</span>
+<span class="n">df_train</span><span class="p">[</span><span class="s2">"UserId"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">UserId</span><span class="p">,</span> <span class="n">users_train</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+<span class="n">df_train</span><span class="p">[</span><span class="s2">"ItemId"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">items_train</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+<span class="n">df_test</span><span class="p">[</span><span class="s2">"UserId"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">df_test</span><span class="o">.</span><span class="n">UserId</span><span class="p">,</span> <span class="n">users_train</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+<span class="n">df_test</span><span class="p">[</span><span class="s2">"ItemId"</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">df_test</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">items_train</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+<span class="n">users_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">df_test</span><span class="o">.</span><span class="n">UserId</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Number of entries in training data: </span><span class="si">{:,}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Number of entries in test data: </span><span class="si">{:,}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">df_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Number of users in training data: </span><span class="si">{:,}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">users_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Number of users in test data: </span><span class="si">{:,}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">users_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Number of items in training and test data: </span><span class="si">{:,}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">items_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Number of entries in training data: 12,274,957
+Number of entries in test data: 5,245,397
+Number of users in training data: 358,848
+Number of users in test data: 358,698
+Number of items in training and test data: 147,181
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Util-function-to-print-ranking-metrics">
+<a class="anchor" href="#Util-function-to-print-ranking-metrics" aria-hidden="true"><span class="octicon octicon-link"></span></a>Util function to print ranking metrics<a class="anchor-link" href="#Util-function-to-print-ranking-metrics"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The models fit here will be evaluated by AUC and P@5, calculated for individual users and then averaged across a random sample of 1,000 users. These metrics are calculated for each user separately, by taking the entries in the hold-out test set as a positive class, entries which are neither in the training or test sets as a negative class, and producing predictions for all the entries that were not in the training set - the idea being that models which tend to rank highest the items that the users ended up consuming are better.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">roc_auc_score</span>
+<span class="kn">from</span> <span class="nn">joblib</span> <span class="kn">import</span> <span class="n">Parallel</span><span class="p">,</span> <span class="n">delayed</span>
+
+<span class="c1">## Note: this is a computationally inefficient implementation of the</span>
+<span class="c1">## test metrics, not recommended to use outside of this notebook</span>
+<span class="k">def</span> <span class="nf">print_ranking_metrics</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">df_train</span><span class="p">,</span> <span class="n">df_test</span><span class="p">,</span> <span class="n">users_test</span><span class="p">,</span>
+                          <span class="n">nusers</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                          <span class="n">njobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A : array(m, k)</span>
+<span class="sd">        The user-factor matrix.</span>
+<span class="sd">    B : array(n, k)</span>
+<span class="sd">        The item-factor matrix</span>
+<span class="sd">    df_train : DataFrame(n_train, [user, item, value])</span>
+<span class="sd">        The training triplets.</span>
+<span class="sd">    df_test : DataFrame(n_test, [user, item, value])</span>
+<span class="sd">        The hold-out triplets.</span>
+<span class="sd">    n_user : int</span>
+<span class="sd">        Number of users to sample.</span>
+<span class="sd">    top_n : int</span>
+<span class="sd">        Number of top-ranked items to calculate precision.</span>
+<span class="sd">    seed : int</span>
+<span class="sd">        Random seed used to select the users.</span>
+<span class="sd">    njobs : int</span>
+<span class="sd">        Number of jobs to run in parallel.</span>
+<span class="sd">    """</span>
+    <span class="n">n_users</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n_items</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">chosen_users</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">users_test</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">nusers</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">all_train</span> <span class="o">=</span> <span class="n">df_train</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_train</span><span class="o">.</span><span class="n">UserId</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">chosen_users</span><span class="p">)]</span>
+    <span class="n">all_test</span> <span class="o">=</span> <span class="n">df_test</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_test</span><span class="o">.</span><span class="n">UserId</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">chosen_users</span><span class="p">)]</span>
+    
+    <span class="k">def</span> <span class="nf">metrics_single_user</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+        <span class="n">ypos</span> <span class="o">=</span> <span class="n">all_test</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">all_test</span><span class="o">.</span><span class="n">UserId</span> <span class="o">==</span> <span class="n">user</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">ytrain</span> <span class="o">=</span> <span class="n">all_train</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">all_train</span><span class="o">.</span><span class="n">UserId</span> <span class="o">==</span> <span class="n">user</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="n">yneg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_items</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">ypos</span><span class="p">,</span> <span class="n">ytrain</span><span class="p">])</span>
+        <span class="n">ytest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">yneg</span><span class="p">,</span> <span class="n">ypos</span><span class="p">]</span>
+        <span class="n">yhat</span> <span class="o">=</span> <span class="n">B</span><span class="p">[</span><span class="n">ytest</span><span class="p">]</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">user</span><span class="p">])</span>
+        <span class="n">auc</span> <span class="o">=</span> <span class="n">roc_auc_score</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">yneg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+                                  <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">ypos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])],</span>
+                            <span class="n">yhat</span><span class="p">)</span>
+        <span class="n">topN</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">yhat</span><span class="p">)[:</span><span class="n">top_n</span><span class="p">]</span>
+        <span class="n">p_at_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">topN</span> <span class="o">&gt;=</span> <span class="n">yneg</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">p_at_k_rnd</span> <span class="o">=</span> <span class="n">ypos</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">ytest</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1">## &lt;- baseline</span>
+        <span class="k">return</span> <span class="n">auc</span><span class="p">,</span> <span class="n">p_at_k</span><span class="p">,</span> <span class="n">p_at_k_rnd</span>
+
+    <span class="n">res_triplets</span> <span class="o">=</span> <span class="n">Parallel</span><span class="p">(</span><span class="n">n_jobs</span> <span class="o">=</span> <span class="n">njobs</span><span class="p">)</span>\
+                    <span class="p">(</span><span class="n">delayed</span><span class="p">(</span><span class="n">metrics_single_user</span><span class="p">)(</span><span class="n">u</span><span class="p">)</span> \
+                        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">chosen_users</span><span class="p">)</span>
+
+    <span class="n">res_triplets</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">res_triplets</span><span class="p">)</span>
+    <span class="n">auc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">res_triplets</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">p_at_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">res_triplets</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">p_at_k_rnd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">res_triplets</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"AUC: </span><span class="si">%.4f</span><span class="s2"> [random: </span><span class="si">%.2f</span><span class="s2">]"</span> <span class="o">%</span> <span class="p">(</span><span class="n">auc</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"P@</span><span class="si">%d</span><span class="s2">: </span><span class="si">%.4f</span><span class="s2"> [random: </span><span class="si">%.4f</span><span class="s2">]"</span> <span class="o">%</span> <span class="p">(</span><span class="n">top_n</span><span class="p">,</span>
+                                         <span class="n">p_at_k</span><span class="p">,</span>
+                                         <span class="n">p_at_k_rnd</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="PoisMF">
+<a class="anchor" href="#PoisMF" aria-hidden="true"><span class="octicon octicon-link"></span></a>PoisMF<a class="anchor-link" href="#PoisMF"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Poisson factorization</strong></p>
+<p>The model is described in more detail in <a href="https://arxiv.org/abs/1811.01908">Fast Non-Bayesian Poisson Factorization for Implicit-Feedback Recommendations</a>.</p>
+<p>The basic idea is to take a sparse input matrix of counts $\mathbf{X}_{m,n}$, which in this case is given by the number of times each user (row in the matrix) played each song (column in the matrix), and find an approximation as the product of two non-negative lower-dimensional latent factor matrices $\mathbf{A}_{m,k}$ and $\mathbf{B}_{n,k}$ by maximizing Poisson likelihood, i.e. fit a model:
+$$
+\mathbf{X} \sim \text{Poisson}(\mathbf{A} \mathbf{B}^T)
+$$</p>
+<p>Which is then used to make predictions on the missing (zero-valued) entries, with the highest-predicted items for each user being the best candidates to recommend.</p>
+<p>The poisemf package offers different optimization methods which have different advantages in terms of speed and quality, and depending on the settings, is usually able to find good solutions in which the latent factors matrices $\mathbf{A}$ and $\mathbf{B}$ are sparse (i.e. most entries are exactly zero).</p>
+<hr>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">time</span>
+<span class="n">model_fast</span> <span class="o">=</span> <span class="n">PoisMF</span><span class="p">(</span><span class="n">reindex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"pg"</span><span class="p">,</span> <span class="n">use_float</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">k</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">niter</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">maxupd</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">l2_reg</span><span class="o">=</span><span class="mf">1e9</span><span class="p">)</span>\
+                <span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df_train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>CPU times: user 48.6 s, sys: 99.9 ms, total: 48.7 s
+Wall time: 27 s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">print_ranking_metrics</span><span class="p">(</span><span class="n">model_fast</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">model_fast</span><span class="o">.</span><span class="n">B</span><span class="p">,</span>
+                      <span class="n">df_train</span><span class="p">,</span> <span class="n">df_test</span><span class="p">,</span> <span class="n">users_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>AUC: 0.9538 [random: 0.50]
+P@5: 0.0888 [random: 0.0001]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">time</span>
+<span class="n">model_balanced</span> <span class="o">=</span> <span class="n">PoisMF</span><span class="p">(</span><span class="n">reindex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"cg"</span><span class="p">,</span> <span class="n">use_float</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                        <span class="n">k</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">niter</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">maxupd</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">l2_reg</span><span class="o">=</span><span class="mf">1e4</span><span class="p">)</span>\
+                    <span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df_train</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>CPU times: user 43min 14s, sys: 1.98 s, total: 43min 16s
+Wall time: 22min 4s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">print_ranking_metrics</span><span class="p">(</span><span class="n">model_balanced</span><span class="o">.</span><span class="n">A</span><span class="p">,</span> <span class="n">model_balanced</span><span class="o">.</span><span class="n">B</span><span class="p">,</span>
+                      <span class="n">df_train</span><span class="p">,</span> <span class="n">df_test</span><span class="p">,</span> <span class="n">users_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>AUC: 0.9823 [random: 0.50]
+P@5: 0.1436 [random: 0.0001]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">A</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([0.06792299, 0.16954426, 0.17553033, 0.00234962, 0.05563869])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Ranking-and-Prediction">
+<a class="anchor" href="#Ranking-and-Prediction" aria-hidden="true"><span class="octicon octicon-link"></span></a>Ranking and Prediction<a class="anchor-link" href="#Ranking-and-Prediction"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">topN</span><span class="p">(</span><span class="n">user</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">exclude</span> <span class="o">=</span> <span class="n">df_train</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_train</span><span class="o">.</span><span class="n">UserId</span><span class="o">==</span><span class="mi">2</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([     0,  96129, 101787,  60559, 139291])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">topN_new</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_train</span><span class="o">.</span><span class="n">UserId</span><span class="o">==</span><span class="mi">2</span><span class="p">],</span> <span class="n">n</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">exclude</span> <span class="o">=</span> <span class="n">df_train</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_train</span><span class="o">.</span><span class="n">UserId</span><span class="o">==</span><span class="mi">2</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([     0,  96129,  60559, 101787, 139291])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="n">item</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">11</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([0.00000000e+00, 2.07693311e-06, 0.00000000e+00])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Sparse-Matrix">
+<a class="anchor" href="#Sparse-Matrix" aria-hidden="true"><span class="octicon octicon-link"></span></a>Sparse Matrix<a class="anchor-link" href="#Sparse-Matrix"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1">## Other packages take a matrix of shape [users, items]</span>
+<span class="n">Xcoo</span> <span class="o">=</span> <span class="n">coo_matrix</span><span class="p">((</span><span class="n">df_train</span><span class="o">.</span><span class="n">Count</span><span class="p">,</span> <span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">UserId</span><span class="p">,</span> <span class="n">df_train</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)))</span>
+<span class="n">Xcoo_T</span> <span class="o">=</span> <span class="n">Xcoo</span><span class="o">.</span><span class="n">T</span>
+<span class="n">Xcsr_T</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">(</span><span class="n">Xcoo_T</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="ALS">
+<a class="anchor" href="#ALS" aria-hidden="true"><span class="octicon octicon-link"></span></a>ALS<a class="anchor-link" href="#ALS"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">ials</span> <span class="o">=</span> <span class="n">AlternatingLeastSquares</span><span class="p">(</span><span class="n">factors</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">regularization</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+                               <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+                               <span class="n">use_gpu</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">ials</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xcsr_T</span><span class="p">)</span>
+
+<span class="n">print_ranking_metrics</span><span class="p">(</span><span class="n">ials</span><span class="o">.</span><span class="n">user_factors</span><span class="p">,</span> <span class="n">ials</span><span class="o">.</span><span class="n">item_factors</span><span class="p">,</span>
+                      <span class="n">df_train</span><span class="p">,</span> <span class="n">df_test</span><span class="p">,</span> <span class="n">users_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+AUC: 0.9782 [random: 0.50]
+P@5: 0.1960 [random: 0.0001]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="BPR">
+<a class="anchor" href="#BPR" aria-hidden="true"><span class="octicon octicon-link"></span></a>BPR<a class="anchor-link" href="#BPR"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">bpr</span> <span class="o">=</span> <span class="n">BayesianPersonalizedRanking</span><span class="p">(</span><span class="n">factors</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">regularization</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+                               <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+                               <span class="n">use_gpu</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">bpr</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xcsr_T</span><span class="p">)</span>
+
+<span class="n">print_ranking_metrics</span><span class="p">(</span><span class="n">bpr</span><span class="o">.</span><span class="n">user_factors</span><span class="p">,</span> <span class="n">bpr</span><span class="o">.</span><span class="n">item_factors</span><span class="p">,</span>
+                      <span class="n">df_train</span><span class="p">,</span> <span class="n">df_test</span><span class="p">,</span> <span class="n">users_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+AUC: 0.9430 [random: 0.50]
+P@5: 0.0976 [random: 0.0001]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="HPF">
+<a class="anchor" href="#HPF" aria-hidden="true"><span class="octicon octicon-link"></span></a>HPF<a class="anchor-link" href="#HPF"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">hpf</span> <span class="o">=</span> <span class="n">HPF</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">use_float</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">Xcoo</span><span class="p">)</span>
+
+<span class="n">print_ranking_metrics</span><span class="p">(</span><span class="n">hpf</span><span class="o">.</span><span class="n">Theta</span><span class="p">,</span> <span class="n">hpf</span><span class="o">.</span><span class="n">Beta</span><span class="p">,</span>
+                      <span class="n">df_train</span><span class="p">,</span> <span class="n">df_test</span><span class="p">,</span> <span class="n">users_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>AUC: 0.9686 [random: 0.50]
+P@5: 0.1086 [random: 0.0001]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+<script type="application/vnd.jupyter.widget-state+json">
+{"baf57328a893499d8cc7840cd3c98d99": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_view_name": "HBoxView", "_dom_classes": [], "_model_name": "HBoxModel", "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.5.0", "box_style": "", "layout": "IPY_MODEL_75af5a769cfd4b9fbf6c95d534ba8f3b", "_model_module": "@jupyter-widgets/controls", "children": ["IPY_MODEL_7650d168da03480097eeb51e6f26eb96", "IPY_MODEL_68a6f0bebee345278ea394fe2aa5161f"]}}, "75af5a769cfd4b9fbf6c95d534ba8f3b": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}, "7650d168da03480097eeb51e6f26eb96": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_view_name": "ProgressView", "style": "IPY_MODEL_a9eb17088c214829a1cb3a64944a4787", "_dom_classes": [], "description": "100%", "_model_name": "FloatProgressModel", "bar_style": "success", "max": 50, "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "value": 50, "_view_count": null, "_view_module_version": "1.5.0", "orientation": "horizontal", "min": 0, "description_tooltip": null, "_model_module": "@jupyter-widgets/controls", "layout": "IPY_MODEL_e1a0835c1332417ea8e89b5cd4b84b83"}}, "68a6f0bebee345278ea394fe2aa5161f": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_view_name": "HTMLView", "style": "IPY_MODEL_42afcd20588e49babe13b77456a37dc6", "_dom_classes": [], "description": "", "_model_name": "HTMLModel", "placeholder": "\u200b", "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "value": " 50/50 [46:03&lt;00:00, 55.28s/it]", "_view_count": null, "_view_module_version": "1.5.0", "description_tooltip": null, "_model_module": "@jupyter-widgets/controls", "layout": "IPY_MODEL_bb788dac0a6741989be196de2ef2ebcc"}}, "a9eb17088c214829a1cb3a64944a4787": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_view_name": "StyleView", "_model_name": "ProgressStyleModel", "description_width": "initial", "_view_module": "@jupyter-widgets/base", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.2.0", "bar_color": null, "_model_module": "@jupyter-widgets/controls"}}, "e1a0835c1332417ea8e89b5cd4b84b83": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}, "42afcd20588e49babe13b77456a37dc6": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_view_name": "StyleView", "_model_name": "DescriptionStyleModel", "description_width": "", "_view_module": "@jupyter-widgets/base", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.2.0", "_model_module": "@jupyter-widgets/controls"}}, "bb788dac0a6741989be196de2ef2ebcc": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}, "e9f1d11e0fce4eefa69eafbf3b9c4542": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "state": {"_view_name": "HBoxView", "_dom_classes": [], "_model_name": "HBoxModel", "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.5.0", "box_style": "", "layout": "IPY_MODEL_31463f1b3f3e41108831826ce471704b", "_model_module": "@jupyter-widgets/controls", "children": ["IPY_MODEL_e2368b70b06e45e593e0246b690b980c", "IPY_MODEL_9554c0299a784792b14a887ae4b46f97"]}}, "31463f1b3f3e41108831826ce471704b": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}, "e2368b70b06e45e593e0246b690b980c": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "state": {"_view_name": "ProgressView", "style": "IPY_MODEL_4a1d932d03094804b919fd5806d1aa9c", "_dom_classes": [], "description": "100%", "_model_name": "FloatProgressModel", "bar_style": "success", "max": 50, "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "value": 50, "_view_count": null, "_view_module_version": "1.5.0", "orientation": "horizontal", "min": 0, "description_tooltip": null, "_model_module": "@jupyter-widgets/controls", "layout": "IPY_MODEL_e4af58b5aea9451ca55030e2040a8447"}}, "9554c0299a784792b14a887ae4b46f97": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "state": {"_view_name": "HTMLView", "style": "IPY_MODEL_95c2195cce1b4fcd888ff0c86cfb8d5b", "_dom_classes": [], "description": "", "_model_name": "HTMLModel", "placeholder": "\u200b", "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "value": " 50/50 [06:59&lt;00:00,  8.39s/it, correct=92.99%, skipped=2.09%]", "_view_count": null, "_view_module_version": "1.5.0", "description_tooltip": null, "_model_module": "@jupyter-widgets/controls", "layout": "IPY_MODEL_1be995ae33e446ec91299e01225cd1c5"}}, "4a1d932d03094804b919fd5806d1aa9c": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "state": {"_view_name": "StyleView", "_model_name": "ProgressStyleModel", "description_width": "initial", "_view_module": "@jupyter-widgets/base", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.2.0", "bar_color": null, "_model_module": "@jupyter-widgets/controls"}}, "e4af58b5aea9451ca55030e2040a8447": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}, "95c2195cce1b4fcd888ff0c86cfb8d5b": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "state": {"_view_name": "StyleView", "_model_name": "DescriptionStyleModel", "description_width": "", "_view_module": "@jupyter-widgets/base", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.2.0", "_model_module": "@jupyter-widgets/controls"}}, "1be995ae33e446ec91299e01225cd1c5": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}}
+</script>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/implicit/music/2021/07/13/implicit-lastfm.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

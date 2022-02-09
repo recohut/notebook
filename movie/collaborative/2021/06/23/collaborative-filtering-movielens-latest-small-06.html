@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>CF Part 6 - Non-negative Matrix factorization method | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="CF Part 6 - Non-negative Matrix factorization method" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Collaborative Filtering on MovieLens Latest-small Part 6 - Finding recommendations using model based non-negative matrix factorization method" />
+<meta property="og:description" content="Collaborative Filtering on MovieLens Latest-small Part 6 - Finding recommendations using model based non-negative matrix factorization method" />
+<link rel="canonical" href="https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-06.html" />
+<meta property="og:url" content="https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-06.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-06-23T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="CF Part 6 - Non-negative Matrix factorization method" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2021-06-23T00:00:00-05:00","datePublished":"2021-06-23T00:00:00-05:00","description":"Collaborative Filtering on MovieLens Latest-small Part 6 - Finding recommendations using model based non-negative matrix factorization method","headline":"CF Part 6 - Non-negative Matrix factorization method","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-06.html"},"url":"https://nb.recohut.com/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-06.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">CF Part 6 - Non-negative Matrix factorization method</h1><p class="page-description">Collaborative Filtering on MovieLens Latest-small Part 6 - Finding recommendations using model based non-negative matrix factorization method</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-06-23T00:00:00-05:00" itemprop="datePublished">
+        Jun 23, 2021
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      8 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#movie">movie</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#collaborative">collaborative</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-06.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-06-23-collaborative-filtering-movielens-latest-small-06.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-06.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-06-23-collaborative-filtering-movielens-latest-small-06.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <ul id="toc" class="section-nav">
+<li class="toc-entry toc-h3"><a href="#One-limitation-of-Matrix-Factorization">One limitation of Matrix Factorization </a></li>
+<li class="toc-entry toc-h3"><a href="#Particulariy-of-Non-negative-Matrix-Factorization">Particulariy of Non-negative Matrix Factorization </a></li>
+<li class="toc-entry toc-h3"><a href="#Objective-function">Objective function </a></li>
+<li class="toc-entry toc-h3"><a href="#Multiplicative-update-rule">Multiplicative update rule </a></li>
+<li class="toc-entry toc-h3"><a href="#Install-and-import-useful-packages">Install and import useful packages </a></li>
+<li class="toc-entry toc-h3"><a href="#requirements">requirements </a></li>
+<li class="toc-entry toc-h3"><a href="#Load-and-preprocess-rating">Load and preprocess rating </a></li>
+<li class="toc-entry toc-h3"><a href="#Non-negative-Matrix-Factorization-Model">Non-negative Matrix Factorization Model </a></li>
+<li class="toc-entry toc-h3"><a href="#Train-the-NMF-model-with-ML-100K-dataset">Train the NMF model with ML-100K dataset </a></li>
+<li class="toc-entry toc-h2"><a href="#Evaluation-of-NMF-with-Scikit-suprise">Evaluation of NMF with Scikit-suprise </a>
+<ul>
+<li class="toc-entry toc-h4"><a href="#ML-1M">ML-1M </a></li>
+</ul>
+</li>
+<li class="toc-entry toc-h2"><a href="#Explainable-Matrix-Factorization">Explainable Matrix Factorization </a></li>
+<li class="toc-entry toc-h2"><a href="#Reference">Reference </a></li>
+<li class="toc-entry toc-h2"><a href="#Author">Author </a></li>
+</ul><!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-06-23-collaborative-filtering-movielens-latest-small-06.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Jusl like Matrix Factorization (MF) <a href="https://ieeexplore.ieee.org/document/5197422">(Yehuda Koren et al., 2009)</a>, Non-negative Matrix Factorization (NMF in short) factors the rating matrix $R$ in two matrices in such a way that $R = PQ^{\top}$.</p>
+<h3 id="One-limitation-of-Matrix-Factorization">
+<a class="anchor" href="#One-limitation-of-Matrix-Factorization" aria-hidden="true"><span class="octicon octicon-link"></span></a>One limitation of Matrix Factorization<a class="anchor-link" href="#One-limitation-of-Matrix-Factorization"> </a>
+</h3>
+<p>$P$ and $Q$ values in MF are non interpretable since their components can take arbitrary (positive and negative) values.</p>
+<h3 id="Particulariy-of-Non-negative-Matrix-Factorization">
+<a class="anchor" href="#Particulariy-of-Non-negative-Matrix-Factorization" aria-hidden="true"><span class="octicon octicon-link"></span></a>Particulariy of Non-negative Matrix Factorization<a class="anchor-link" href="#Particulariy-of-Non-negative-Matrix-Factorization"> </a>
+</h3>
+<p>NMF <a href="http://www.dm.unibo.it/~simoncin/nmfconverge.pdf">(Lee and Seung, 1999)</a> allows the reconstruction of $P$ and $Q$ in such a way that $P,Q \ge 0$. Constraining $P$ and $Q$ values to be taken from $[0,1]$ allows  a probabilistic interpretation</p>
+<ul>
+<li>Latent factors represent groups of users who share the same tastes,</li>
+<li>The value  $P_{u,l}$  represents the probability that user $u$ belongs to the group $l$ of users and </li>
+<li>The value $Q_{l,i}$ represents the probability that users in the group $l$  likes item $i$.</li>
+</ul>
+<h3 id="Objective-function">
+<a class="anchor" href="#Objective-function" aria-hidden="true"><span class="octicon octicon-link"></span></a>Objective function<a class="anchor-link" href="#Objective-function"> </a>
+</h3>
+<p>With the Euclidian distance, the NMF objective function is defined by</p>
+\begin{equation}
+J = \frac{1}{2}\sum_{(u,i) \in \kappa}||R_{u,i} - P_uQ_i^{\top}||^2 + \lambda_P||P_u||^2 + \lambda_Q||Q_i||^2
+\end{equation}<p>The goal is to minimize the cost function $J$ by optimizing parameters $P$ and $Q$, with $\lambda_P$ and $\lambda_Q$ the regularizer parameters.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Multiplicative-update-rule">
+<a class="anchor" href="#Multiplicative-update-rule" aria-hidden="true"><span class="octicon octicon-link"></span></a>Multiplicative update rule<a class="anchor-link" href="#Multiplicative-update-rule"> </a>
+</h3>
+<p>According <a href="https://www.nature.com/articles/44565.pdf">(Lee and Seung, 1999)</a>, to the multiplicative update rule for $P$ and $Q$ are as follows :</p>
+\begin{equation}
+P \leftarrow P \cdot \frac{RQ}{PQ^{\top}Q}
+\end{equation}\begin{equation}
+Q \leftarrow Q \cdot \frac{R^{\top}P}{QP^{\top}P}
+\end{equation}<p>However, since $R$ is a sparse matrix, we need to update each $P_u$ according to existing ratings of user $u$. Similarily, we need to update $Q_i$ according to existing ratings on item $i$. Hence :</p>
+\begin{equation}
+P_{u,k} \leftarrow P_{u,k} \cdot \frac{\sum_{i \in I_u}Q_{i,k}\cdot r_{u,i}}{\sum_{i \in I_u}Q_{i,k}\cdot \hat{r}_{u,i} + \lambda_P|I_u|P_{u,k}}
+\end{equation}\begin{equation}
+Q_{i,k} \leftarrow Q_{i,k} \cdot \frac{\sum_{u \in U_i}P_{u,k}\cdot r_{u,i}}{\sum_{u \in U_i}P_{u,k}\cdot \hat{r}_{u,i} + \lambda_Q|U_i|Q_{i,k}}
+\end{equation}<p>Where</p>
+<ul>
+<li>$P_{u,k}$ is the $k^{th}$ latent factor of $P_u$</li>
+<li>$Q_{i,k}$ is the $k^{th}$ latent factor of $Q_i$</li>
+<li>$I_u$ the of items rated by user $u$</li>
+<li>$U_i$ the set of users who rated item $i$</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">"recsys.zip"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">"recsys"</span><span class="p">)):</span>
+    <span class="o">!</span>wget https://github.com/nzhinusoftcm/review-on-collaborative-filtering/raw/master/recsys.zip    
+    <span class="o">!</span>unzip recsys.zip
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Install-and-import-useful-packages">
+<a class="anchor" href="#Install-and-import-useful-packages" aria-hidden="true"><span class="octicon octicon-link"></span></a>Install and import useful packages<a class="anchor-link" href="#Install-and-import-useful-packages"> </a>
+</h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="requirements">
+<a class="anchor" href="#requirements" aria-hidden="true"><span class="octicon octicon-link"></span></a>requirements<a class="anchor-link" href="#requirements"> </a>
+</h3>
+<pre><code>matplotlib==3.2.2
+numpy==1.19.2
+pandas==1.0.5
+python==3.7
+scikit-learn==0.24.1
+scikit-surprise==1.1.1
+scipy==1.6.2</code></pre>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">mean_ratings</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">normalized_ratings</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">ids_encoder</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">rating_matrix</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">get_examples</span>
+<span class="kn">from</span> <span class="nn">recsys.preprocessing</span> <span class="kn">import</span> <span class="n">scale_ratings</span>
+
+<span class="kn">from</span> <span class="nn">recsys.datasets</span> <span class="kn">import</span> <span class="n">ml1m</span>
+<span class="kn">from</span> <span class="nn">recsys.datasets</span> <span class="kn">import</span> <span class="n">ml100k</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Load-and-preprocess-rating">
+<a class="anchor" href="#Load-and-preprocess-rating" aria-hidden="true"><span class="octicon octicon-link"></span></a>Load and preprocess rating<a class="anchor-link" href="#Load-and-preprocess-rating"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ratings</span><span class="p">,</span> <span class="n">movies</span> <span class="o">=</span> <span class="n">ml100k</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
+
+<span class="c1"># prepare data</span>
+<span class="n">ratings</span><span class="p">,</span> <span class="n">uencoder</span><span class="p">,</span> <span class="n">iencoder</span> <span class="o">=</span> <span class="n">ids_encoder</span><span class="p">(</span><span class="n">ratings</span><span class="p">)</span>
+
+<span class="c1"># convert ratings from dataframe to numpy array</span>
+<span class="n">np_ratings</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+
+<span class="c1"># get examples as tuples of userids and itemids and labels from normalize ratings</span>
+<span class="n">raw_examples</span><span class="p">,</span> <span class="n">raw_labels</span> <span class="o">=</span> <span class="n">get_examples</span><span class="p">(</span><span class="n">ratings</span><span class="p">,</span> <span class="n">labels_column</span><span class="o">=</span><span class="s2">"rating"</span><span class="p">)</span>
+
+<span class="c1"># train test split</span>
+<span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">x_test</span><span class="p">),</span> <span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">examples</span><span class="o">=</span><span class="n">raw_examples</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">raw_labels</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Non-negative-Matrix-Factorization-Model">
+<a class="anchor" href="#Non-negative-Matrix-Factorization-Model" aria-hidden="true"><span class="octicon octicon-link"></span></a>Non-negative Matrix Factorization Model<a class="anchor-link" href="#Non-negative-Matrix-Factorization-Model"> </a>
+</h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">NMF</span><span class="p">:</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ratings</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">uencoder</span><span class="p">,</span> <span class="n">iencoder</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">lambda_P</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">lambda_Q</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+        
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+        
+        <span class="c1"># initialize the latent factor matrices P and Q (of shapes (m,k) and (n,k) respectively) that will be learnt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ratings</span> <span class="o">=</span> <span class="n">ratings</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">np_ratings</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span>
+        
+        <span class="c1"># hyper parameter initialization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_P</span> <span class="o">=</span> <span class="n">lambda_P</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lambda_Q</span> <span class="o">=</span> <span class="n">lambda_Q</span>
+
+        <span class="c1"># initialize encoders</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uencoder</span> <span class="o">=</span> <span class="n">uencoder</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iencoder</span> <span class="o">=</span> <span class="n">iencoder</span>
+        
+        <span class="c1"># training history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"epochs"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">"loss"</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">"val_loss"</span><span class="p">:</span> <span class="p">[],</span>
+        <span class="p">}</span>
+    
+    <span class="k">def</span> <span class="nf">print_training_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Training NMF ...'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'k=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">mae</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        returns the Mean Absolute Error</span>
+<span class="sd">        """</span>
+        <span class="c1"># number of training examples</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">x_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">pair</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">):</span>
+            <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">pair</span>
+            <span class="n">error</span> <span class="o">+=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">u</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="n">error</span> <span class="o">/</span> <span class="n">m</span>
+    
+    <span class="k">def</span> <span class="nf">update_rule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+        <span class="n">I</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">np_ratings</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">np_ratings</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">u</span><span class="p">][:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span>
+        <span class="n">U</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">np_ratings</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">np_ratings</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">i</span><span class="p">][:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span>    
+                    
+        <span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">I</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">I</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">dem</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">I</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">u</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">I</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="p">))</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_P</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">I</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">u</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">dem</span>
+
+        <span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">U</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">dem</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">U</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">U</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">))</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_Q</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">U</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">num</span> <span class="o">/</span> <span class="n">dem</span>
+    
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">print_training_progress</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">val_error</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">epoch</span> <span class="o">%</span> <span class="n">steps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"epoch </span><span class="si">{</span><span class="n">epoch</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">epochs</span><span class="si">}</span><span class="s2"> - loss : </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2"> - val_loss : </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">val_error</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">validation_data</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">print_training_parameters</span><span class="p">()</span>
+        <span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">validation_data</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">pair</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">):</span>
+                <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="n">pair</span>
+                <span class="n">r_hat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">u</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="n">r_hat</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">update_rule</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>                
+            <span class="c1"># training and validation error  after this epochs</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mae</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+            <span class="n">val_error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mae</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update_history</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">val_error</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">print_training_progress</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">val_error</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">history</span>
+    
+    <span class="k">def</span> <span class="nf">update_history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">val_error</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">'epochs'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">'loss'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">history</span><span class="p">[</span><span class="s1">'val_loss'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val_error</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">):</span>        
+        <span class="n">error</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mae</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"validation error : </span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'MAE : '</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>        
+        <span class="k">return</span> <span class="n">error</span>
+      
+    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userid</span><span class="p">,</span> <span class="n">itemid</span><span class="p">):</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uencoder</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">userid</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iencoder</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">itemid</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">u</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">r</span>
+
+    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userid</span><span class="p">,</span> <span class="n">N</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+        <span class="c1"># encode the userid</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uencoder</span><span class="o">.</span><span class="n">transform</span><span class="p">([</span><span class="n">userid</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># predictions for users userid on all product</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">P</span><span class="p">[</span><span class="n">u</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">Q</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+        <span class="c1"># get the indices of the top N predictions</span>
+        <span class="n">top_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">predictions</span><span class="p">))[:</span><span class="n">N</span><span class="p">]</span>
+
+        <span class="c1"># decode indices to get their corresponding itemids</span>
+        <span class="n">top_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iencoder</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">top_idx</span><span class="p">)</span>
+
+        <span class="c1"># take corresponding predictions for top N indices</span>
+        <span class="n">preds</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">top_items</span><span class="p">,</span> <span class="n">preds</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Train-the-NMF-model-with-ML-100K-dataset">
+<a class="anchor" href="#Train-the-NMF-model-with-ML-100K-dataset" aria-hidden="true"><span class="octicon octicon-link"></span></a>Train the NMF model with ML-100K dataset<a class="anchor-link" href="#Train-the-NMF-model-with-ML-100K-dataset"> </a>
+</h3>
+<p>model parameters :</p>
+<ul>
+<li>$k = 10$ : (number of factors)</li>
+<li>$\lambda_P = 0.6$</li>
+<li>$\lambda_Q = 0.6$</li>
+<li>epochs = 10</li>
+</ul>
+<p>Note that it may take some time to complete the training on 10 epochs (around 7 minutes).</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[</span><span class="s1">'userid'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>   <span class="c1"># total number of users</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[</span><span class="s1">'itemid'</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>   <span class="c1"># total number of items</span>
+
+<span class="c1"># create and train the model</span>
+<span class="n">nmf</span> <span class="o">=</span> <span class="n">NMF</span><span class="p">(</span><span class="n">ratings</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">uencoder</span><span class="p">,</span> <span class="n">iencoder</span><span class="p">,</span> <span class="n">K</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">lambda_P</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">lambda_Q</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">nmf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Training NMF ...
+k=10
+epoch 1/10 - loss : 0.916 - val_loss : 0.917
+epoch 2/10 - loss : 0.915 - val_loss : 0.917
+epoch 3/10 - loss : 0.915 - val_loss : 0.917
+epoch 4/10 - loss : 0.915 - val_loss : 0.917
+epoch 5/10 - loss : 0.915 - val_loss : 0.917
+epoch 6/10 - loss : 0.915 - val_loss : 0.917
+epoch 7/10 - loss : 0.915 - val_loss : 0.917
+epoch 8/10 - loss : 0.915 - val_loss : 0.917
+epoch 9/10 - loss : 0.915 - val_loss : 0.917
+epoch 10/10 - loss : 0.915 - val_loss : 0.917
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">nmf</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">x_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>validation error : 0.917
+MAE :  0.916504134301954
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>0.916504134301954</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluation-of-NMF-with-Scikit-suprise">
+<a class="anchor" href="#Evaluation-of-NMF-with-Scikit-suprise" aria-hidden="true"><span class="octicon octicon-link"></span></a>Evaluation of NMF with Scikit-suprise<a class="anchor-link" href="#Evaluation-of-NMF-with-Scikit-suprise"> </a>
+</h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can use the <a href="https://surprise.readthedocs.io/en/stable/">scikt-suprise</a> package to train the NMF model. It  is an easy-to-use Python scikit for recommender systems.</p>
+<ol>
+<li>Import the NMF class from the suprise scikit.</li>
+<li>Load the data with the built-in function</li>
+<li>Instanciate NMF with <code>k=10</code> (<code>n_factors</code>) and we use 10 epochs (<code>n_epochs</code>)</li>
+<li>Evaluate the model using cross-validation with 5 folds.</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">surprise</span> <span class="kn">import</span> <span class="n">NMF</span>
+<span class="kn">from</span> <span class="nn">surprise</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">surprise.model_selection</span> <span class="kn">import</span> <span class="n">cross_validate</span>
+
+<span class="c1"># Load the movielens-100k dataset (download it if needed).</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">load_builtin</span><span class="p">(</span><span class="s1">'ml-100k'</span><span class="p">)</span>
+
+<span class="c1"># Use the NMF algorithm.</span>
+<span class="n">nmf</span> <span class="o">=</span> <span class="n">NMF</span><span class="p">(</span><span class="n">n_factors</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># Run 5-fold cross-validation and print results.</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">cross_validate</span><span class="p">(</span><span class="n">nmf</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">measures</span><span class="o">=</span><span class="p">[</span><span class="s1">'MAE'</span><span class="p">],</span> <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Evaluating MAE of algorithm NMF on 5 split(s).
+
+                  Fold 1  Fold 2  Fold 3  Fold 4  Fold 5  Mean    Std     
+MAE (testset)     0.9626  0.9435  0.9777  0.9607  0.9510  0.9591  0.0116  
+Fit time          0.63    0.69    0.74    0.65    0.71    0.68    0.04    
+Test time         0.15    0.11    0.14    0.10    0.15    0.13    0.02    
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>As result, the mean MAE on the test set is <strong>mae = 0.9510</strong> which is equivalent to the result we have obtained on <em>ml-100k</em> with our own implementation <strong>mae = 0.9165</strong></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="ML-1M">
+<a class="anchor" href="#ML-1M" aria-hidden="true"><span class="octicon octicon-link"></span></a>ML-1M<a class="anchor-link" href="#ML-1M"> </a>
+</h4>
+<p>The mean MAE on a 5-fold cross-validation is <strong>mae = 0.9567</strong></p>
+<p>This may take arount 2 minutes</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">load_builtin</span><span class="p">(</span><span class="s1">'ml-1m'</span><span class="p">)</span>
+<span class="n">nmf</span> <span class="o">=</span> <span class="n">NMF</span><span class="p">(</span><span class="n">n_factors</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">cross_validate</span><span class="p">(</span><span class="n">nmf</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">measures</span><span class="o">=</span><span class="p">[</span><span class="s1">'MAE'</span><span class="p">],</span> <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Evaluating MAE of algorithm NMF on 5 split(s).
+
+                  Fold 1  Fold 2  Fold 3  Fold 4  Fold 5  Mean    Std     
+MAE (testset)     0.9559  0.9580  0.9566  0.9639  0.9490  0.9567  0.0047  
+Fit time          6.37    6.55    6.49    6.45    6.51    6.47    0.06    
+Test time         1.68    1.31    1.64    1.46    1.75    1.57    0.16    
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Explainable-Matrix-Factorization">
+<a class="anchor" href="#Explainable-Matrix-Factorization" aria-hidden="true"><span class="octicon octicon-link"></span></a>Explainable Matrix Factorization<a class="anchor-link" href="#Explainable-Matrix-Factorization"> </a>
+</h2>
+<p>NMF introduced explainability to MF by constraining $P$ and $Q$ values in $[0,1]$. It can be considered is an inner explainable model. It's possible to inject external informations into the model in order to bring explainability. This is what the <strong>Explainable Matrix Factorization (EMF)</strong> algorithm does. It computes explainable scores from user or item similarities taken from the user-based or item-based CF.</p>
+<p>Click <a href="https://github.com/nzhinusoftcm/review-on-collaborative-filtering/blob/master/7.Explainable_Matrix_Factorization.ipynb">here</a> to open the EMF notebook.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Reference">
+<a class="anchor" href="#Reference" aria-hidden="true"><span class="octicon octicon-link"></span></a>Reference<a class="anchor-link" href="#Reference"> </a>
+</h2>
+<ol>
+<li>Daniel D. Lee &amp; H. Sebastian Seung (1999). <a href="https://www.nature.com/articles/44565">Learning the parts of objects by non-negative matrix factorization</a>
+</li>
+<li>Deng Cai et al. (2008). <a href="https://ieeexplore.ieee.org/document/4781101">Non-negative Matrix Factorization on Manifold</a>
+</li>
+<li>Yu-Xiong Wang and Yu-Jin Zhang (2011). <a href="https://ieeexplore.ieee.org/document/6165290">Non-negative Matrix Factorization: a Comprehensive Review</a>
+</li>
+<li>Nicolas Gillis (2014). <a href="https://arxiv.org/pdf/1401.5226.pdf">The Why and How of Nonnegative Matrix Factorization</a>
+</li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Author">
+<a class="anchor" href="#Author" aria-hidden="true"><span class="octicon octicon-link"></span></a>Author<a class="anchor-link" href="#Author"> </a>
+</h2>
+<p><a href="https://www.linkedin.com/in/carmel-wenga-871876178/">Carmel WENGA</a>, <br>
+PhD student at Université de la Polynésie Française, <br> 
+Applied Machine Learning Research Engineer, <br>
+<a href="https://shoppinglist.cm">ShoppingList</a>, NzhinuSoft.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/movie/collaborative/2021/06/23/collaborative-filtering-movielens-latest-small-06.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

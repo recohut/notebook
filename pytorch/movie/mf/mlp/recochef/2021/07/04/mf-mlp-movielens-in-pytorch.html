@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Training neural factorization model on movielens dataset | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Training neural factorization model on movielens dataset" />
+<meta name="author" content="<a href='https://github.com/yanneta/pytorch-tutorials'>Yannet</a>" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Training MF, MF+bias, and MLP model on movielens-100k dataset in PyTorch" />
+<meta property="og:description" content="Training MF, MF+bias, and MLP model on movielens-100k dataset in PyTorch" />
+<link rel="canonical" href="https://nb.recohut.com/pytorch/movie/mf/mlp/recochef/2021/07/04/mf-mlp-movielens-in-pytorch.html" />
+<meta property="og:url" content="https://nb.recohut.com/pytorch/movie/mf/mlp/recochef/2021/07/04/mf-mlp-movielens-in-pytorch.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2021-07-04T00:00:00-05:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Training neural factorization model on movielens dataset" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"<a href='https://github.com/yanneta/pytorch-tutorials'>Yannet</a>"},"dateModified":"2021-07-04T00:00:00-05:00","datePublished":"2021-07-04T00:00:00-05:00","description":"Training MF, MF+bias, and MLP model on movielens-100k dataset in PyTorch","headline":"Training neural factorization model on movielens dataset","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/pytorch/movie/mf/mlp/recochef/2021/07/04/mf-mlp-movielens-in-pytorch.html"},"url":"https://nb.recohut.com/pytorch/movie/mf/mlp/recochef/2021/07/04/mf-mlp-movielens-in-pytorch.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Training neural factorization model on movielens dataset</h1><p class="page-description">Training MF, MF+bias, and MLP model on movielens-100k dataset in PyTorch</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2021-07-04T00:00:00-05:00" itemprop="datePublished">
+        Jul 4, 2021
+      </time>• 
+          <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name"><a href='https://github.com/yanneta/pytorch-tutorials'>Yannet</a></span></span>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      3 min read
+    
+</span></p>
+
+    
+      <p class="category-tags"><i class="fas fa-tags category-tags-icon"></i></i> 
+      
+        <a class="category-tags-link" href="/categories/#Pytorch">Pytorch</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#Movie">Movie</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#MF">MF</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#MLP">MLP</a>
+        &nbsp;
+      
+        <a class="category-tags-link" href="/categories/#RecoChef">RecoChef</a>
+        
+      
+      </p>
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2021-07-04-mf-mlp-movielens-in-pytorch.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2021-07-04-mf-mlp-movielens-in-pytorch.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2021-07-04-mf-mlp-movielens-in-pytorch.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2021-07-04-mf-mlp-movielens-in-pytorch.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2021-07-04-mf-mlp-movielens-in-pytorch.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">git</span><span class="o">+</span><span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">recochef</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>  Installing build dependencies ... done
+  Getting requirements to build wheel ... done
+    Preparing wheel metadata ... done
+  Building wheel for recochef (PEP 517) ... done
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+
+<span class="kn">from</span> <span class="nn">recochef.datasets.synthetic</span> <span class="kn">import</span> <span class="n">Synthetic</span>
+<span class="kn">from</span> <span class="nn">recochef.datasets.movielens</span> <span class="kn">import</span> <span class="n">MovieLens</span>
+<span class="kn">from</span> <span class="nn">recochef.preprocessing.split</span> <span class="kn">import</span> <span class="n">chrono_split</span>
+<span class="kn">from</span> <span class="nn">recochef.preprocessing.encode</span> <span class="kn">import</span> <span class="n">label_encode</span> <span class="k">as</span> <span class="n">le</span>
+<span class="kn">from</span> <span class="nn">recochef.models.factorization</span> <span class="kn">import</span> <span class="n">MF</span><span class="p">,</span> <span class="n">MF_bias</span>
+<span class="kn">from</span> <span class="nn">recochef.models.dnn</span> <span class="kn">import</span> <span class="n">CollabFNet</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># synt = Synthetic()</span>
+<span class="c1"># df = synt.implicit()</span>
+
+<span class="n">movielens</span> <span class="o">=</span> <span class="n">MovieLens</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">movielens</span><span class="o">.</span><span class="n">load_interactions</span><span class="p">()</span>
+
+<span class="c1"># changing rating colname to event following implicit naming conventions</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;RATING&#39;</span><span class="p">:</span> <span class="s1">&#39;EVENT&#39;</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+
+<span class="c1"># chronological split</span>
+<span class="n">df_train</span><span class="p">,</span> <span class="n">df_valid</span> <span class="o">=</span> <span class="n">chrono_split</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">ratio</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">min_rating</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Train set:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">df_train</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Validation set:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">df_valid</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Train set:
+
+       USERID  ITEMID  EVENT  TIMESTAMP
+59972       1     168    5.0  874965478
+92487       1     172    5.0  874965478
+74577       1     165    5.0  874965518
+48214       1     156    4.0  874965556
+22971       1     166    5.0  874965677
+...       ...     ...    ...        ...
+98752     943     139    1.0  888640027
+89336     943     426    4.0  888640027
+80660     943     720    1.0  888640048
+93177     943      80    2.0  888640048
+87415     943      53    3.0  888640067
+
+[80000 rows x 4 columns]
+====================================================================================================
+
+Validation set:
+
+       USERID  ITEMID  EVENT  TIMESTAMP
+10508       1     208    5.0  878542960
+83307       1       3    4.0  878542960
+8976        1      12    5.0  878542960
+78171       1      58    4.0  878542960
+9811        1     201    3.0  878542960
+...       ...     ...    ...        ...
+81005     943     450    1.0  888693158
+92536     943     227    1.0  888693158
+95003     943     230    1.0  888693158
+94914     943     229    2.0  888693158
+92880     943     234    3.0  888693184
+
+[20000 rows x 4 columns]
+====================================================================================================
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df_train</span><span class="p">,</span> <span class="n">uid_maps</span> <span class="o">=</span> <span class="n">le</span><span class="p">(</span><span class="n">df_train</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="s1">&#39;USERID&#39;</span><span class="p">)</span>
+<span class="n">df_train</span><span class="p">,</span> <span class="n">iid_maps</span> <span class="o">=</span> <span class="n">le</span><span class="p">(</span><span class="n">df_train</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="s1">&#39;ITEMID&#39;</span><span class="p">)</span>
+<span class="n">df_valid</span> <span class="o">=</span> <span class="n">le</span><span class="p">(</span><span class="n">df_valid</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="s1">&#39;USERID&#39;</span><span class="p">,</span> <span class="n">maps</span><span class="o">=</span><span class="n">uid_maps</span><span class="p">)</span>
+<span class="n">df_valid</span> <span class="o">=</span> <span class="n">le</span><span class="p">(</span><span class="n">df_valid</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="s1">&#39;ITEMID&#39;</span><span class="p">,</span> <span class="n">maps</span><span class="o">=</span><span class="n">iid_maps</span><span class="p">)</span>
+
+<span class="c1"># # event implicit to rating conversion</span>
+<span class="c1"># event_weights = {&#39;click&#39;:1, &#39;add&#39;:2, &#39;purchase&#39;:4}</span>
+<span class="c1"># event_maps = dict({&#39;EVENT_TO_IDX&#39;:event_weights})</span>
+<span class="c1"># df_train = le(df_train, col=&#39;EVENT&#39;, maps=event_maps)</span>
+<span class="c1"># df_valid = le(df_valid, col=&#39;EVENT&#39;, maps=event_maps)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed Train set:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">df_train</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processed Validation set:</span><span class="se">\n\n</span><span class="si">{</span><span class="n">df_valid</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Processed Train set:
+
+       USERID  ITEMID  EVENT  TIMESTAMP
+59972       0       0    5.0  874965478
+92487       0       1    5.0  874965478
+74577       0       2    5.0  874965518
+48214       0       3    4.0  874965556
+22971       0       4    5.0  874965677
+...       ...     ...    ...        ...
+98752     942     933    1.0  888640027
+89336     942     990    4.0  888640027
+80660     942     643    1.0  888640048
+93177     942     155    2.0  888640048
+87415     942     166    3.0  888640067
+
+[80000 rows x 4 columns]
+====================================================================================================
+
+Processed Validation set:
+
+       USERID  ITEMID  EVENT  TIMESTAMP
+10508       0   341.0    5.0  878542960
+83307       0   983.0    4.0  878542960
+8976        0   425.0    5.0  878542960
+78171       0   639.0    4.0  878542960
+9811        0   490.0    3.0  878542960
+...       ...     ...    ...        ...
+81005     942   314.0    1.0  888693158
+92536     942   154.0    1.0  888693158
+95003     942   183.0    1.0  888693158
+94914     942   176.0    2.0  888693158
+92880     942   132.0    3.0  888693184
+
+[19917 rows x 4 columns]
+====================================================================================================
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">num_users</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">USERID</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+<span class="n">num_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">ITEMID</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+
+<span class="n">num_users_t</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_valid</span><span class="o">.</span><span class="n">USERID</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+<span class="n">num_items_t</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_valid</span><span class="o">.</span><span class="n">ITEMID</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There are </span><span class="si">{</span><span class="n">num_users</span><span class="si">}</span><span class="s2"> users and </span><span class="si">{</span><span class="n">num_items</span><span class="si">}</span><span class="s2"> items in the train set.</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;There are </span><span class="si">{</span><span class="n">num_users_t</span><span class="si">}</span><span class="s2"> users and </span><span class="si">{</span><span class="n">num_items_t</span><span class="si">}</span><span class="s2"> items in the validation set.</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>There are 943 users and 1613 items in the train set.
+====================================================================================================
+
+There are 943 users and 1429 items in the validation set.
+====================================================================================================
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">train_epocs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unsqueeze</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="n">wd</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+        <span class="n">users</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">USERID</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="c1"># .cuda()</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">ITEMID</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="c1">#.cuda()</span>
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">df_train</span><span class="o">.</span><span class="n">EVENT</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="c1">#.cuda()</span>
+        <span class="k">if</span> <span class="n">unsqueeze</span><span class="p">:</span>
+            <span class="n">ratings</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">y_hat</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">users</span><span class="p">,</span> <span class="n">items</span><span class="p">)</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> 
+    <span class="n">test_loss</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">unsqueeze</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">test_loss</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">unsqueeze</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">df_valid</span><span class="o">.</span><span class="n">USERID</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="c1">#.cuda()</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">df_valid</span><span class="o">.</span><span class="n">ITEMID</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="c1">#.cuda()</span>
+    <span class="n">ratings</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">df_valid</span><span class="o">.</span><span class="n">EVENT</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="c1">#.cuda()</span>
+    <span class="k">if</span> <span class="n">unsqueeze</span><span class="p">:</span>
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">y_hat</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">users</span><span class="p">,</span> <span class="n">items</span><span class="p">)</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">y_hat</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;test loss </span><span class="si">%.3f</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">MF</span><span class="p">(</span><span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span><span class="p">,</span> <span class="n">emb_size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span> <span class="c1"># .cuda() if you have a GPU</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training MF model:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">train_epocs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Training MF model:
+
+13.594555854797363
+5.292399883270264
+2.558849573135376
+3.584117889404297
+1.0360910892486572
+1.9875222444534302
+2.920832633972168
+2.4130148887634277
+1.2886441946029663
+1.112807273864746
+test loss 2.085 
+
+====================================================================================================
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">MF_bias</span><span class="p">(</span><span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span><span class="p">,</span> <span class="n">emb_size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span> <span class="c1">#.cuda()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training MF+bias model:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">train_epocs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Training MF+bias model:
+
+13.59664535522461
+9.730958938598633
+4.798837184906006
+1.3603413105010986
+2.697232723236084
+4.214857578277588
+2.871798276901245
+1.3329992294311523
+0.9624974727630615
+1.459389328956604
+test loss 2.269 
+
+====================================================================================================
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">CollabFNet</span><span class="p">(</span><span class="n">num_users</span><span class="p">,</span> <span class="n">num_items</span><span class="p">,</span> <span class="n">emb_size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span> <span class="c1">#.cuda()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Training MLP model:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">train_epocs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">wd</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">,</span> <span class="n">unsqueeze</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">100</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Training MLP model:
+
+12.962654113769531
+1.4028953313827515
+15.373563766479492
+2.177295207977295
+2.6291019916534424
+5.752542495727539
+6.88251256942749
+6.2746357917785645
+4.8090314865112305
+3.095308303833008
+1.6791961193084717
+1.1257785558700562
+1.678966760635376
+2.615834951400757
+2.80102276802063
+test loss 2.559 
+
+====================================================================================================
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><!-- from https://github.com/utterance/utterances -->
+<script src="https://utteranc.es/client.js"
+        repo="recohut/notebook"
+        issue-term="title"
+        label="blogpost-comment"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script><a class="u-url" href="/pytorch/movie/mf/mlp/recochef/2021/07/04/mf-mlp-movielens-in-pytorch.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
