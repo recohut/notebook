@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Keyword Extraction with RAKE and NLTK | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Keyword Extraction with RAKE and NLTK" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/01/keyword-extraction.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/01/keyword-extraction.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-01T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Keyword Extraction with RAKE and NLTK" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-01T00:00:00-06:00","datePublished":"2022-01-01T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Keyword Extraction with RAKE and NLTK","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/01/keyword-extraction.html"},"url":"https://nb.recohut.com/2022/01/01/keyword-extraction.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Keyword Extraction with RAKE and NLTK</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-01T00:00:00-06:00" itemprop="datePublished">
+        Jan 1, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      4 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-01-keyword-extraction.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-01-keyword-extraction.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-01-keyword-extraction.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-01-keyword-extraction.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-01-keyword-extraction.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">path</span> <span class="o">=</span> <span class="s1">&#39;/content&#39;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.feature_extraction.text</span> <span class="kn">import</span> <span class="n">TfidfVectorizer</span>
+<span class="kn">from</span> <span class="nn">sklearn.feature_extraction.text</span> <span class="kn">import</span> <span class="n">CountVectorizer</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+<span class="n">tqdm</span><span class="o">.</span><span class="n">pandas</span><span class="p">()</span>
+<span class="o">%</span><span class="k">reload_ext</span> autoreload
+<span class="o">%</span><span class="k">autoreload</span> 2
+<span class="o">%</span><span class="k">reload_ext</span> google.colab.data_table
+<span class="o">%</span><span class="k">config</span> InlineBackend.figure_format = &#39;retina&#39;
+
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;fivethirtyeight&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;seaborn-notebook&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">files</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">path</span><span class="p">);</span> <span class="n">files</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[&#39;manual-all-domains_99done_Google_Title.xlsx&#39;,
+ &#39;manual-all-domains_full_data.xlsx&#39;]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_raw</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_excel</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">files</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">index_col</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">df_raw</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;domain&#39;</span><span class="p">,</span><span class="s1">&#39;signup_url&#39;</span><span class="p">,</span><span class="s1">&#39;other_lang&#39;</span><span class="p">,</span><span class="s1">&#39;lang&#39;</span><span class="p">,</span><span class="s1">&#39;title&#39;</span><span class="p">]</span>
+<span class="n">df_raw</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;class &#39;pandas.core.frame.DataFrame&#39;&gt;
+Int64Index: 2784 entries, 1 to 2784
+Data columns (total 5 columns):
+ #   Column      Non-Null Count  Dtype 
+---  ------      --------------  ----- 
+ 0   domain      2784 non-null   object
+ 1   signup_url  2784 non-null   object
+ 2   other_lang  2784 non-null   object
+ 3   lang        1273 non-null   object
+ 4   title       1194 non-null   object
+dtypes: object(5)
+memory usage: 130.5+ KB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">nltk</span>
+<span class="n">nltk</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="s1">&#39;wordnet&#39;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">nltk.stem</span> <span class="kn">import</span> <span class="n">WordNetLemmatizer</span> 
+<span class="n">lemmatizer</span> <span class="o">=</span> <span class="n">WordNetLemmatizer</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[nltk_data] Downloading package wordnet to /root/nltk_data...
+[nltk_data]   Unzipping corpora/wordnet.zip.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">process</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+  <span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+  <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+  <span class="n">text</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;[^a-z0-9 ]&#39;</span><span class="p">,</span><span class="s1">&#39;&#39;</span><span class="p">,</span><span class="n">text</span><span class="p">)</span>
+  <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">lemmatizer</span><span class="o">.</span><span class="n">lemmatize</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="s1">&#39;v&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()])</span>
+  <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">lemmatizer</span><span class="o">.</span><span class="n">lemmatize</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="s1">&#39;n&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">()])</span>
+  <span class="n">text</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+  <span class="k">return</span> <span class="n">text</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># xx = xx.dropna(subset=[&#39;title&#39;])</span>
+<span class="c1"># xx[&#39;title&#39;] = xx[&#39;title&#39;].apply(process)</span>
+<span class="c1"># xx[&#39;title&#39;] = xx[&#39;title&#39;].replace(r&#39;^\s*$&#39;, np.nan, regex=True)</span>
+<span class="c1"># xx = xx.dropna(subset=[&#39;title&#39;])</span>
+<span class="c1"># xx</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">df_raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">])</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">process</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\s*$&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">regex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;title&#39;</span><span class="p">])</span>
+<span class="n">df</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;class &#39;pandas.core.frame.DataFrame&#39;&gt;
+Int64Index: 1086 entries, 1 to 2784
+Data columns (total 5 columns):
+ #   Column      Non-Null Count  Dtype 
+---  ------      --------------  ----- 
+ 0   domain      1086 non-null   object
+ 1   signup_url  1086 non-null   object
+ 2   other_lang  1086 non-null   object
+ 3   lang        318 non-null    object
+ 4   title       1086 non-null   object
+dtypes: object(5)
+memory usage: 50.9+ KB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>domain</th>
+      <th>signup_url</th>
+      <th>other_lang</th>
+      <th>lang</th>
+      <th>title</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>2505</th>
+      <td>live.com</td>
+      <td>https://signup.live.com/signup?mkt=en-gb&amp;lic=1...</td>
+      <td>N</td>
+      <td>NaN</td>
+      <td>create account</td>
+    </tr>
+    <tr>
+      <th>2099</th>
+      <td>trainingzone.co.uk</td>
+      <td>https://www.trainingzone.co.uk/user/register?d...</td>
+      <td>N</td>
+      <td>NaN</td>
+      <td>sign up trainingzone</td>
+    </tr>
+    <tr>
+      <th>1786</th>
+      <td>allthatmatters.com</td>
+      <td>https://allthatmatters.com/apps/mindbody/login</td>
+      <td>N</td>
+      <td>NaN</td>
+      <td>please log in to your account all that matter ...</td>
+    </tr>
+    <tr>
+      <th>2746</th>
+      <td>cbd.int</td>
+      <td>https://accounts.cbd.int/signup</td>
+      <td>N</td>
+      <td>NaN</td>
+      <td>account convention on biological diversity</td>
+    </tr>
+    <tr>
+      <th>1880</th>
+      <td>debateafrica.com</td>
+      <td>http://debateafrica.com/register/</td>
+      <td>N</td>
+      <td>NaN</td>
+      <td>create an account</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># from langdetect import detect</span>
+<span class="c1"># langs = []</span>
+<span class="c1"># df[&#39;lang&#39;] = &#39;xx&#39;</span>
+<span class="c1"># for index, row in df.iterrows():</span>
+<span class="c1">#   try:</span>
+<span class="c1">#     df.loc[index,&#39;lang&#39;] = detect(row[&#39;title&#39;])</span>
+<span class="c1">#   except:</span>
+<span class="c1">#     pass</span>
+<span class="c1"># langs.append(detect(row[&#39;title&#39;]))</span>
+<span class="c1"># pd.Series(langs).value_counts()</span>
+<span class="c1"># df.to_csv(&#39;x.csv&#39;)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">top_feats</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+    <span class="n">topn_ids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">row</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="n">top_n</span><span class="p">]</span>
+    <span class="n">top_feats</span> <span class="o">=</span> <span class="p">[(</span><span class="n">features</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">topn_ids</span><span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">top_feats</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;features&#39;</span><span class="p">,</span> <span class="s1">&#39;score&#39;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">df</span>
+    
+<span class="k">def</span> <span class="nf">top_mean_feats</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">grp_ids</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">mins</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">25</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">grp_ids</span><span class="p">:</span>
+      <span class="n">D</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">grp_ids</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+  <span class="k">else</span><span class="p">:</span>
+      <span class="n">D</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+  <span class="n">D</span><span class="p">[</span><span class="n">D</span> <span class="o">&lt;</span> <span class="n">mins</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="n">means</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">top_feats</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">top_n</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">model_word_1gram</span> <span class="o">=</span> <span class="n">CountVectorizer</span><span class="p">(</span><span class="n">analyzer</span><span class="o">=</span><span class="s1">&#39;word&#39;</span><span class="p">,</span> <span class="n">stop_words</span><span class="o">=</span><span class="s1">&#39;english&#39;</span><span class="p">,</span> <span class="n">max_df</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">min_df</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">model_word_2gram</span> <span class="o">=</span> <span class="n">CountVectorizer</span><span class="p">(</span><span class="n">analyzer</span><span class="o">=</span><span class="s1">&#39;word&#39;</span><span class="p">,</span> <span class="n">stop_words</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_df</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">min_df</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">matrix_word_1gram</span> <span class="o">=</span> <span class="n">model_word_1gram</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+<span class="n">matrix_word_2gram</span> <span class="o">=</span> <span class="n">model_word_2gram</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">features_word_1gram</span> <span class="o">=</span> <span class="n">model_word_1gram</span><span class="o">.</span><span class="n">get_feature_names</span><span class="p">()</span>
+<span class="n">features_word_2gram</span> <span class="o">=</span> <span class="n">model_word_2gram</span><span class="o">.</span><span class="n">get_feature_names</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">top_word_1gram</span> <span class="o">=</span> <span class="n">top_mean_feats</span><span class="p">(</span><span class="n">matrix_word_1gram</span><span class="p">,</span> <span class="n">features_word_1gram</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">top_word_1gram</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>        features     score
+0        account  0.226519
+1         create  0.151934
+2           sign  0.112339
+3       register  0.109576
+4   registration  0.058011
+5            new  0.048803
+6         online  0.038674
+7           free  0.035912
+8          login  0.032228
+9         signup  0.030387
+10      customer  0.025783
+11          shop  0.018416
+12          join  0.018416
+13          news  0.015654
+14         forum  0.014733
+15         store  0.013812
+16           log  0.013812
+17          baby  0.012891
+18          user  0.012891
+19          site  0.012891
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">top_word_2gram</span> <span class="o">=</span> <span class="n">top_mean_feats</span><span class="p">(</span><span class="n">matrix_word_2gram</span><span class="p">,</span> <span class="n">features_word_2gram</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">top_word_2gram</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>            features     score
+0            sign up  0.087477
+1     create account  0.079190
+2         create new  0.029466
+3            sign in  0.024862
+4         an account  0.022099
+5             up for  0.019337
+6   customer account  0.019337
+7       new customer  0.018416
+8          create an  0.016575
+9        new account  0.015654
+10            log in  0.012891
+11        my account  0.011050
+12       create your  0.010129
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">nltk.util</span> <span class="kn">import</span> <span class="n">ngrams</span>
+<span class="k">def</span> <span class="nf">create_chargrams</span><span class="p">(</span><span class="n">word</span><span class="p">):</span>
+  <span class="n">gramslist</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">):</span>
+    <span class="n">grams</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ngrams</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">word</span><span class="p">),</span> <span class="n">n</span><span class="p">))</span>
+    <span class="n">grams</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">,</span> <span class="n">grams</span><span class="p">))))</span>
+    <span class="n">gramslist</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">grams</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">gramslist</span>
+
+<span class="k">def</span> <span class="nf">chargram_similarity</span><span class="p">(</span><span class="n">word1</span><span class="p">,</span> <span class="n">word2</span><span class="p">):</span>
+  <span class="n">gramlist1</span> <span class="o">=</span> <span class="n">create_chargrams</span><span class="p">(</span><span class="n">word1</span><span class="p">)</span>
+  <span class="n">gramlist2</span> <span class="o">=</span> <span class="n">create_chargrams</span><span class="p">(</span><span class="n">word2</span><span class="p">)</span>
+  <span class="n">gramlistc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">gramlist1</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">gramlist2</span><span class="p">))</span>
+  <span class="n">simscore</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gramlistc</span><span class="p">)</span><span class="o">/</span><span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">gramlist1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">gramlist2</span><span class="p">))</span>
+  <span class="k">return</span> <span class="n">simscore</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(&#39;signin&#39;,&#39;sign in&#39;): &quot;</span><span class="p">,</span> <span class="n">chargram_similarity</span><span class="p">(</span><span class="s1">&#39;signin&#39;</span><span class="p">,</span><span class="s1">&#39;sign in&#39;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(&#39;signin&#39;,&#39;create&#39;): &quot;</span><span class="p">,</span> <span class="n">chargram_similarity</span><span class="p">(</span><span class="s1">&#39;signin&#39;</span><span class="p">,</span><span class="s1">&#39;create&#39;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(&#39;signin&#39;,&#39;signup&#39;): &quot;</span><span class="p">,</span> <span class="n">chargram_similarity</span><span class="p">(</span><span class="s1">&#39;signin&#39;</span><span class="p">,</span><span class="s1">&#39;signup&#39;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(&#39;signin&#39;,&#39;sign in&#39;):  0.5
+(&#39;signin&#39;,&#39;create&#39;):  0.0
+(&#39;signin&#39;,&#39;signup&#39;):  0.42857142857142855
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># !python -m spacy download en_core_web_sm</span>
+<span class="c1"># import spacy</span>
+<span class="c1"># import pytextrank</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s1">&#39; . &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+<span class="n">nlp</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s2">&quot;en_core_web_sm&quot;</span><span class="p">)</span>
+<span class="n">tr</span> <span class="o">=</span> <span class="n">pytextrank</span><span class="o">.</span><span class="n">TextRank</span><span class="p">()</span>
+<span class="n">nlp</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="n">tr</span><span class="o">.</span><span class="n">PipelineComponent</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;textrank&quot;</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">phrases</span><span class="p">[:</span><span class="mi">10</span><span class="p">]:</span>
+    <span class="c1"># print(&quot;{:.4f} {:5d}  {}&quot;.format(p.rank, p.count, p.text)); print(p.chunks)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{:.4f}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">rank</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>0.0839 new account
+0.0831 new customer account
+0.0818 account registration
+0.0793 account sign
+0.0778 new account joccom
+0.0776 new customer account zumiez
+0.0776 new customer account generalimprintshopname
+0.0776 new customer account playtech
+0.0776 new customer account mobileciti
+0.0770 account baby
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># from summa import keywords</span>
+<span class="c1"># text = &#39; . &#39;.join(df.title.tolist())</span>
+<span class="n">xx</span> <span class="o">=</span> <span class="n">keywords</span><span class="o">.</span><span class="n">keywords</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">scores</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">deaccent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">xx</span><span class="p">[:</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[(&#39;account&#39;, 0.5546846599427575),
+ (&#39;register&#39;, 0.42351724134353225),
+ (&#39;create&#39;, 0.3322145252944762),
+ (&#39;sign&#39;, 0.2557827345972672),
+ (&#39;registration&#39;, 0.24678282402332308),
+ (&#39;signup&#39;, 0.13756182354313182),
+ (&#39;free&#39;, 0.11879990793662887),
+ (&#39;group login&#39;, 0.08187352841189384),
+ (&#39;join&#39;, 0.0781287383478171),
+ (&#39;online setiap&#39;, 0.07308738841245678)]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># from rake_nltk import Metric, Rake</span>
+<span class="c1"># rake = Rake(min_length=1, max_length=2, ranking_metric=Metric.WORD_FREQUENCY)</span>
+<span class="c1"># text = &#39; . &#39;.join(df.title.tolist())</span>
+<span class="c1"># rake.extract_keywords_from_text(text)</span>
+<span class="n">rake</span><span class="o">.</span><span class="n">get_ranked_phrases_with_scores</span><span class="p">()[:</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[(61.0, &#39;account registration&#39;),
+ (55.0, &#39;account login&#39;),
+ (45.0, &#39;free account&#39;),
+ (41.0, &#39;create account&#39;),
+ (40.0, &#39;online account&#39;),
+ (40.0, &#39;new account&#39;),
+ (40.0, &#39;google account&#39;),
+ (40.0, &#39;church account&#39;),
+ (40.0, &#39;account subscribe&#39;),
+ (39.0, &#39;twitchtv account&#39;)]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">rake</span> <span class="o">=</span> <span class="n">Rake</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ranking_metric</span><span class="o">=</span><span class="n">Metric</span><span class="o">.</span><span class="n">WORD_FREQUENCY</span><span class="p">)</span>
+<span class="n">rake</span><span class="o">.</span><span class="n">extract_keywords_from_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="n">rake</span><span class="o">.</span><span class="n">get_ranked_phrases_with_scores</span><span class="p">()[:</span><span class="mi">10</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[(1.0, &#39;zoom&#39;),
+ (1.0, &#39;yts&#39;),
+ (1.0, &#39;yovoads&#39;),
+ (1.0, &#39;youmengregistrationyoumenglogin&#39;),
+ (1.0, &#39;yamap&#39;),
+ (1.0, &#39;wwwmlbcom&#39;),
+ (1.0, &#39;wwwmed1de&#39;),
+ (1.0, &#39;wwwkinkcom&#39;),
+ (1.0, &#39;wwwkankensbagscom&#39;),
+ (1.0, &#39;wwwgm25com&#39;)]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># print(df_tfidf)</span>
+
+<span class="c1"># list(tfidf.vocabulary_.keys())[:10]</span>
+
+<span class="c1"># df_tfidf = pd.DataFrame(x[0].T.todense(), index=tfidf.get_feature_names(), columns=[&quot;TF-IDF&quot;])</span>
+<span class="c1"># df_tfidf = df_tfidf.sort_values(&#39;TF-IDF&#39;, ascending=False)</span>
+<span class="c1"># print(df_tfidf.head(25))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/01/keyword-extraction.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

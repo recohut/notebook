@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Data exploration at scale with AWS Athena | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Data exploration at scale with AWS Athena" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/08/eda-aws-athena.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/08/eda-aws-athena.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-08T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Data exploration at scale with AWS Athena" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-08T00:00:00-06:00","datePublished":"2022-01-08T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Data exploration at scale with AWS Athena","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/08/eda-aws-athena.html"},"url":"https://nb.recohut.com/2022/01/08/eda-aws-athena.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Data exploration at scale with AWS Athena</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-08T00:00:00-06:00" itemprop="datePublished">
+        Jan 8, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      13 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-08-eda-aws-athena.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-08-eda-aws-athena.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-08-eda-aws-athena.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-08-eda-aws-athena.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-08-eda-aws-athena.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><div class="flash">
+    <svg class="octicon octicon-info" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm6.5-.25A.75.75 0 017.25 7h1a.75.75 0 01.75.75v2.75h.25a.75.75 0 010 1.5h-2a.75.75 0 010-1.5h.25v-2h-.25a.75.75 0 01-.75-.75zM8 6a1 1 0 100-2 1 1 0 000 2z"></path></svg>
+    <strong>Note: </strong><a href="https://learning.oreilly.com/library/view/mlops-engineering-at/9781617297762/OEBPS/Text/03.htm">https://learning.oreilly.com/library/view/mlops-engineering-at/9781617297762/OEBPS/Text/03.htm</a>
+</div></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2><font color="red">Upload the `BUCKET_ID` file</font></h2>
+<p>Before proceeding, ensure that you have a backup copy of the <code>BUCKET_ID</code> file created in the <a href="https://colab.research.google.com/github/osipov/smlbook/blob/master/ch2.ipynb">Chapter 2</a> notebook before proceeding. The contents of the <code>BUCKET_ID</code> file are reused later in this notebook and in the other notebooks.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="k">assert</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="s2">&quot;Place the BUCKET_ID file in the current directory before proceeding&quot;</span>
+
+<span class="n">BUCKET_ID</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BUCKET_ID</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="OPTIONAL:-Download-and-install-AWS-CLI"><strong>OPTIONAL:</strong> Download and install AWS CLI<a class="anchor-link" href="#OPTIONAL:-Download-and-install-AWS-CLI"> </a></h2><p>This is unnecessary if you have already installed AWS CLI in a preceding notebook.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+curl <span class="s2">&quot;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&quot;</span> -o <span class="s2">&quot;awscliv2.zip&quot;</span>
+unzip -o awscliv2.zip
+sudo ./aws/install
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Specify-AWS-credentials">Specify AWS credentials<a class="anchor-link" href="#Specify-AWS-credentials"> </a></h2><p>Modify the contents of the next cell to specify your AWS credentials as strings.</p>
+<p>If you see the following exception:</p>
+<p><code>TypeError: str expected, not NoneType</code></p>
+<p>It means that you did not specify the credentials correctly.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="c1"># *** REPLACE None in the next 2 lines with your AWS key values ***</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_ACCESS_KEY_ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_SECRET_ACCESS_KEY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Confirm-the-credentials">Confirm the credentials<a class="anchor-link" href="#Confirm-the-credentials"> </a></h2><p>Run the next cell to validate your credentials.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+aws sts get-caller-identity
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If you have specified the correct credentials as values for the <code>AWS_ACCESS_KEY_ID</code> and the <code>AWS_SECRET_ACCESS_KEY</code> environment variables, then <code>aws sts get-caller-identity</code> used by the previous cell should have returned back the <code>UserId</code>, <code>Account</code> and the <code>Arn</code> for the credentials, resembling the following</p>
+
+<pre><code>{
+    "UserId": "█████████████████████",
+    "Account": "████████████",
+    "Arn": "arn:aws:iam::████████████:user/█████████"
+}</code></pre>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Specify-the-region">Specify the region<a class="anchor-link" href="#Specify-the-region"> </a></h2><p>Replace the <code>None</code> in the next cell with your AWS region name, for example <code>us-west-2</code>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_DEFAULT_REGION&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If you have specified the region correctly, the following cell should return back the region that you have specifies.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">echo</span> <span class="nv">$AWS_DEFAULT_REGION</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Download-a-tiny-sample">Download a tiny sample<a class="anchor-link" href="#Download-a-tiny-sample"> </a></h2><p>Download a tiny sample of the dataset from <a href="https://gist.github.com/osipov/1fc0265f8f829d9d9eee8393657423a9">https://gist.github.com/osipov/1fc0265f8f829d9d9eee8393657423a9</a> to a <code>trips_sample.csv</code> file which you are going to use to learn about using the Athena interface.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+wget -q https://gist.githubusercontent.com/osipov/1fc0265f8f829d9d9eee8393657423a9/raw/9957c1f09cdfa64f8b8d89cfec532a0e150d5178/trips_sample.csv
+ls -ltr trips_sample.csv
+cat trips_sample.csv
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Assuming the previous cell executed successfully, it should have returned the following result:</p>
+
+<pre><code>-rw-r--r-- 1 root root 378 Nov 23 19:50 trips_sample.csv
+fareamount_double,origin_block_latitude,origin_block_longitude,destination_block_latitude,destination_block_longitude
+8.11,38.900769,-77.033644,38.912239,-77.036514
+5.95,38.912609,-77.030788,38.906445,-77.023978
+7.57,38.900773,-77.03655,38.896131,-77.024975
+11.61,38.892101000000004,-77.044208,38.905969,-77.06564399999999
+4.87,38.899615000000004,-76.980387,38.900638,-76.97023</code></pre>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Upload-trips_sample.csv-to-your-object-storage-bucket">Upload <code>trips_sample.csv</code> to your object storage bucket<a class="anchor-link" href="#Upload-trips_sample.csv-to-your-object-storage-bucket"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+aws s3 cp trips_sample.csv s3://dc-taxi-<span class="nv">$BUCKET_ID</span>-<span class="nv">$AWS_DEFAULT_REGION</span>/samples/trips_sample.csv
+aws s3 ls s3://dc-taxi-<span class="nv">$BUCKET_ID</span>-<span class="nv">$AWS_DEFAULT_REGION</span>/samples/trips_sample.csv
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The output of the <code>aws s3 ls</code> command above should include the following, confirming that the file was uploaded successfully.</p>
+
+<pre><code>2020-11-23 20:07:31        378 trips_sample.csv</code></pre>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Create-an-Athena-workgroup">Create an Athena workgroup<a class="anchor-link" href="#Create-an-Athena-workgroup"> </a></h2><p>Create a <code>dc_taxi_athena_workgroup</code> for your Athena project, assuming one does not exist yet.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+aws athena delete-work-group --work-group dc_taxi_athena_workgroup --recursive-delete-option <span class="m">2</span>&gt; /dev/null
+aws athena create-work-group --name dc_taxi_athena_workgroup <span class="se">\</span>
+--configuration <span class="s2">&quot;ResultConfiguration={OutputLocation=s3://dc-taxi-</span><span class="nv">$BUCKET_ID</span><span class="s2">-</span><span class="nv">$AWS_DEFAULT_REGION</span><span class="s2">/athena},EnforceWorkGroupConfiguration=false,PublishCloudWatchMetricsEnabled=false&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Query-Athena-and-Report-Query-Status">Query Athena and Report Query Status<a class="anchor-link" href="#Query-Athena-and-Report-Query-Status"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nv">SQL</span><span class="o">=</span><span class="s2">&quot;</span>
+<span class="s2">CREATE EXTERNAL TABLE IF NOT EXISTS dc_taxi_db.dc_taxi_csv_sample_strings(</span>
+<span class="s2">        fareamount STRING,</span>
+<span class="s2">        origin_block_latitude STRING,</span>
+<span class="s2">        origin_block_longitude STRING,</span>
+<span class="s2">        destination_block_latitude STRING,</span>
+<span class="s2">        destination_block_longitude STRING</span>
+<span class="s2">)</span>
+<span class="s2">ROW FORMAT DELIMITED FIELDS TERMINATED BY &#39;,&#39;</span>
+<span class="s2">LOCATION &#39;s3://dc-taxi-</span><span class="nv">$BUCKET_ID</span><span class="s2">-</span><span class="nv">$AWS_DEFAULT_REGION</span><span class="s2">/samples/&#39;</span>
+<span class="s2">TBLPROPERTIES (&#39;skip.header.line.count&#39;=&#39;1&#39;);&quot;</span>
+
+<span class="nv">ATHENA_QUERY_ID</span><span class="o">=</span><span class="k">$(</span>aws athena start-query-execution <span class="se">\</span>
+--work-group dc_taxi_athena_workgroup <span class="se">\</span>
+--query <span class="s1">&#39;QueryExecutionId&#39;</span> <span class="se">\</span>
+--output text <span class="se">\</span>
+--query-string <span class="s2">&quot;</span><span class="nv">$SQL</span><span class="s2">&quot;</span><span class="k">)</span>
+
+<span class="nb">echo</span> <span class="nv">$SQL</span>
+
+<span class="nb">echo</span> <span class="nv">$ATHENA_QUERY_ID</span>
+<span class="k">until</span> aws athena get-query-execution <span class="se">\</span>
+  --query <span class="s1">&#39;QueryExecution.Status.State&#39;</span> <span class="se">\</span>
+  --output text <span class="se">\</span>
+  --query-execution-id <span class="nv">$ATHENA_QUERY_ID</span> <span class="p">|</span> grep -v <span class="s2">&quot;RUNNING&quot;</span><span class="p">;</span>
+<span class="k">do</span>
+  <span class="nb">printf</span> <span class="s1">&#39;.&#39;</span>
+  sleep <span class="m">1</span><span class="p">;</span> 
+<span class="k">done</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Download-and-Preview-a-Utility-Script-to-Query-Athena">Download and Preview a Utility Script to Query Athena<a class="anchor-link" href="#Download-and-Preview-a-Utility-Script-to-Query-Athena"> </a></h2><p>The script is downloaded as <code>utils.sh</code> and is loaded in the upcoming cells using <code>source utils.sh</code> command.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+wget -q https://raw.githubusercontent.com/osipov/smlbook/master/utils.sh
+ls -l utils.sh
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Output-Athena-Query-to-a-Text-Table">Output Athena Query to a Text Table<a class="anchor-link" href="#Output-Athena-Query-to-a-Text-Table"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh
+<span class="nv">SQL</span><span class="o">=</span><span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+
+<span class="s2">origin_block_latitude || &#39; , &#39; || origin_block_longitude</span>
+<span class="s2">    AS origin,</span>
+
+<span class="s2">destination_block_latitude || &#39;  , &#39; || destination_block_longitude</span>
+<span class="s2">    AS destination</span>
+
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_csv_sample_strings</span>
+<span class="s2">&quot;</span>
+athena_query_to_table <span class="s2">&quot;</span><span class="nv">$SQL</span><span class="s2">&quot;</span> <span class="s2">&quot;ResultSet.Rows[*].[Data[0].VarCharValue,Data[1].VarCharValue]&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Output-Athena-Query-to-JSON-for-a-Pandas-DataFrame">Output Athena Query to JSON for a Pandas DataFrame<a class="anchor-link" href="#Output-Athena-Query-to-JSON-for-a-Pandas-DataFrame"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">SELECT</span>
+
+<span class="s2">origin_block_latitude || &#39; , &#39; || origin_block_longitude</span>
+<span class="s2">    AS origin,</span>
+
+<span class="s2">destination_block_latitude || &#39;  , &#39; || destination_block_longitude</span>
+<span class="s2">    AS destination</span>
+
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_csv_sample_strings</span>
+<span class="s2">&quot;&quot;&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Create-a-Utility-Function-to-Read-AWS-CLI-JSON-as-Pandas">Create a Utility Function to Read AWS CLI JSON as Pandas<a class="anchor-link" href="#Create-a-Utility-Function-to-Read-AWS-CLI-JSON-as-Pandas"> </a></h2><p>Note that the <code>utils.sh</code> script saves the output from Athena to <code>/tmp/awscli.json</code></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="k">def</span> <span class="nf">awscli_to_df</span><span class="p">():</span>
+  <span class="n">json_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="s1">&#39;/tmp/awscli.json&#39;</span><span class="p">)</span>
+  <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">json_df</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">index</span> <span class="o">=</span> <span class="n">json_df</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="n">json_df</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Apply-Athena-schema-on-read-with-columns-as-DOUBLE">Apply Athena schema-on-read with columns as <code>DOUBLE</code><a class="anchor-link" href="#Apply-Athena-schema-on-read-with-columns-as-DOUBLE"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query <span class="s2">&quot;</span>
+<span class="s2">CREATE EXTERNAL TABLE IF NOT EXISTS dc_taxi_db.dc_taxi_csv_sample_double(</span>
+<span class="s2">        fareamount DOUBLE,</span>
+<span class="s2">        origin_block_latitude DOUBLE,</span>
+<span class="s2">        origin_block_longitude DOUBLE,</span>
+<span class="s2">        destination_block_latitude DOUBLE,</span>
+<span class="s2">        destination_block_longitude DOUBLE</span>
+<span class="s2">)</span>
+<span class="s2">ROW FORMAT DELIMITED FIELDS TERMINATED BY &#39;,&#39;</span>
+<span class="s2">LOCATION &#39;s3://dc-taxi-</span><span class="nv">$BUCKET_ID</span><span class="s2">-</span><span class="nv">$AWS_DEFAULT_REGION</span><span class="s2">/samples/&#39;</span>
+<span class="s2">TBLPROPERTIES (&#39;skip.header.line.count&#39;=&#39;1&#39;);</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT ROUND(MAX(fareamount) - MIN(fareamount), 2)</span>
+<span class="s2">FROM dc_taxi_db.dc_taxi_csv_sample_double</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Explore-10-records-from-the-DC-taxi-dataset">Explore 10 records from the DC taxi dataset<a class="anchor-link" href="#Explore-10-records-from-the-DC-taxi-dataset"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT fareamount_double,</span>
+<span class="s2">         origin_block_latitude_double,</span>
+<span class="s2">         origin_block_longitude_double,</span>
+<span class="s2">         destination_block_latitude_double,</span>
+<span class="s2">         destination_block_longitude_double,</span>
+<span class="s2">         origindatetime_tr</span>
+<span class="s2">FROM dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">LIMIT 10</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="What-is-the-number-of-the-timestamps-with-NULL-values?">What is the number of the timestamps with NULL values?<a class="anchor-link" href="#What-is-the-number-of-the-timestamps-with-NULL-values?"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    (SELECT COUNT(*) FROM dc_taxi_db.dc_taxi_parquet) AS total,</span>
+<span class="s2">    COUNT(*) AS null_origindate_time_total</span>
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">WHERE</span>
+<span class="s2">    origindatetime_tr IS NULL</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="How-many-timestamps-are-un-parsable?">How many timestamps are un-parsable?<a class="anchor-link" href="#How-many-timestamps-are-un-parsable?"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    (SELECT COUNT(*) FROM dc_taxi_db.dc_taxi_parquet)</span>
+<span class="s2">    - COUNT(DATE_PARSE(origindatetime_tr, &#39;%m/%d/%Y %H:%i&#39;))</span>
+<span class="s2">    AS origindatetime_not_parsed</span>
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">WHERE</span>
+<span class="s2">    origindatetime_tr IS NOT NULL;</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="How-often-are-parts-of-the-pick-up-location-coordinate-missing?">How often are parts of the pick up location coordinate missing?<a class="anchor-link" href="#How-often-are-parts-of-the-pick-up-location-coordinate-missing?"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    ROUND(100.0 * COUNT(*) / (SELECT COUNT(*)</span>
+<span class="s2">                        FROM dc_taxi_db.dc_taxi_parquet), 2)</span>
+
+<span class="s2">        AS percentage_null,</span>
+
+<span class="s2">    (SELECT COUNT(*)</span>
+<span class="s2">     FROM dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">     WHERE origin_block_longitude_double IS NULL</span>
+<span class="s2">     OR origin_block_latitude_double IS NULL)</span>
+
+<span class="s2">        AS either_null,</span>
+
+<span class="s2">    (SELECT COUNT(*)</span>
+<span class="s2">     FROM dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">     WHERE origin_block_longitude_double IS NULL</span>
+<span class="s2">     AND origin_block_latitude_double IS NULL)</span>
+
+<span class="s2">        AS both_null</span>
+
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">WHERE</span>
+<span class="s2">    origin_block_longitude_double IS NULL</span>
+<span class="s2">    OR origin_block_latitude_double IS NULL</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="How-often-are-parts-of-the-drop-off-coordinates-missing?">How often are parts of the drop off coordinates missing?<a class="anchor-link" href="#How-often-are-parts-of-the-drop-off-coordinates-missing?"> </a></h2><p>Repeat the previous analysis</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    ROUND(100.0 * COUNT(*) / (SELECT COUNT(*)</span>
+<span class="s2">                        FROM dc_taxi_db.dc_taxi_parquet), 2)</span>
+
+<span class="s2">        AS percentage_null,</span>
+
+<span class="s2">    (SELECT COUNT(*)</span>
+<span class="s2">     FROM dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">     WHERE destination_block_longitude_double IS NULL</span>
+<span class="s2">     OR destination_block_latitude_double IS NULL)</span>
+
+<span class="s2">        AS either_null,</span>
+
+<span class="s2">    (SELECT COUNT(*)</span>
+<span class="s2">     FROM dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">     WHERE destination_block_longitude_double IS NULL</span>
+<span class="s2">     AND destination_block_latitude_double IS NULL)</span>
+
+<span class="s2">        AS both_null</span>
+
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">WHERE</span>
+<span class="s2">    destination_block_longitude_double IS NULL</span>
+<span class="s2">    OR destination_block_latitude_double IS NULL</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Find-the-count-and-the-fraction-of-the-missing-coordinates">Find the count and the fraction of the missing coordinates<a class="anchor-link" href="#Find-the-count-and-the-fraction-of-the-missing-coordinates"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    COUNT(*)</span>
+<span class="s2">      AS total,</span>
+
+<span class="s2">    ROUND(100.0 * COUNT(*) / (SELECT COUNT(*)</span>
+<span class="s2">                              FROM dc_taxi_db.dc_taxi_parquet), 2)</span>
+<span class="s2">      AS percent</span>
+
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+
+<span class="s2">WHERE</span>
+<span class="s2">    origin_block_latitude_double IS NULL</span>
+<span class="s2">    OR origin_block_longitude_double IS NULL</span>
+<span class="s2">    OR destination_block_latitude_double IS NULL</span>
+<span class="s2">    OR destination_block_longitude_double IS NULL</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Query-for-the-values-and-quantities-of-fareamount_string-that-failed-to-parse-as-a-double">Query for the values and quantities of fareamount_string that failed to parse as a double<a class="anchor-link" href="#Query-for-the-values-and-quantities-of-fareamount_string-that-failed-to-parse-as-a-double"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    fareamount_string,</span>
+<span class="s2">    COUNT(fareamount_string) AS rows,</span>
+<span class="s2">    ROUND(100.0 * COUNT(fareamount_string) /</span>
+<span class="s2">          ( SELECT COUNT(*)</span>
+<span class="s2">            FROM dc_taxi_db.dc_taxi_parquet), 2)</span>
+
+<span class="s2">      AS percent</span>
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">WHERE</span>
+<span class="s2">    fareamount_double IS NULL</span>
+<span class="s2">    AND fareamount_string IS NOT NULL</span>
+<span class="s2">GROUP BY</span>
+<span class="s2">    fareamount_string;</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Explore-summary-statistics-of-the-fareamount_double-column">Explore summary statistics of the <code>fareamount_double</code> column<a class="anchor-link" href="#Explore-summary-statistics-of-the-fareamount_double-column"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">WITH</span>
+<span class="s2">src AS (SELECT</span>
+<span class="s2">            fareamount_double AS val</span>
+<span class="s2">        FROM</span>
+<span class="s2">            dc_taxi_db.dc_taxi_parquet),</span>
+
+<span class="s2">stats AS</span>
+<span class="s2">    (SELECT</span>
+<span class="s2">        MIN(val) AS min,</span>
+<span class="s2">        APPROX_PERCENTILE(val, 0.25) AS q1,</span>
+<span class="s2">        APPROX_PERCENTILE(val ,0.5) AS q2,</span>
+<span class="s2">        APPROX_PERCENTILE(val, 0.75) AS q3,</span>
+<span class="s2">        AVG(val) AS mean,</span>
+<span class="s2">        STDDEV(val) AS std,</span>
+<span class="s2">        MAX(val) AS max</span>
+<span class="s2">    FROM</span>
+<span class="s2">        src)</span>
+
+<span class="s2">SELECT</span>
+<span class="s2">    DISTINCT min, q1, q2, q3, max</span>
+
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet, stats</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="What-percentage-of-fare-amount-values-are-null-or-below-the-minimum-threshold?">What percentage of fare amount values are null or below the minimum threshold?<a class="anchor-link" href="#What-percentage-of-fare-amount-values-are-null-or-below-the-minimum-threshold?"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">WITH</span>
+<span class="s2">src AS (SELECT</span>
+<span class="s2">            COUNT(*) AS total</span>
+<span class="s2">        FROM</span>
+<span class="s2">            dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">        WHERE</span>
+<span class="s2">            fareamount_double IS NOT NULL)</span>
+
+<span class="s2">SELECT</span>
+<span class="s2">    ROUND(100.0 * COUNT(fareamount_double) / MIN(total), 2) AS percent</span>
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet, src</span>
+<span class="s2">WHERE</span>
+<span class="s2">    fareamount_double &lt; 3.25</span>
+<span class="s2">    AND fareamount_double IS NOT NULL</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Compute-summary-statistics-for-the-cases-where-the-fareamount_string-failed-to-parse">Compute summary statistics for the cases where the fareamount_string failed to parse<a class="anchor-link" href="#Compute-summary-statistics-for-the-cases-where-the-fareamount_string-failed-to-parse"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    fareamount_string,</span>
+<span class="s2">    ROUND( MIN(mileage_double), 2) AS min,</span>
+<span class="s2">    ROUND( APPROX_PERCENTILE(mileage_double, 0.25), 2) AS q1,</span>
+<span class="s2">    ROUND( APPROX_PERCENTILE(mileage_double ,0.5), 2) AS q2,</span>
+<span class="s2">    ROUND( APPROX_PERCENTILE(mileage_double, 0.75), 2) AS q3,</span>
+<span class="s2">    ROUND( MAX(mileage_double), 2) AS max</span>
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">WHERE</span>
+<span class="s2">    fareamount_string LIKE &#39;NULL&#39;</span>
+<span class="s2">GROUP BY</span>
+<span class="s2">    fareamount_string</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Figure-out-the-lower-left-and-upper-right-boundary-locations">Figure out the lower left and upper right boundary locations<a class="anchor-link" href="#Figure-out-the-lower-left-and-upper-right-boundary-locations"> </a></h2><p>Plugging the latitude and longitude coordinates reported by the query into OpenStreetMap ( <a href="https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&amp;route=38.8110%2C-77.1130%3B38.9950%2C-76.9100#map=11/38.9025/-77.0094">https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&amp;route=38.8110%2C-77.1130%3B38.9950%2C-76.9100#map=11/38.9025/-77.0094</a> ) yields 21.13 miles or an estimate of $ \$48.89 (21.13 * \$2.16/mile + \$3.25) $.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT </span>
+<span class="s2">  MIN(lat) AS lower_left_latitude,</span>
+<span class="s2">  MIN(lon) AS lower_left_longitude,</span>
+<span class="s2">  MAX(lat) AS upper_right_latitude,</span>
+<span class="s2">  MAX(lon) AS upper_right_longitude</span>
+
+<span class="s2"> FROM (</span>
+<span class="s2">  SELECT </span>
+<span class="s2">    MIN(origin_block_latitude_double) AS lat,</span>
+<span class="s2">    MIN(origin_block_longitude_double) AS lon </span>
+<span class="s2">  FROM &quot;</span>dc_taxi_db<span class="s2">&quot;.&quot;</span>dc_taxi_parquet<span class="s2">&quot; </span>
+<span class="s2">  </span>
+<span class="s2">  UNION</span>
+
+<span class="s2">  SELECT </span>
+<span class="s2">    MIN(destination_block_latitude_double) AS lat, </span>
+<span class="s2">    MIN(destination_block_longitude_double) AS lon </span>
+<span class="s2">  FROM &quot;</span>dc_taxi_db<span class="s2">&quot;.&quot;</span>dc_taxi_parquet<span class="s2">&quot; </span>
+<span class="s2">  </span>
+<span class="s2">  UNION</span>
+
+<span class="s2">  SELECT </span>
+<span class="s2">    MAX(origin_block_latitude_double) AS lat, </span>
+<span class="s2">    MAX(origin_block_longitude_double) AS lon </span>
+<span class="s2">  FROM &quot;</span>dc_taxi_db<span class="s2">&quot;.&quot;</span>dc_taxi_parquet<span class="s2">&quot; </span>
+<span class="s2">  </span>
+<span class="s2">  UNION</span>
+
+<span class="s2">  SELECT </span>
+<span class="s2">    MAX(destination_block_latitude_double) AS lat, </span>
+<span class="s2">    MAX(destination_block_longitude_double) AS lon </span>
+<span class="s2">  FROM &quot;</span>dc_taxi_db<span class="s2">&quot;.&quot;</span>dc_taxi_parquet<span class="s2">&quot;</span>
+
+<span class="s2">)</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Compute-normally-distributed-averages-of-random-samples">Compute normally distributed averages of random samples<a class="anchor-link" href="#Compute-normally-distributed-averages-of-random-samples"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">WITH dc_taxi AS </span>
+<span class="s2">(SELECT *, </span>
+<span class="s2">    origindatetime_tr </span>
+<span class="s2">    || fareamount_string </span>
+<span class="s2">    || origin_block_latitude_string </span>
+<span class="s2">    || origin_block_longitude_string </span>
+<span class="s2">    || destination_block_latitude_string </span>
+<span class="s2">    || destination_block_longitude_string </span>
+<span class="s2">    || mileage_string AS objectid</span>
+
+<span class="s2">    FROM &quot;</span>dc_taxi_db<span class="s2">&quot;.&quot;</span>dc_taxi_parquet<span class="s2">&quot;</span>
+
+<span class="s2">    WHERE fareamount_double &gt;= 3.25</span>
+<span class="s2">            AND fareamount_double IS NOT NULL</span>
+<span class="s2">            AND mileage_double &gt; 0 )</span>
+
+<span class="s2">SELECT AVG(mileage_double) AS average_mileage</span>
+<span class="s2">FROM dc_taxi</span>
+<span class="s2">WHERE objectid IS NOT NULL</span>
+<span class="s2">GROUP BY  MOD( ABS( from_big_endian_64( xxhash64( to_utf8( objectid ) ) ) ), 1000)</span>
+<span class="s2">&quot;</span> ResultSet.Rows<span class="o">[</span>*<span class="o">]</span>.<span class="o">[</span>Data<span class="o">[]</span>.VarCharValue<span class="o">]</span> <span class="m">1000</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Visually-confirm-that-the-means-of-samples-are-normally-distributed">Visually confirm that the means of samples are normally distributed<a class="anchor-link" href="#Visually-confirm-that-the-means-of-samples-are-normally-distributed"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span> <span class="o">=</span> <span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">9</span><span class="p">))</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="n">awscli_to_df</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">average_mileage</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">average_mileage</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">average_mileage</span> <span class="o">-=</span> <span class="n">df</span><span class="o">.</span><span class="n">average_mileage</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">average_mileage</span> <span class="o">/=</span> <span class="n">df</span><span class="o">.</span><span class="n">average_mileage</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">average_mileage</span><span class="o">.</span><span class="n">plot</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">bins</span> <span class="o">=</span> <span class="mi">30</span><span class="p">);</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Produce-a-statistical-upper-bound-estimate-for-the-mileage">Produce a statistical upper bound estimate for the mileage<a class="anchor-link" href="#Produce-a-statistical-upper-bound-estimate-for-the-mileage"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">WITH dc_taxi AS </span>
+<span class="s2">(SELECT *, </span>
+<span class="s2">    origindatetime_tr </span>
+<span class="s2">    || fareamount_string </span>
+<span class="s2">    || origin_block_latitude_string </span>
+<span class="s2">    || origin_block_longitude_string </span>
+<span class="s2">    || destination_block_latitude_string </span>
+<span class="s2">    || destination_block_longitude_string </span>
+<span class="s2">    || mileage_string AS objectid</span>
+
+<span class="s2">    FROM &quot;</span>dc_taxi_db<span class="s2">&quot;.&quot;</span>dc_taxi_parquet<span class="s2">&quot;</span>
+
+<span class="s2">    WHERE fareamount_double &gt;= 3.25</span>
+<span class="s2">            AND fareamount_double IS NOT NULL</span>
+<span class="s2">            AND mileage_double &gt; 0 ),</span>
+
+<span class="s2">dc_taxi_samples AS (</span>
+<span class="s2">    SELECT AVG(mileage_double) AS average_mileage</span>
+<span class="s2">    FROM dc_taxi</span>
+<span class="s2">    WHERE objectid IS NOT NULL</span>
+<span class="s2">    GROUP BY  MOD( ABS( from_big_endian_64( xxhash64( to_utf8( objectid ) ) ) ) , 1000)</span>
+<span class="s2">)</span>
+<span class="s2">SELECT AVG(average_mileage) + 4 * STDDEV(average_mileage)</span>
+<span class="s2">FROM dc_taxi_samples</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">upper_mileage</span> <span class="o">=</span> <span class="mf">2.16</span> <span class="o">*</span> <span class="n">awscli_to_df</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">+</span> <span class="mf">3.25</span>
+<span class="n">upper_mileage</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Produce-the-final-estimate-for-the-upper-bound-on-fare-amount">Produce the final estimate for the upper bound on fare amount<a class="anchor-link" href="#Produce-the-final-estimate-for-the-upper-bound-on-fare-amount"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">WITH dc_taxi AS </span>
+<span class="s2">(SELECT *, </span>
+<span class="s2">    origindatetime_tr </span>
+<span class="s2">    || fareamount_string </span>
+<span class="s2">    || origin_block_latitude_string </span>
+<span class="s2">    || origin_block_longitude_string </span>
+<span class="s2">    || destination_block_latitude_string </span>
+<span class="s2">    || destination_block_longitude_string </span>
+<span class="s2">    || mileage_string AS objectid</span>
+
+<span class="s2">    FROM &quot;</span>dc_taxi_db<span class="s2">&quot;.&quot;</span>dc_taxi_parquet<span class="s2">&quot;</span>
+
+<span class="s2">    WHERE fareamount_double &gt;= 3.25</span>
+<span class="s2">            AND fareamount_double IS NOT NULL</span>
+<span class="s2">            AND mileage_double &gt; 0 ),</span>
+
+<span class="s2">dc_taxi_samples AS (</span>
+<span class="s2">    SELECT AVG(fareamount_double) AS average_fareamount</span>
+<span class="s2">    FROM dc_taxi</span>
+<span class="s2">    WHERE objectid IS NOT NULL</span>
+<span class="s2">    GROUP BY  MOD( ABS( from_big_endian_64( xxhash64( to_utf8( objectid ) ) ) ) , 1000)</span>
+<span class="s2">)</span>
+<span class="s2">SELECT AVG(average_fareamount) + 4 * STDDEV(average_fareamount)</span>
+<span class="s2">FROM dc_taxi_samples</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">upper_fareamount</span> <span class="o">=</span> <span class="n">awscli_to_df</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+<span class="n">upper_fareamount</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">means</span> <span class="o">=</span> <span class="p">[</span><span class="mf">15.96</span><span class="p">,</span> <span class="mf">29.19</span><span class="p">,</span> <span class="mf">48.89</span><span class="p">,</span> <span class="mi">560</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span><span class="mf">422.45</span><span class="p">]</span>
+<span class="nb">sum</span><span class="p">(</span><span class="n">means</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">means</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Check-the-percentage-of-the-dataset-above-the-upper-fare-amount-bound">Check the percentage of the dataset above the upper fare amount bound<a class="anchor-link" href="#Check-the-percentage-of-the-dataset-above-the-upper-fare-amount-bound"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    100.0 * COUNT(fareamount_double) / </span>
+<span class="s2">      (SELECT COUNT(*) </span>
+<span class="s2">      FROM dc_taxi_db.dc_taxi_parquet </span>
+<span class="s2">      WHERE fareamount_double IS NOT NULL) AS percent</span>
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">WHERE (fareamount_double &lt; 3.25 OR fareamount_double &gt; 179.75)</span>
+<span class="s2">        AND fareamount_double IS NOT NULL;</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Produce-final-summary-statistics">Produce final summary statistics<a class="anchor-link" href="#Produce-final-summary-statistics"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">WITH src AS (SELECT fareamount_double AS val</span>
+<span class="s2">             FROM dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">             WHERE fareamount_double IS NOT NULL</span>
+<span class="s2">             AND fareamount_double &gt;= 3.25</span>
+<span class="s2">             AND fareamount_double &lt;= 180.0),</span>
+<span class="s2">stats AS</span>
+<span class="s2">    (SELECT</span>
+<span class="s2">     ROUND(MIN(val), 2) AS min,</span>
+<span class="s2">     ROUND(APPROX_PERCENTILE(val, 0.25), 2) AS q1,</span>
+<span class="s2">     ROUND(APPROX_PERCENTILE(val, 0.5), 2) AS q2,</span>
+<span class="s2">     ROUND(APPROX_PERCENTILE(val, 0.75), 2) AS q3,</span>
+<span class="s2">     ROUND(AVG(val), 2) AS mean,</span>
+<span class="s2">     ROUND(STDDEV(val), 2) AS std,</span>
+<span class="s2">     ROUND(MAX(val), 2) AS max</span>
+<span class="s2">    FROM src)</span>
+<span class="s2">SELECT min, q1, q2, q3, max, mean, std</span>
+<span class="s2">FROM stats;</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Check-that-minimum-and-maximum-locations-are-within-DC-boundaries">Check that minimum and maximum locations are within DC boundaries<a class="anchor-link" href="#Check-that-minimum-and-maximum-locations-are-within-DC-boundaries"> </a></h2><p>Using the SQL query and OpenStreetMap ( <a href="https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&amp;route=38.8106%2C-77.1134%3B38.9940%2C-76.9100#map=11/38.9025/-77.0210">https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&amp;route=38.8106%2C-77.1134%3B38.9940%2C-76.9100#map=11/38.9025/-77.0210</a> )  check that the minimum and maximum coordinates for the origin latitude and longitude columns confirm that resulting pairs (38.81138, -77.113633) and (38.994217, -76.910012) as well as ( 38.994217,  -76.910012) and (38.81138,  -77.113633) (<a href="https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&amp;route=38.994217%2C-76.910012%3B38.81138%2C-77.113633#map=11/38.9025/-77.0210">https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&amp;route=38.994217%2C-76.910012%3B38.81138%2C-77.113633#map=11/38.9025/-77.0210</a> ) are within DC boundaries.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh <span class="p">;</span> athena_query_to_pandas <span class="s2">&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    MIN(origin_block_latitude_double) AS olat_min,</span>
+<span class="s2">    MIN(origin_block_longitude_double) AS olon_min,</span>
+<span class="s2">    MAX(origin_block_latitude_double) AS olat_max,</span>
+<span class="s2">    MAX(origin_block_longitude_double) AS olon_max,</span>
+<span class="s2">    MIN(destination_block_latitude_double) AS dlat_min,</span>
+<span class="s2">    MIN(destination_block_longitude_double) AS dlon_min,</span>
+<span class="s2">    MAX(destination_block_latitude_double) AS dlat_max,</span>
+<span class="s2">    MAX(destination_block_longitude_double) AS dlon_max</span>
+<span class="s2">FROM</span>
+<span class="s2">    dc_taxi_db.dc_taxi_parquet</span>
+<span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">awscli_to_df</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Use-a-PySpark-job-to-create-a-VACUUMed-dataset">Use a PySpark job to create a VACUUMed dataset<a class="anchor-link" href="#Use-a-PySpark-job-to-create-a-VACUUMed-dataset"> </a></h2><p>The next cell uses the Jupyter <code>%%writefile</code> magic to save the source code for the PySpark job to the <code>dctaxi_parquet_vacuum.py</code> file.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%writefile</span> dctaxi_parquet_vacuum.py
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">awsglue.transforms</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">awsglue.utils</span> <span class="kn">import</span> <span class="n">getResolvedOptions</span>
+<span class="kn">from</span> <span class="nn">pyspark.context</span> <span class="kn">import</span> <span class="n">SparkContext</span>
+<span class="kn">from</span> <span class="nn">awsglue.context</span> <span class="kn">import</span> <span class="n">GlueContext</span>
+<span class="kn">from</span> <span class="nn">awsglue.job</span> <span class="kn">import</span> <span class="n">Job</span>
+
+<span class="n">args</span> <span class="o">=</span> <span class="n">getResolvedOptions</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;JOB_NAME&#39;</span><span class="p">,</span>
+                                     <span class="s1">&#39;BUCKET_SRC_PATH&#39;</span><span class="p">,</span>
+                                     <span class="s1">&#39;BUCKET_DST_PATH&#39;</span><span class="p">,</span>
+                                     <span class="p">])</span>
+
+<span class="n">BUCKET_SRC_PATH</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;BUCKET_SRC_PATH&#39;</span><span class="p">]</span>
+<span class="n">BUCKET_DST_PATH</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s1">&#39;BUCKET_DST_PATH&#39;</span><span class="p">]</span>
+
+<span class="n">sc</span> <span class="o">=</span> <span class="n">SparkContext</span><span class="p">()</span>
+<span class="n">glueContext</span> <span class="o">=</span> <span class="n">GlueContext</span><span class="p">(</span><span class="n">sc</span><span class="p">)</span>
+<span class="n">logger</span> <span class="o">=</span> <span class="n">glueContext</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span>
+<span class="n">spark</span> <span class="o">=</span> <span class="n">glueContext</span><span class="o">.</span><span class="n">spark_session</span>
+
+<span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="p">(</span><span class="n">glueContext</span><span class="p">)</span>
+<span class="n">job</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="s1">&#39;JOB_NAME&#39;</span><span class="p">],</span> <span class="n">args</span><span class="p">)</span>
+
+<span class="n">df</span> <span class="o">=</span> <span class="p">(</span> <span class="n">spark</span>
+        <span class="o">.</span><span class="n">read</span>
+        <span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">BUCKET_SRC_PATH</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Apply the SQL query developed though the VACUUM-based analysis of the data to prepare a version of the dataset without any <code>NULL</code> values and with an interval applied to the <code>fareamount_double</code> column.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%writefile</span> -a dctaxi_parquet_vacuum.py
+
+<span class="n">df</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;dc_taxi_parquet&quot;</span><span class="p">)</span>
+
+<span class="n">query_df</span> <span class="o">=</span> <span class="n">spark</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">SELECT</span>
+<span class="s2">    fareamount_double,</span>
+<span class="s2">    origindatetime_tr,</span>
+<span class="s2">    origin_block_latitude_double,</span>
+<span class="s2">    origin_block_longitude_double,</span>
+<span class="s2">    destination_block_latitude_double,</span>
+<span class="s2">    destination_block_longitude_double </span>
+<span class="s2">FROM </span>
+<span class="s2">  dc_taxi_parquet </span>
+<span class="s2">WHERE </span>
+<span class="s2">    origindatetime_tr IS NOT NULL</span>
+<span class="s2">    AND fareamount_double IS NOT NULL</span>
+<span class="s2">    AND fareamount_double &gt;= 3.25</span>
+<span class="s2">    AND fareamount_double &lt;= 180.0</span>
+<span class="s2">    AND origin_block_latitude_double IS NOT NULL</span>
+<span class="s2">    AND origin_block_longitude_double IS NOT NULL</span>
+<span class="s2">    AND destination_block_latitude_double IS NOT NULL</span>
+<span class="s2">    AND destination_block_longitude_double IS NOT NULL</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Convert the original, <code>STRING</code> formatted <code>origindatetime_tr</code> column into a SQL <code>TIMESTAMP</code> column named <code>origindatetime_ts</code>. The conversion is needed to extract the year, month, day of the week (<code>dow</code>), and hour of the taxi trip as separate numeric, <code>INTEGER</code> columns for machine learning. Lastly, drop any records that are missing values (for example due to failed conversion), or are duplicated in the dataset.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%writefile</span> -a dctaxi_parquet_vacuum.py
+
+
+<span class="c1">#parse to check for valid value of the original timestamp</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="kn">import</span> <span class="n">col</span><span class="p">,</span> <span class="n">to_timestamp</span><span class="p">,</span> <span class="n">dayofweek</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">hour</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="kn">import</span> <span class="n">IntegerType</span>
+
+<span class="c1">#convert the source timestamp into numeric data needed for machine learning</span>
+<span class="n">query_df</span> <span class="o">=</span> <span class="p">(</span><span class="n">query_df</span>
+  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span><span class="s2">&quot;origindatetime_ts&quot;</span><span class="p">,</span> <span class="n">to_timestamp</span><span class="p">(</span><span class="s2">&quot;origindatetime_tr&quot;</span><span class="p">,</span> <span class="s2">&quot;dd/MM/yyyy HH:mm&quot;</span><span class="p">))</span>
+  <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">col</span><span class="p">(</span><span class="s2">&quot;origindatetime_ts&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isNotNull</span><span class="p">())</span>
+  <span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;origindatetime_tr&quot;</span><span class="p">)</span>
+  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span> <span class="s1">&#39;year_integer&#39;</span><span class="p">,</span>  <span class="n">year</span><span class="p">(</span><span class="s1">&#39;origindatetime_ts&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">())</span> <span class="p">)</span>
+  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span> <span class="s1">&#39;month_integer&#39;</span><span class="p">,</span>  <span class="n">month</span><span class="p">(</span><span class="s1">&#39;origindatetime_ts&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">())</span> <span class="p">)</span>
+  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span> <span class="s1">&#39;dow_integer&#39;</span><span class="p">,</span>  <span class="n">dayofweek</span><span class="p">(</span><span class="s1">&#39;origindatetime_ts&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">())</span> <span class="p">)</span>
+  <span class="o">.</span><span class="n">withColumn</span><span class="p">(</span> <span class="s1">&#39;hour_integer&#39;</span><span class="p">,</span>  <span class="n">hour</span><span class="p">(</span><span class="s1">&#39;origindatetime_ts&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">IntegerType</span><span class="p">())</span> <span class="p">)</span>
+  <span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;origindatetime_ts&#39;</span><span class="p">)</span> <span class="p">)</span>
+
+<span class="c1">#drop missing data and duplicates</span>
+<span class="n">query_df</span> <span class="o">=</span> <span class="p">(</span> <span class="n">query_df</span>
+            <span class="o">.</span><span class="n">dropna</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span> <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Persists the cleaned up dataset as a Parquet formatted dataset in the AWS S3 location specified by the <code>BUCKET_DST_PATH</code> parameter. The <code>save_stats_metadata</code> function computes summary statistics of the clean up dataset and saves the statistics as a single CSV file located in a AWS S3 subfolder named <code>.meta/stats</code> under the S3 location from the <code>BUCKET_DST_PATH</code> parameter.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%%writefile</span> -a dctaxi_parquet_vacuum.py
+
+
+<span class="p">(</span><span class="n">query_df</span>
+ <span class="o">.</span><span class="n">write</span>
+ <span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">BUCKET_DST_PATH</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;overwrite&quot;</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">save_stats_metadata</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span><span class="p">,</span> <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">):</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">coalesce</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">write</span>
+    <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;header&quot;</span><span class="p">,</span> <span class="n">header</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">csv</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span><span class="p">))</span>
+
+<span class="n">save_stats_metadata</span><span class="p">(</span><span class="n">query_df</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">BUCKET_DST_PATH</span><span class="si">}</span><span class="s2">/.meta/stats&quot;</span><span class="p">)</span>
+
+<span class="n">job</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Run-and-monitor-the-PySpark-job">Run and monitor the PySpark job<a class="anchor-link" href="#Run-and-monitor-the-PySpark-job"> </a></h2><ul>
+<li><strong>it should take about 5 minutes for the job to complete</strong></li>
+</ul>
+<p>Once the PySpark job completes successfully, the job execution status should  change from <code>RUNNING</code> to <code>SUCCEEDED</code>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">source</span> utils.sh
+
+<span class="nv">PYSPARK_SRC_NAME</span><span class="o">=</span>dctaxi_parquet_vacuum.py <span class="se">\</span>
+<span class="nv">PYSPARK_JOB_NAME</span><span class="o">=</span>dc-taxi-parquet-vacuum-job <span class="se">\</span>
+<span class="nv">BUCKET_SRC_PATH</span><span class="o">=</span>s3://dc-taxi-<span class="nv">$BUCKET_ID</span>-<span class="nv">$AWS_DEFAULT_REGION</span>/parquet <span class="se">\</span>
+<span class="nv">BUCKET_DST_PATH</span><span class="o">=</span>s3://dc-taxi-<span class="nv">$BUCKET_ID</span>-<span class="nv">$AWS_DEFAULT_REGION</span>/parquet/vacuum <span class="se">\</span>
+run_job
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In case of a successful completion, the last cell should have produced an output similar to the following:</p>
+
+<pre><code>2021-06-01 23:34:56       1840 dctaxi_parquet_vacuum.py
+{
+    "JobName": "dc-taxi-parquet-vacuum-job"
+}
+{
+    "Name": "dc-taxi-parquet-vacuum-job"
+}
+{
+    "JobRunId": "jr_59eee7f229f448b39286f1bd19428c9082aaf6bed232342cc05e68f9246d131e"
+}
+Waiting for the job to finish...............SUCCEEDED</code></pre>
+<p>Once the PySpark job completes successfully, the job execution status should  change from <code>RUNNING</code> to <code>SUCCEEDED</code>. You can run the next cell to get the updated job status.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>aws glue get-job-runs --job-name dc-taxi-parquet-vacuum-job --output text --query <span class="s1">&#39;JobRuns[0].JobRunState&#39;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/08/eda-aws-athena.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

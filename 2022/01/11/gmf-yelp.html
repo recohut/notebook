@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Training GMF with Truncated and Reweighted Denoising Losses on Yelp Dataset | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Training GMF with Truncated and Reweighted Denoising Losses on Yelp Dataset" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/11/gmf-yelp.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/11/gmf-yelp.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-11T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Training GMF with Truncated and Reweighted Denoising Losses on Yelp Dataset" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-11T00:00:00-06:00","datePublished":"2022-01-11T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Training GMF with Truncated and Reweighted Denoising Losses on Yelp Dataset","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/11/gmf-yelp.html"},"url":"https://nb.recohut.com/2022/01/11/gmf-yelp.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Training GMF with Truncated and Reweighted Denoising Losses on Yelp Dataset</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-11T00:00:00-06:00" itemprop="datePublished">
+        Jan 11, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      17 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-11-gmf-yelp.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-11-gmf-yelp.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-11-gmf-yelp.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-11-gmf-yelp.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-11-gmf-yelp.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Executive-summary">Executive summary<a class="anchor-link" href="#Executive-summary"> </a></h2><table>
+<thead><tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Problem</td>
+<td>It is of importance to account for the inevitable noises in implicit feedback. However, little work on recommendation has taken the noisy nature of implicit feedback into consideration.</td>
+</tr>
+<tr>
+<td>Prblm Stmt.</td>
+<td>We formulate a denoising recommender training task as $Θ^∗ = \text{argmin}_Θ \mathcal{L}(\textit{denoise}(\bar{D}))$ aiming to learn a reliable recommender model with parameters $Θ^∗$ by denoising implicit feedback $\bar{D}$. Formally, by assuming the existence of inconsistency between $y_{ui}^∗$ and $\bar{y}_{ui}$, we define noisy interactions (a.k.a. false-positive interactions) as ${(u, i)</td>
+<td>y<em>{ui}^∗ = 0 ∧ \bar{y}</em>{ui} = 1}$.</td>
+</tr>
+<tr>
+<td>Solution</td>
+<td>Adaptive Denoising Training (ADT), which adaptively prunes the noisy interactions by two paradigms - Truncated Loss and Reweighted Loss. Furthermore, we consider extra feedback (e.g., rating) as auxiliary signal and employ three strategies to incorporate extra feedback into ADT: fine-tuning, warm-up training, and colliding inference.</td>
+</tr>
+<tr>
+<td>Dataset</td>
+<td>Adressa, Amazon-books, Yelp2018.</td>
+</tr>
+<tr>
+<td>Preprocessing</td>
+<td>We split the dataset into training, validation, and testing sets, and explored two experimental settings: 1) Extra feedback is unavailable during training. To evaluate the performance of denoising implicit feedback, we kept all interactions, including the false-positive ones, in training and validation, and tested the models only on true-positive interactions. 2) Sparse extra feedback is available during training. We assume that partial true-positive interactions have already been known, which will be used to verify the performance of the proposed three strategies: fine-tuning, warm-up training, and colliding inference.</td>
+</tr>
+<tr>
+<td>Metrics</td>
+<td>Recall, NDCG</td>
+</tr>
+<tr>
+<td>Hyperparams</td>
+<td>For GMF and NeuMF, the factor numbers of users and items are both 32. As to CDAE, the hidden size of MLP is set as 200. In addition, Adam is applied to optimize all the parameters with the learning rate initialized as 0.001 and he batch size set as 1,024. As to the ADT strategies, they have three hyper-parameters in total: α and max in the T-CE loss, and β in the R-CE loss. In detail, max is searched in {0.05, 0.1, 0.2} and β is tuned in {0.05, 0.1, ..., 0.25, 0.5, 1.0}. As for α, we controlled its range by adjusting the iteration number N to the maximum drop rate max, and N is adjusted in {1k, 5k, 10k, 20k, 30k}. In colliding inference, the number of neighbors Nu is tuned in {1, 3, 5, 10, 20, 50, 100}, wj is set as 1/</td>
+<td>Nu</td>
+<td>, and λ is searched in {0, 0.1, 0.2, ..., 1}. We used the validation set to tune the hyper-parameters and reported the performance on the testing set.</td>
+</tr>
+<tr>
+<td>Models</td>
+<td>GMF, NMF, CDAE, {GMF, NMF, CDAE}+T_CE, {GMF, NMF, CDAE}+R_CE</td>
+</tr>
+<tr>
+<td>Cluster</td>
+<td>Python 3.6+, PyTorch</td>
+</tr>
+<tr>
+<td>Tags</td>
+<td><code>LossReweighting</code>, <code>TruncatedLoss</code>, <code>MatrixFactorization</code>, <code>Denoising</code></td>
+</tr>
+<tr>
+<td>Credits</td>
+<td>Wenjie Wang</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Process-flow">Process flow<a class="anchor-link" href="#Process-flow"> </a></h2><p><img src="https://github.com/RecoHut-Stanzas/S063707/raw/main/images/process_flow.svg" alt="" /></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span> 
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span> 
+<span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.utils.data</span> <span class="k">as</span> <span class="nn">data</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span> 
+<span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="kn">import</span> <span class="n">Variable</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
+<span class="kn">import</span> <span class="nn">torch.backends.cudnn</span> <span class="k">as</span> <span class="nn">cudnn</span>
+<span class="kn">from</span> <span class="nn">torch.utils.tensorboard</span> <span class="kn">import</span> <span class="n">SummaryWriter</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">()</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--dataset&#39;</span><span class="p">,</span> 
+	<span class="nb">type</span> <span class="o">=</span> <span class="nb">str</span><span class="p">,</span>
+	<span class="n">help</span> <span class="o">=</span> <span class="s1">&#39;dataset used for training, options: amazon_book, yelp, adressa&#39;</span><span class="p">,</span>
+	<span class="n">default</span> <span class="o">=</span> <span class="s1">&#39;yelp&#39;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--model&#39;</span><span class="p">,</span> 
+	<span class="nb">type</span> <span class="o">=</span> <span class="nb">str</span><span class="p">,</span>
+	<span class="n">help</span> <span class="o">=</span> <span class="s1">&#39;model used for training. options: GMF, NeuMF-end&#39;</span><span class="p">,</span>
+	<span class="n">default</span> <span class="o">=</span> <span class="s1">&#39;GMF&#39;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--alpha&#39;</span><span class="p">,</span> 
+	<span class="nb">type</span> <span class="o">=</span> <span class="nb">float</span><span class="p">,</span> 
+	<span class="n">default</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> 
+	<span class="n">help</span><span class="o">=</span><span class="s1">&#39;hyperparameter in loss function&#39;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--drop_rate&#39;</span><span class="p">,</span> 
+	<span class="nb">type</span> <span class="o">=</span> <span class="nb">float</span><span class="p">,</span>
+	<span class="n">help</span> <span class="o">=</span> <span class="s1">&#39;drop rate&#39;</span><span class="p">,</span>
+	<span class="n">default</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--num_gradual&#39;</span><span class="p">,</span> 
+	<span class="nb">type</span> <span class="o">=</span> <span class="nb">int</span><span class="p">,</span> 
+	<span class="n">default</span> <span class="o">=</span> <span class="mi">30000</span><span class="p">,</span>
+	<span class="n">help</span><span class="o">=</span><span class="s1">&#39;how many epochs to linearly increase drop_rate&#39;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--exponent&#39;</span><span class="p">,</span> 
+	<span class="nb">type</span> <span class="o">=</span> <span class="nb">float</span><span class="p">,</span> 
+	<span class="n">default</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> 
+	<span class="n">help</span><span class="o">=</span><span class="s1">&#39;exponent of the drop rate {0.5, 1, 2}&#39;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--lr&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> 
+	<span class="n">default</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> 
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;learning rate&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--dropout&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+	<span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>  
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;dropout rate&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--batch_size&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> 
+	<span class="n">default</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> 
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;batch size for training&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--epochs&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+	<span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;training epoches&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--eval_freq&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+	<span class="n">default</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;the freq of eval&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--top_k&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span> 
+	<span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span>
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;compute metrics@top_k&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--factor_num&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+	<span class="n">default</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> 
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;predictive factors numbers in the model&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--num_layers&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+	<span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> 
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;number of layers in MLP model&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--num_ng&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+	<span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> 
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;sample negative items for training&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--out&quot;</span><span class="p">,</span> 
+	<span class="n">default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;save model or not&quot;</span><span class="p">)</span>
+<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--gpu&quot;</span><span class="p">,</span> 
+	<span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+	<span class="n">default</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">,</span>
+	<span class="n">help</span><span class="o">=</span><span class="s2">&quot;gpu card ID&quot;</span><span class="p">)</span>
+<span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">([])</span>
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;CUDA_VISIBLE_DEVICES&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">gpu</span>
+<span class="n">cudnn</span><span class="o">.</span><span class="n">benchmark</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">torch</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">2019</span><span class="p">)</span> <span class="c1"># cpu</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">2019</span><span class="p">)</span> <span class="c1">#gpu</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">2019</span><span class="p">)</span> <span class="c1">#numpy</span>
+<span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">2019</span><span class="p">)</span> <span class="c1">#random and transforms</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">backends</span><span class="o">.</span><span class="n">cudnn</span><span class="o">.</span><span class="n">deterministic</span><span class="o">=</span><span class="kc">True</span> <span class="c1"># cudnn</span>
+
+<span class="k">def</span> <span class="nf">worker_init_fn</span><span class="p">(</span><span class="n">worker_id</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">2019</span> <span class="o">+</span> <span class="n">worker_id</span><span class="p">)</span>
+
+<span class="n">data_path</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">/&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">model_path</span> <span class="o">=</span> <span class="s1">&#39;./models/</span><span class="si">{}</span><span class="s1">/&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="s1">&#39;./models&#39;</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;arguments: </span><span class="si">%s</span><span class="s2"> &quot;</span> <span class="o">%</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;config model&quot;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;config data path&quot;</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;config model path&quot;</span><span class="p">,</span> <span class="n">model_path</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>arguments: Namespace(alpha=0.2, batch_size=1024, dataset=&#39;yelp&#39;, drop_rate=0.2, dropout=0.0, epochs=10, eval_freq=2000, exponent=1, factor_num=32, gpu=&#39;0&#39;, lr=0.001, model=&#39;GMF&#39;, num_gradual=30000, num_layers=3, num_ng=1, out=True, top_k=[50, 100]) 
+config model GMF
+config data path yelp/
+config model path ./models/yelp/
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data">Data<a class="anchor-link" href="#Data"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">git</span> <span class="n">clone</span> <span class="o">--</span><span class="n">branch</span> <span class="n">v4</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">RecoHut</span><span class="o">-</span><span class="n">Datasets</span><span class="o">/</span><span class="n">yelp</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Cloning into &#39;yelp&#39;...
+remote: Enumerating objects: 57, done.
+remote: Counting objects: 100% (57/57), done.
+remote: Compressing objects: 100% (50/50), done.
+remote: Total 57 (delta 5), reused 52 (delta 3), pack-reused 0
+Unpacking objects: 100% (57/57), done.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">load_all</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">data_path</span><span class="p">):</span>
+
+	<span class="n">train_rating</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.train.rating&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+	<span class="n">valid_rating</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.valid.rating&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+	<span class="n">test_negative</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.test.negative&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+
+	<span class="c1">################# load training data #################	</span>
+	<span class="n">train_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+		<span class="n">train_rating</span><span class="p">,</span> 
+		<span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">,</span> <span class="s1">&#39;noisy&#39;</span><span class="p">],</span> 
+		<span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">})</span>
+
+	<span class="k">if</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s2">&quot;adressa&quot;</span><span class="p">:</span>
+		<span class="n">user_num</span> <span class="o">=</span> <span class="mi">212231</span>
+		<span class="n">item_num</span> <span class="o">=</span> <span class="mi">6596</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">user_num</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+		<span class="n">item_num</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;user, item num&quot;</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">)</span>
+	<span class="n">train_data</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+	<span class="c1"># load ratings as a dok matrix</span>
+	<span class="n">train_mat</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">dok_matrix</span><span class="p">((</span><span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+	<span class="n">train_data_list</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">train_data_noisy</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">train_data</span><span class="p">:</span>
+		<span class="n">train_mat</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1.0</span>
+		<span class="n">train_data_list</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+		<span class="n">train_data_noisy</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+	<span class="c1">################# load validation data #################</span>
+	<span class="n">valid_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+		<span class="n">valid_rating</span><span class="p">,</span> 
+		<span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">,</span> <span class="s1">&#39;noisy&#39;</span><span class="p">],</span> 
+		<span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">})</span>
+	<span class="n">valid_data</span> <span class="o">=</span> <span class="n">valid_data</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+	<span class="n">valid_data_list</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">valid_data</span><span class="p">:</span>
+		<span class="n">valid_data_list</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+	
+	<span class="n">user_pos</span> <span class="o">=</span> <span class="p">{}</span>
+	<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">train_data_list</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">user_pos</span><span class="p">:</span>
+			<span class="n">user_pos</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">user_pos</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+	<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">valid_data_list</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">user_pos</span><span class="p">:</span>
+			<span class="n">user_pos</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">user_pos</span><span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+
+
+	<span class="c1">################# load testing data #################</span>
+	<span class="n">test_mat</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">dok_matrix</span><span class="p">((</span><span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+	<span class="n">test_data_pos</span> <span class="o">=</span> <span class="p">{}</span>
+	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">test_negative</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+		<span class="n">line</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+		<span class="k">while</span> <span class="n">line</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+			<span class="n">arr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span>
+			<span class="k">if</span> <span class="n">dataset</span> <span class="o">==</span> <span class="s2">&quot;adressa&quot;</span><span class="p">:</span>
+				<span class="n">u</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+				<span class="n">i</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">u</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+				<span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+			<span class="k">if</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">test_data_pos</span><span class="p">:</span>
+				<span class="n">test_data_pos</span><span class="p">[</span><span class="n">u</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">test_data_pos</span><span class="p">[</span><span class="n">u</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="p">]</span>
+			<span class="n">test_mat</span><span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+			<span class="n">line</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+
+
+	<span class="k">return</span> <span class="n">train_data_list</span><span class="p">,</span> <span class="n">valid_data_list</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">,</span> <span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">train_mat</span><span class="p">,</span> <span class="n">train_data_noisy</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">NCFData</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span>
+				<span class="n">num_item</span><span class="p">,</span> <span class="n">train_mat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_ng</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">is_training</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">noisy_or_not</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="nb">super</span><span class="p">(</span><span class="n">NCFData</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+		<span class="sd">&quot;&quot;&quot; Note that the labels are only useful when training, we thus </span>
+<span class="sd">			add them in the ng_sample() function.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">features_ps</span> <span class="o">=</span> <span class="n">features</span>
+		<span class="k">if</span> <span class="n">is_training</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">noisy_or_not</span> <span class="o">=</span> <span class="n">noisy_or_not</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">noisy_or_not</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">))]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">num_item</span> <span class="o">=</span> <span class="n">num_item</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">train_mat</span> <span class="o">=</span> <span class="n">train_mat</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">num_ng</span> <span class="o">=</span> <span class="n">num_ng</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">is_training</span> <span class="o">=</span> <span class="n">is_training</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">))]</span>
+
+	<span class="k">def</span> <span class="nf">ng_sample</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_training</span>  <span class="o">!=</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;no need to sampling when testing&#39;</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">features_ng</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features_ps</span><span class="p">:</span>
+			<span class="n">u</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+			<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_ng</span><span class="p">):</span>
+				<span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_item</span><span class="p">)</span>
+				<span class="k">while</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_mat</span><span class="p">:</span>
+					<span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_item</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">features_ng</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">u</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
+
+		<span class="n">labels_ps</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features_ps</span><span class="p">))]</span>
+		<span class="n">labels_ng</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features_ng</span><span class="p">))]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">noisy_or_not_fill</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noisy_or_not</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features_ng</span><span class="p">))]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">features_fill</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">features_ps</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">features_ng</span>
+		<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">noisy_or_not_fill</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features_fill</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">labels_fill</span> <span class="o">=</span> <span class="n">labels_ps</span> <span class="o">+</span> <span class="n">labels_ng</span>
+
+	<span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_ng</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">labels</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+		<span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">features_fill</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_training</span> <span class="o">!=</span> <span class="mi">2</span> \
+					<span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">features_ps</span>
+		<span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels_fill</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_training</span> <span class="o">!=</span> <span class="mi">2</span> \
+					<span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">labels</span>
+		<span class="n">noisy_or_not</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">noisy_or_not_fill</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_training</span> <span class="o">!=</span> <span class="mi">2</span> \
+					<span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">noisy_or_not</span>
+
+		<span class="n">user</span> <span class="o">=</span> <span class="n">features</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+		<span class="n">item</span> <span class="o">=</span> <span class="n">features</span><span class="p">[</span><span class="n">idx</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">label</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+		<span class="n">noisy_label</span> <span class="o">=</span> <span class="n">noisy_or_not</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+		<span class="k">return</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">noisy_label</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model">Model<a class="anchor-link" href="#Model"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">NCF</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">factor_num</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span>
+					<span class="n">dropout</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">GMF_model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">MLP_model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+		<span class="nb">super</span><span class="p">(</span><span class="n">NCF</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		user_num: number of users;</span>
+<span class="sd">		item_num: number of items;</span>
+<span class="sd">		factor_num: number of predictive factors;</span>
+<span class="sd">		num_layers: the number of layers in MLP model;</span>
+<span class="sd">		dropout: dropout rate between fully connected layers;</span>
+<span class="sd">		model: &#39;MLP&#39;, &#39;GMF&#39;, &#39;NeuMF-end&#39;, and &#39;NeuMF-pre&#39;;</span>
+<span class="sd">		GMF_model: pre-trained GMF weights;</span>
+<span class="sd">		MLP_model: pre-trained MLP weights.</span>
+<span class="sd">		&quot;&quot;&quot;</span>		
+		<span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">dropout</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">GMF_model</span> <span class="o">=</span> <span class="n">GMF_model</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">MLP_model</span> <span class="o">=</span> <span class="n">MLP_model</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">embed_user_GMF</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">user_num</span><span class="p">,</span> <span class="n">factor_num</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">embed_item_GMF</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">item_num</span><span class="p">,</span> <span class="n">factor_num</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">embed_user_MLP</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span>
+				<span class="n">user_num</span><span class="p">,</span> <span class="n">factor_num</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">num_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">embed_item_MLP</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span>
+				<span class="n">item_num</span><span class="p">,</span> <span class="n">factor_num</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">num_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)))</span>
+
+		<span class="n">MLP_modules</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">):</span>
+			<span class="n">input_size</span> <span class="o">=</span> <span class="n">factor_num</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">num_layers</span> <span class="o">-</span> <span class="n">i</span><span class="p">))</span>
+			<span class="n">MLP_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">))</span>
+			<span class="n">MLP_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_size</span><span class="p">,</span> <span class="n">input_size</span><span class="o">//</span><span class="mi">2</span><span class="p">))</span>
+			<span class="n">MLP_modules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">())</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">MLP_layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="n">MLP_modules</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;MLP&#39;</span><span class="p">,</span> <span class="s1">&#39;GMF&#39;</span><span class="p">]:</span>
+			<span class="n">predict_size</span> <span class="o">=</span> <span class="n">factor_num</span> 
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">predict_size</span> <span class="o">=</span> <span class="n">factor_num</span> <span class="o">*</span> <span class="mi">2</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">predict_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">predict_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">_init_weight_</span><span class="p">()</span>
+
+	<span class="k">def</span> <span class="nf">_init_weight_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot; We leave the weights initialization here. &quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;NeuMF-pre&#39;</span><span class="p">:</span>
+			<span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embed_user_GMF</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+			<span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embed_user_MLP</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+			<span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embed_item_GMF</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+			<span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">normal_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embed_item_MLP</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">std</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+
+			<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLP_layers</span><span class="p">:</span>
+				<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
+					<span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+			<span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">kaiming_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">predict_layer</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> 
+									<span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">nonlinearity</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">)</span>
+
+			<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+				<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">)</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+					<span class="n">m</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">zero_</span><span class="p">()</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="c1"># embedding layers</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">embed_user_GMF</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+							<span class="bp">self</span><span class="o">.</span><span class="n">GMF_model</span><span class="o">.</span><span class="n">embed_user_GMF</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">embed_item_GMF</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+							<span class="bp">self</span><span class="o">.</span><span class="n">GMF_model</span><span class="o">.</span><span class="n">embed_item_GMF</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">embed_user_MLP</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+							<span class="bp">self</span><span class="o">.</span><span class="n">MLP_model</span><span class="o">.</span><span class="n">embed_user_MLP</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">embed_item_MLP</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+							<span class="bp">self</span><span class="o">.</span><span class="n">MLP_model</span><span class="o">.</span><span class="n">embed_item_MLP</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+
+			<span class="c1"># mlp layers</span>
+			<span class="k">for</span> <span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">MLP_layers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLP_model</span><span class="o">.</span><span class="n">MLP_layers</span><span class="p">):</span>
+				<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m2</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
+					<span class="n">m1</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+					<span class="n">m1</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
+
+			<span class="c1"># predict layers</span>
+			<span class="n">predict_weight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">GMF_model</span><span class="o">.</span><span class="n">predict_layer</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span> 
+				<span class="bp">self</span><span class="o">.</span><span class="n">MLP_model</span><span class="o">.</span><span class="n">predict_layer</span><span class="o">.</span><span class="n">weight</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+			<span class="n">precit_bias</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">GMF_model</span><span class="o">.</span><span class="n">predict_layer</span><span class="o">.</span><span class="n">bias</span> <span class="o">+</span> \
+						<span class="bp">self</span><span class="o">.</span><span class="n">MLP_model</span><span class="o">.</span><span class="n">predict_layer</span><span class="o">.</span><span class="n">bias</span>
+
+			<span class="bp">self</span><span class="o">.</span><span class="n">predict_layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">predict_weight</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">predict_layer</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">precit_bias</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;MLP&#39;</span><span class="p">:</span>
+			<span class="n">embed_user_GMF</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_user_GMF</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+			<span class="n">embed_item_GMF</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_item_GMF</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+			<span class="n">output_GMF</span> <span class="o">=</span> <span class="n">embed_user_GMF</span> <span class="o">*</span> <span class="n">embed_item_GMF</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;GMF&#39;</span><span class="p">:</span>
+			<span class="n">embed_user_MLP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_user_MLP</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+			<span class="n">embed_item_MLP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embed_item_MLP</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+			<span class="n">interaction</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">embed_user_MLP</span><span class="p">,</span> <span class="n">embed_item_MLP</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+			<span class="n">output_MLP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MLP_layers</span><span class="p">(</span><span class="n">interaction</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;GMF&#39;</span><span class="p">:</span>
+			<span class="n">concat</span> <span class="o">=</span> <span class="n">output_GMF</span>
+		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;MLP&#39;</span><span class="p">:</span>
+			<span class="n">concat</span> <span class="o">=</span> <span class="n">output_MLP</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">concat</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">output_GMF</span><span class="p">,</span> <span class="n">output_MLP</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+		<span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict_layer</span><span class="p">(</span><span class="n">concat</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">prediction</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluate">Evaluate<a class="anchor-link" href="#Evaluate"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">test_all_users</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">,</span> <span class="n">top_k</span><span class="p">):</span>
+    
+    <span class="n">predictedIndices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">GroundTruth</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">test_data_pos</span><span class="p">:</span>
+        <span class="n">batch_num</span> <span class="o">=</span> <span class="n">item_num</span> <span class="o">//</span> <span class="n">batch_size</span>
+        <span class="n">batch_user</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="n">u</span><span class="p">]</span><span class="o">*</span><span class="n">batch_size</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+        <span class="n">st</span><span class="p">,</span> <span class="n">ed</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">batch_size</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">batch_num</span><span class="p">):</span>
+            <span class="n">batch_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">ed</span><span class="p">)])</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+            <span class="n">pred</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch_user</span><span class="p">,</span> <span class="n">batch_item</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">predictions</span> <span class="o">=</span> <span class="n">pred</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">predictions</span><span class="p">,</span> <span class="n">pred</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">st</span><span class="p">,</span> <span class="n">ed</span> <span class="o">=</span> <span class="n">st</span><span class="o">+</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">ed</span><span class="o">+</span><span class="n">batch_size</span>
+        <span class="n">ed</span> <span class="o">=</span> <span class="n">ed</span> <span class="o">-</span> <span class="n">batch_size</span>
+        <span class="n">batch_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ed</span><span class="p">,</span> <span class="n">item_num</span><span class="p">)])</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+        <span class="n">batch_user</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">([</span><span class="n">u</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">item_num</span><span class="o">-</span><span class="n">ed</span><span class="p">))</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">batch_user</span><span class="p">,</span> <span class="n">batch_item</span><span class="p">)</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">predictions</span><span class="p">,</span> <span class="n">pred</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">test_data_mask</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">item_num</span>
+        <span class="k">if</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">user_pos</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">user_pos</span><span class="p">[</span><span class="n">u</span><span class="p">]:</span>
+                <span class="n">test_data_mask</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">9999</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">predictions</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">test_data_mask</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">top_k</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">predictedIndices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="n">GroundTruth</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test_data_pos</span><span class="p">[</span><span class="n">u</span><span class="p">])</span>
+    <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">NDCG</span><span class="p">,</span> <span class="n">MRR</span> <span class="o">=</span> <span class="n">compute_acc</span><span class="p">(</span><span class="n">GroundTruth</span><span class="p">,</span> <span class="n">predictedIndices</span><span class="p">,</span> <span class="n">top_k</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">NDCG</span><span class="p">,</span> <span class="n">MRR</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">compute_acc</span><span class="p">(</span><span class="n">GroundTruth</span><span class="p">,</span> <span class="n">predictedIndices</span><span class="p">,</span> <span class="n">topN</span><span class="p">):</span>
+    <span class="n">precision</span> <span class="o">=</span> <span class="p">[]</span> 
+    <span class="n">recall</span> <span class="o">=</span> <span class="p">[]</span> 
+    <span class="n">NDCG</span> <span class="o">=</span> <span class="p">[]</span> 
+    <span class="n">MRR</span> <span class="o">=</span> <span class="p">[]</span>
+    
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">topN</span><span class="p">)):</span>
+        <span class="n">sumForPrecision</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">sumForRecall</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">sumForNdcg</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">sumForMRR</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">predictedIndices</span><span class="p">)):</span>  <span class="c1"># for a user,</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">GroundTruth</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">mrrFlag</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">userHit</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">userMRR</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">dcg</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">idcg</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">idcgCount</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">GroundTruth</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">ndcg</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">hit</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">topN</span><span class="p">[</span><span class="n">index</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">predictedIndices</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="ow">in</span> <span class="n">GroundTruth</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                        <span class="c1"># if Hit!</span>
+                        <span class="n">dcg</span> <span class="o">+=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">mrrFlag</span><span class="p">:</span>
+                            <span class="n">userMRR</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="n">j</span><span class="o">+</span><span class="mf">1.0</span><span class="p">))</span>
+                            <span class="n">mrrFlag</span> <span class="o">=</span> <span class="kc">False</span>
+                        <span class="n">userHit</span> <span class="o">+=</span> <span class="mi">1</span>
+                
+                    <span class="k">if</span> <span class="n">idcgCount</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">idcg</span> <span class="o">+=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="n">idcgCount</span> <span class="o">=</span> <span class="n">idcgCount</span><span class="o">-</span><span class="mi">1</span>
+                            
+                <span class="k">if</span><span class="p">(</span><span class="n">idcg</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">ndcg</span> <span class="o">+=</span> <span class="p">(</span><span class="n">dcg</span><span class="o">/</span><span class="n">idcg</span><span class="p">)</span>
+                    
+                <span class="n">sumForPrecision</span> <span class="o">+=</span> <span class="n">userHit</span> <span class="o">/</span> <span class="n">topN</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+                <span class="n">sumForRecall</span> <span class="o">+=</span> <span class="n">userHit</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">GroundTruth</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>               
+                <span class="n">sumForNdcg</span> <span class="o">+=</span> <span class="n">ndcg</span>
+                <span class="n">sumForMRR</span> <span class="o">+=</span> <span class="n">userMRR</span>
+        
+        <span class="n">precision</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sumForPrecision</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">predictedIndices</span><span class="p">))</span>
+        <span class="n">recall</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sumForRecall</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">predictedIndices</span><span class="p">))</span>
+        <span class="n">NDCG</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sumForNdcg</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">predictedIndices</span><span class="p">))</span>
+        <span class="n">MRR</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sumForMRR</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">predictedIndices</span><span class="p">))</span>
+        
+    <span class="k">return</span> <span class="n">precision</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">NDCG</span><span class="p">,</span> <span class="n">MRR</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="T_CE">T_CE<a class="anchor-link" href="#T_CE"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Loss-function">Loss function<a class="anchor-link" href="#Loss-function"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">loss_function</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">drop_rate</span><span class="p">):</span>
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">binary_cross_entropy_with_logits</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">reduce</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">loss_mul</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">*</span> <span class="n">t</span>
+    <span class="n">ind_sorted</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">loss_mul</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+    <span class="n">loss_sorted</span> <span class="o">=</span> <span class="n">loss</span><span class="p">[</span><span class="n">ind_sorted</span><span class="p">]</span>
+
+    <span class="n">remember_rate</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">drop_rate</span>
+    <span class="n">num_remember</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">remember_rate</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">loss_sorted</span><span class="p">))</span>
+
+    <span class="n">ind_update</span> <span class="o">=</span> <span class="n">ind_sorted</span><span class="p">[:</span><span class="n">num_remember</span><span class="p">]</span>
+
+    <span class="n">loss_update</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">binary_cross_entropy_with_logits</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">ind_update</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="n">ind_update</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">loss_update</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Training-&amp;-Evaluation">Training &amp; Evaluation<a class="anchor-link" href="#Training-&amp;-Evaluation"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">valid_data</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">,</span> <span class="n">user_num</span> <span class="p">,</span><span class="n">item_num</span><span class="p">,</span> <span class="n">train_mat</span><span class="p">,</span> <span class="n">train_data_noisy</span> <span class="o">=</span> <span class="n">load_all</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+
+<span class="c1"># construct the train and test datasets</span>
+<span class="n">train_dataset</span> <span class="o">=</span> <span class="n">NCFData</span><span class="p">(</span>
+		<span class="n">train_data</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">train_mat</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_ng</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">train_data_noisy</span><span class="p">)</span>
+<span class="n">valid_dataset</span> <span class="o">=</span> <span class="n">NCFData</span><span class="p">(</span>
+		<span class="n">valid_data</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">train_mat</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_ng</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span>
+		<span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">worker_init_fn</span><span class="o">=</span><span class="n">worker_init_fn</span><span class="p">)</span>
+<span class="n">valid_loader</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">valid_dataset</span><span class="p">,</span>
+		<span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">worker_init_fn</span><span class="o">=</span><span class="n">worker_init_fn</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;data loaded! user_num:</span><span class="si">{}</span><span class="s2">, item_num:</span><span class="si">{}</span><span class="s2"> train_data_len:</span><span class="si">{}</span><span class="s2"> test_user_num:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_data_pos</span><span class="p">)))</span>
+
+<span class="c1">########################### CREATE MODEL #################################</span>
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;NeuMF-pre&#39;</span><span class="p">:</span> <span class="c1"># pre-training. Not used in our work.</span>
+	<span class="n">GMF_model_path</span> <span class="o">=</span> <span class="n">model_path</span> <span class="o">+</span> <span class="s1">&#39;GMF.pth&#39;</span>
+	<span class="n">MLP_model_path</span> <span class="o">=</span> <span class="n">model_path</span> <span class="o">+</span> <span class="s1">&#39;MLP.pth&#39;</span>
+	<span class="n">NeuMF_model_path</span> <span class="o">=</span> <span class="n">model_path</span> <span class="o">+</span> <span class="s1">&#39;NeuMF.pth&#39;</span>
+	<span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">GMF_model_path</span><span class="p">),</span> <span class="s1">&#39;lack of GMF model&#39;</span>
+	<span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">MLP_model_path</span><span class="p">),</span> <span class="s1">&#39;lack of MLP model&#39;</span>
+	<span class="n">GMF_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">GMF_model_path</span><span class="p">)</span>
+	<span class="n">MLP_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">MLP_model_path</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+	<span class="n">GMF_model</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="n">MLP_model</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">NCF</span><span class="p">(</span><span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">factor_num</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_layers</span><span class="p">,</span> 
+						<span class="n">args</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">GMF_model</span><span class="p">,</span> <span class="n">MLP_model</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">BCE_loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;NeuMF-pre&#39;</span><span class="p">:</span>
+	<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lr</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+	<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lr</span><span class="p">)</span>
+
+<span class="c1"># writer = SummaryWriter() # for visualization</span>
+
+<span class="c1"># define drop rate schedule</span>
+<span class="k">def</span> <span class="nf">drop_rate_schedule</span><span class="p">(</span><span class="n">iteration</span><span class="p">):</span>
+
+	<span class="n">drop_rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">drop_rate</span><span class="o">**</span><span class="n">args</span><span class="o">.</span><span class="n">exponent</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gradual</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">iteration</span> <span class="o">&lt;</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gradual</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">drop_rate</span><span class="p">[</span><span class="n">iteration</span><span class="p">]</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">args</span><span class="o">.</span><span class="n">drop_rate</span>
+
+
+<span class="c1">########################### Eval #####################################</span>
+<span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">valid_loader</span><span class="p">,</span> <span class="n">best_loss</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+	
+	<span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+	<span class="n">epoch_loss</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">valid_loader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">ng_sample</span><span class="p">()</span> <span class="c1"># negative sampling</span>
+	<span class="k">for</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">noisy_or_not</span> <span class="ow">in</span> <span class="n">valid_loader</span><span class="p">:</span>
+		<span class="n">user</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+		<span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+		<span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+		<span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+		<span class="n">loss</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">drop_rate_schedule</span><span class="p">(</span><span class="n">count</span><span class="p">))</span>
+		<span class="n">epoch_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;################### EVAL ######################&quot;</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Eval loss:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">))</span>
+	<span class="k">if</span> <span class="n">epoch_loss</span> <span class="o">&lt;</span> <span class="n">best_loss</span><span class="p">:</span>
+		<span class="n">best_loss</span> <span class="o">=</span> <span class="n">epoch_loss</span>
+		<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">out</span><span class="p">:</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">model_path</span><span class="p">):</span>
+				<span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+			<span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">.pth&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">drop_rate</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gradual</span><span class="p">))</span>
+	<span class="k">return</span> <span class="n">best_loss</span>
+
+<span class="c1">########################### Test #####################################</span>
+<span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">):</span>
+	<span class="n">top_k</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">top_k</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+	<span class="n">_</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">NDCG</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">test_all_users</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="mi">4096</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">,</span> <span class="n">top_k</span><span class="p">)</span>
+
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;################### TEST ######################&quot;</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recall </span><span class="si">{:.4f}</span><span class="s2">-</span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">recall</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">recall</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NDCG </span><span class="si">{:.4f}</span><span class="s2">-</span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NDCG</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">NDCG</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="c1">########################### TRAINING #####################################</span>
+<span class="n">count</span><span class="p">,</span> <span class="n">best_hr</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+<span class="n">best_loss</span> <span class="o">=</span> <span class="mf">1e9</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span> <span class="c1"># Enable dropout (if have).</span>
+
+	<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+	<span class="n">train_loader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">ng_sample</span><span class="p">()</span>
+
+	<span class="k">for</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">noisy_or_not</span> <span class="ow">in</span> <span class="n">train_loader</span><span class="p">:</span>
+		<span class="n">user</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+		<span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+		<span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+		<span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+		<span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+		<span class="n">loss</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">drop_rate_schedule</span><span class="p">(</span><span class="n">count</span><span class="p">))</span>
+		<span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+		<span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+		<span class="k">if</span> <span class="n">count</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_freq</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;epoch: </span><span class="si">{}</span><span class="s2">, iter: </span><span class="si">{}</span><span class="s2">, loss:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">loss</span><span class="p">))</span>
+			<span class="n">best_loss</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">valid_loader</span><span class="p">,</span> <span class="n">best_loss</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+			<span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+		<span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;############################## Training End. ##############################&quot;</span><span class="p">)</span>
+<span class="n">test_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">-</span><span class="si">{}</span><span class="s1">.pth&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">drop_rate</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_gradual</span><span class="p">))</span>
+<span class="n">test_model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">test</span><span class="p">(</span><span class="n">test_model</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>user, item num
+45548 57396
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/usr/local/lib/python3.7/dist-packages/torch/utils/data/dataloader.py:481: UserWarning: This DataLoader will create 4 worker processes in total. Our suggested max number of worker in current system is 2, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  cpuset_checked))
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>data loaded! user_num:45548, item_num:57396 train_data_len:1672520 test_user_num:45525
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/usr/local/lib/python3.7/dist-packages/torch/nn/_reduction.py:42: UserWarning: size_average and reduce args will be deprecated, please use reduction=&#39;none&#39; instead.
+  warnings.warn(warning.format(ret))
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>epoch: 0, iter: 2000, loss:0.4857825040817261
+################### EVAL ######################
+Eval loss:184.8551025390625
+epoch: 1, iter: 4000, loss:0.24887847900390625
+################### EVAL ######################
+Eval loss:115.4634780883789
+epoch: 1, iter: 6000, loss:0.21611060202121735
+################### EVAL ######################
+Eval loss:90.331787109375
+epoch: 2, iter: 8000, loss:0.18297776579856873
+################### EVAL ######################
+Eval loss:77.42632293701172
+epoch: 3, iter: 10000, loss:0.1536407172679901
+################### EVAL ######################
+Eval loss:68.5382080078125
+epoch: 3, iter: 12000, loss:0.1829090118408203
+################### EVAL ######################
+Eval loss:62.065673828125
+epoch: 4, iter: 14000, loss:0.11369739472866058
+################### EVAL ######################
+Eval loss:56.34415817260742
+epoch: 4, iter: 16000, loss:0.08793307840824127
+################### EVAL ######################
+Eval loss:51.920955657958984
+epoch: 5, iter: 18000, loss:0.1071598008275032
+################### EVAL ######################
+Eval loss:48.343868255615234
+epoch: 6, iter: 20000, loss:0.07359810173511505
+################### EVAL ######################
+Eval loss:45.544002532958984
+epoch: 6, iter: 22000, loss:0.1074337512254715
+################### EVAL ######################
+Eval loss:41.1801643371582
+epoch: 7, iter: 24000, loss:0.07862947136163712
+################### EVAL ######################
+Eval loss:39.67675018310547
+epoch: 7, iter: 26000, loss:0.08733634650707245
+################### EVAL ######################
+Eval loss:35.83267593383789
+epoch: 8, iter: 28000, loss:0.0823584571480751
+################### EVAL ######################
+Eval loss:32.80326461791992
+epoch: 9, iter: 30000, loss:0.029638517647981644
+################### EVAL ######################
+Eval loss:31.047956466674805
+epoch: 9, iter: 32000, loss:0.08437806367874146
+################### EVAL ######################
+Eval loss:30.97898292541504
+############################## Training End. ##############################
+################### TEST ######################
+Recall 0.0899-0.1473
+NDCG 0.0364-0.0494
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="R_CE">R_CE<a class="anchor-link" href="#R_CE"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Loss-function">Loss function<a class="anchor-link" href="#Loss-function"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">loss_function</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">alpha</span><span class="p">):</span>
+
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">binary_cross_entropy_with_logits</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">reduce</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="n">y_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="n">t</span> <span class="o">+</span> <span class="n">torch</span><span class="o">.</span><span class="n">pow</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">y_</span><span class="p">),</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">loss_</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">*</span> <span class="n">weight</span>
+    <span class="n">loss_</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">loss_</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">loss_</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Training-&amp;-Evaluation">Training &amp; Evaluation<a class="anchor-link" href="#Training-&amp;-Evaluation"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">valid_data</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">,</span> <span class="n">user_num</span> <span class="p">,</span><span class="n">item_num</span><span class="p">,</span> <span class="n">train_mat</span><span class="p">,</span> <span class="n">train_data_noisy</span> <span class="o">=</span> <span class="n">load_all</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="n">data_path</span><span class="p">)</span>
+
+<span class="c1"># construct the train and test datasets</span>
+<span class="n">train_dataset</span> <span class="o">=</span> <span class="n">NCFData</span><span class="p">(</span>
+		<span class="n">train_data</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">train_mat</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_ng</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">train_data_noisy</span><span class="p">)</span>
+<span class="n">valid_dataset</span> <span class="o">=</span> <span class="n">NCFData</span><span class="p">(</span>
+		<span class="n">valid_data</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">train_mat</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_ng</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span>
+		<span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">worker_init_fn</span><span class="o">=</span><span class="n">worker_init_fn</span><span class="p">)</span>
+<span class="n">valid_loader</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">valid_dataset</span><span class="p">,</span>
+		<span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">pin_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">worker_init_fn</span><span class="o">=</span><span class="n">worker_init_fn</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;data loaded! user_num:</span><span class="si">{}</span><span class="s2">, item_num:</span><span class="si">{}</span><span class="s2"> train_data_len:</span><span class="si">{}</span><span class="s2"> test_user_num:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_data_pos</span><span class="p">)))</span>
+
+<span class="c1">########################### CREATE MODEL #################################</span>
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;NeuMF-pre&#39;</span><span class="p">:</span> <span class="c1"># pre-training. Not used in our work.</span>
+	<span class="n">GMF_model_path</span> <span class="o">=</span> <span class="n">model_path</span> <span class="o">+</span> <span class="s1">&#39;GMF.pth&#39;</span>
+	<span class="n">MLP_model_path</span> <span class="o">=</span> <span class="n">model_path</span> <span class="o">+</span> <span class="s1">&#39;MLP.pth&#39;</span>
+	<span class="n">NeuMF_model_path</span> <span class="o">=</span> <span class="n">model_path</span> <span class="o">+</span> <span class="s1">&#39;NeuMF.pth&#39;</span>
+	<span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">GMF_model_path</span><span class="p">),</span> <span class="s1">&#39;lack of GMF model&#39;</span>
+	<span class="k">assert</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">MLP_model_path</span><span class="p">),</span> <span class="s1">&#39;lack of MLP model&#39;</span>
+	<span class="n">GMF_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">GMF_model_path</span><span class="p">)</span>
+	<span class="n">MLP_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">MLP_model_path</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+	<span class="n">GMF_model</span> <span class="o">=</span> <span class="kc">None</span>
+	<span class="n">MLP_model</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">NCF</span><span class="p">(</span><span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">factor_num</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_layers</span><span class="p">,</span> 
+						<span class="n">args</span><span class="o">.</span><span class="n">dropout</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">GMF_model</span><span class="p">,</span> <span class="n">MLP_model</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">BCE_loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span> <span class="o">==</span> <span class="s1">&#39;NeuMF-pre&#39;</span><span class="p">:</span>
+	<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lr</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+	<span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lr</span><span class="p">)</span>
+
+<span class="c1"># writer = SummaryWriter() # for visualization</span>
+
+<span class="c1">########################### Eval #####################################</span>
+<span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">valid_loader</span><span class="p">,</span> <span class="n">best_loss</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+	
+	<span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+	<span class="n">epoch_loss</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="n">valid_loader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">ng_sample</span><span class="p">()</span> <span class="c1"># negative sampling</span>
+	<span class="k">for</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">noisy_or_not</span> <span class="ow">in</span> <span class="n">valid_loader</span><span class="p">:</span>
+		<span class="n">user</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+		<span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+		<span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+		<span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+		<span class="n">loss</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
+		<span class="n">epoch_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;################### EVAL ######################&quot;</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Eval loss:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">))</span>
+	<span class="k">if</span> <span class="n">epoch_loss</span> <span class="o">&lt;</span> <span class="n">best_loss</span><span class="p">:</span>
+		<span class="n">best_loss</span> <span class="o">=</span> <span class="n">epoch_loss</span>
+		<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">out</span><span class="p">:</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">model_path</span><span class="p">):</span>
+				<span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+			<span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">.pth&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">alpha</span><span class="p">))</span>
+	<span class="k">return</span> <span class="n">best_loss</span>
+
+<span class="c1">########################### Test #####################################</span>
+<span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">):</span>
+	<span class="n">top_k</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">top_k</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+	<span class="n">_</span><span class="p">,</span> <span class="n">recall</span><span class="p">,</span> <span class="n">NDCG</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">test_all_users</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="mi">4096</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">,</span> <span class="n">top_k</span><span class="p">)</span>
+
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;################### TEST ######################&quot;</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recall </span><span class="si">{:.4f}</span><span class="s2">-</span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">recall</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">recall</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;NDCG </span><span class="si">{:.4f}</span><span class="s2">-</span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NDCG</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">NDCG</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<span class="c1">########################### TRAINING #####################################</span>
+<span class="n">count</span><span class="p">,</span> <span class="n">best_hr</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+<span class="n">best_loss</span> <span class="o">=</span> <span class="mf">1e9</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span> <span class="c1"># Enable dropout (if have).</span>
+
+	<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+	<span class="n">train_loader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">ng_sample</span><span class="p">()</span>
+
+	<span class="k">for</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">noisy_or_not</span> <span class="ow">in</span> <span class="n">train_loader</span><span class="p">:</span>
+		<span class="n">user</span> <span class="o">=</span> <span class="n">user</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+		<span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+		<span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+
+		<span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+		<span class="n">prediction</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+		<span class="n">loss</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">alpha</span><span class="p">)</span>
+		<span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+		<span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+		<span class="k">if</span> <span class="n">count</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">eval_freq</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;epoch: </span><span class="si">{}</span><span class="s2">, iter: </span><span class="si">{}</span><span class="s2">, loss:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">count</span><span class="p">,</span> <span class="n">loss</span><span class="p">))</span>
+			<span class="n">best_loss</span> <span class="o">=</span> <span class="nb">eval</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">valid_loader</span><span class="p">,</span> <span class="n">best_loss</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span>
+			<span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+		<span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;############################## Training End. ##############################&quot;</span><span class="p">)</span>
+<span class="n">test_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}{}</span><span class="s1">_</span><span class="si">{}</span><span class="s1">.pth&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">alpha</span><span class="p">))</span>
+<span class="n">test_model</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+<span class="n">test</span><span class="p">(</span><span class="n">test_model</span><span class="p">,</span> <span class="n">test_data_pos</span><span class="p">,</span> <span class="n">user_pos</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>user, item num
+45548 57396
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/usr/local/lib/python3.7/dist-packages/torch/utils/data/dataloader.py:481: UserWarning: This DataLoader will create 4 worker processes in total. Our suggested max number of worker in current system is 2, which is smaller than what this DataLoader is going to create. Please be aware that excessive worker creation might get DataLoader running slow or even freeze, lower the worker number to avoid potential slowness/freeze if necessary.
+  cpuset_checked))
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>data loaded! user_num:45548, item_num:57396 train_data_len:1672520 test_user_num:45525
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/usr/local/lib/python3.7/dist-packages/torch/nn/_reduction.py:42: UserWarning: size_average and reduce args will be deprecated, please use reduction=&#39;none&#39; instead.
+  warnings.warn(warning.format(ret))
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>epoch: 0, iter: 2000, loss:0.41513800621032715
+################### EVAL ######################
+Eval loss:161.4785614013672
+epoch: 1, iter: 4000, loss:0.22459657490253448
+################### EVAL ######################
+Eval loss:99.95635223388672
+epoch: 1, iter: 6000, loss:0.19919627904891968
+################### EVAL ######################
+Eval loss:84.1415786743164
+epoch: 2, iter: 8000, loss:0.17733421921730042
+################### EVAL ######################
+Eval loss:77.36993408203125
+epoch: 3, iter: 10000, loss:0.15221725404262543
+################### EVAL ######################
+Eval loss:73.90560150146484
+epoch: 3, iter: 12000, loss:0.16913804411888123
+################### EVAL ######################
+Eval loss:70.4941177368164
+epoch: 4, iter: 14000, loss:0.14335578680038452
+################### EVAL ######################
+Eval loss:69.64494323730469
+epoch: 4, iter: 16000, loss:0.12221892923116684
+################### EVAL ######################
+Eval loss:67.81050109863281
+epoch: 5, iter: 18000, loss:0.11312472820281982
+################### EVAL ######################
+Eval loss:68.0766830444336
+epoch: 6, iter: 20000, loss:0.09356789290904999
+################### EVAL ######################
+Eval loss:69.34413146972656
+epoch: 6, iter: 22000, loss:0.125381737947464
+################### EVAL ######################
+Eval loss:68.00005340576172
+epoch: 7, iter: 24000, loss:0.10218605399131775
+################### EVAL ######################
+Eval loss:69.70828247070312
+epoch: 7, iter: 26000, loss:0.10325159877538681
+################### EVAL ######################
+Eval loss:68.36780548095703
+epoch: 8, iter: 28000, loss:0.09633355587720871
+################### EVAL ######################
+Eval loss:70.18128204345703
+epoch: 9, iter: 30000, loss:0.0662553533911705
+################### EVAL ######################
+Eval loss:72.70501708984375
+epoch: 9, iter: 32000, loss:0.09527254104614258
+################### EVAL ######################
+Eval loss:71.64075469970703
+############################## Training End. ##############################
+################### TEST ######################
+Recall 0.0864-0.1365
+NDCG 0.0367-0.0481
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="References">References<a class="anchor-link" href="#References"> </a></h2><ol>
+<li><a href="https://github.com/RecoHut-Stanzas/S063707">https://github.com/RecoHut-Stanzas/S063707</a></li>
+<li><a href="https://arxiv.org/pdf/2112.01160v1.pdf">https://arxiv.org/pdf/2112.01160v1.pdf</a></li>
+<li><a href="https://github.com/WenjieWWJ/DenoisingRec">https://github.com/WenjieWWJ/DenoisingRec</a></li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="o">-</span><span class="n">qq</span> <span class="n">install</span> <span class="n">tree</span>
+<span class="err">!</span><span class="n">rm</span> <span class="o">-</span><span class="n">r</span> <span class="n">sample_data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">tree</span> <span class="o">-</span><span class="n">h</span> <span class="o">--</span><span class="n">du</span> <span class="o">.</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>.
+├── [126M]  models
+│   └── [126M]  yelp
+│       ├── [ 63M]  GMF_0.2-30000.pth
+│       └── [ 63M]  GMF_0.2.pth
+└── [ 26M]  yelp
+    ├── [ 241]  README.md
+    ├── [1.8M]  yelp.test.negative
+    ├── [ 21M]  yelp.train.rating
+    └── [2.7M]  yelp.valid.rating
+
+ 152M used in 3 directories, 6 files
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">reload_ext</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">watermark</span> <span class="o">-</span><span class="n">a</span> <span class="s2">&quot;Sparsh A.&quot;</span> <span class="o">-</span><span class="n">m</span> <span class="o">-</span><span class="n">iv</span> <span class="o">-</span><span class="n">u</span> <span class="o">-</span><span class="n">t</span> <span class="o">-</span><span class="n">d</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Author: Sparsh A.
+
+Last updated: 2021-12-12 12:39:53
+
+Compiler    : GCC 7.5.0
+OS          : Linux
+Release     : 5.4.104+
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 2
+Architecture: 64bit
+
+argparse: 1.1
+IPython : 5.5.0
+scipy   : 1.4.1
+torch   : 1.10.0+cu111
+numpy   : 1.19.5
+pandas  : 1.1.5
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>END</strong></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/11/gmf-yelp.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

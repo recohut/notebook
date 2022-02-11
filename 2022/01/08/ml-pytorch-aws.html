@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Serverless machine learning at scale with pytorch and AWS | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Serverless machine learning at scale with pytorch and AWS" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/08/ml-pytorch-aws.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/08/ml-pytorch-aws.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-08T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Serverless machine learning at scale with pytorch and AWS" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-08T00:00:00-06:00","datePublished":"2022-01-08T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Serverless machine learning at scale with pytorch and AWS","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/08/ml-pytorch-aws.html"},"url":"https://nb.recohut.com/2022/01/08/ml-pytorch-aws.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Serverless machine learning at scale with pytorch and AWS</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-08T00:00:00-06:00" itemprop="datePublished">
+        Jan 8, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      5 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-08-ml-pytorch-aws.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-08-ml-pytorch-aws.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-08-ml-pytorch-aws.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-08-ml-pytorch-aws.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-08-ml-pytorch-aws.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><div class="flash">
+    <svg class="octicon octicon-info" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path fill-rule="evenodd" d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8zm6.5-.25A.75.75 0 017.25 7h1a.75.75 0 01.75.75v2.75h.25a.75.75 0 010 1.5h-2a.75.75 0 010-1.5h.25v-2h-.25a.75.75 0 01-.75-.75zM8 6a1 1 0 100-2 1 1 0 000 2z"></path></svg>
+    <strong>Note: </strong><a href="https://learning.oreilly.com/library/view/mlops-engineering-at/9781617297762/OEBPS/Text/07.htm#sigil_toc_id_83">https://learning.oreilly.com/library/view/mlops-engineering-at/9781617297762/OEBPS/Text/07.htm#sigil_toc_id_83</a>
+</div></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2><font color="red">Upload the `BUCKET_ID` file</font></h2>
+<p>Before proceeding, ensure that you have a backup copy of the <code>BUCKET_ID</code> file created in the <a href="https://colab.research.google.com/github/osipov/smlbook/blob/master/ch2.ipynb">Chapter 2</a> notebook before proceeding. The contents of the <code>BUCKET_ID</code> file are reused later in this notebook and in the other notebooks.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="k">assert</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">(),</span> <span class="s2">&quot;Place the BUCKET_ID file in the current directory before proceeding&quot;</span>
+
+<span class="n">BUCKET_ID</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">BUCKET_ID</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="OPTIONAL:-Download-and-install-AWS-CLI"><strong>OPTIONAL:</strong> Download and install AWS CLI<a class="anchor-link" href="#OPTIONAL:-Download-and-install-AWS-CLI"> </a></h2><p>This is unnecessary if you have already installed AWS CLI in a preceding notebook.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+curl <span class="s2">&quot;https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip&quot;</span> -o <span class="s2">&quot;awscliv2.zip&quot;</span>
+unzip -o awscliv2.zip
+sudo ./aws/install
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Specify-AWS-credentials">Specify AWS credentials<a class="anchor-link" href="#Specify-AWS-credentials"> </a></h2><p>Modify the contents of the next cell to specify your AWS credentials as strings.</p>
+<p>If you see the following exception:</p>
+<p><code>TypeError: str expected, not NoneType</code></p>
+<p>It means that you did not specify the credentials correctly.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="c1"># *** REPLACE None in the next 2 lines with your AWS key values ***</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_ACCESS_KEY_ID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_SECRET_ACCESS_KEY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Confirm-the-credentials">Confirm the credentials<a class="anchor-link" href="#Confirm-the-credentials"> </a></h2><p>Run the next cell to validate your credentials.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+aws sts get-caller-identity
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If you have specified the correct credentials as values for the <code>AWS_ACCESS_KEY_ID</code> and the <code>AWS_SECRET_ACCESS_KEY</code> environment variables, then <code>aws sts get-caller-identity</code> used by the previous cell should have returned back the <code>UserId</code>, <code>Account</code> and the <code>Arn</code> for the credentials, resembling the following</p>
+
+<pre><code>{
+    "UserId": "█████████████████████",
+    "Account": "████████████",
+    "Arn": "arn:aws:iam::████████████:user/█████████"
+}</code></pre>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Specify-the-region">Specify the region<a class="anchor-link" href="#Specify-the-region"> </a></h2><p>Replace the <code>None</code> in the next cell with your AWS region name, for example <code>us-west-2</code>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_DEFAULT_REGION&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If you have specified the region correctly, the following cell should return back the region that you have specifies.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span>%%bash
+<span class="nb">echo</span> <span class="nv">$AWS_DEFAULT_REGION</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Using-ObjectStorageDataset">Using ObjectStorageDataset<a class="anchor-link" href="#Using-ObjectStorageDataset"> </a></h2><p><code>ObjectStorageDataset</code> provides support for tensor-based, out-of-memory datasets for the iterable-style <code>torch.utils.data.DataLoader</code> interface. The <code>ObjectStorageDataset</code> is not available by default when you install PyTorch, so you need to install it separately in your Python environment using:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>pip install kaen<span class="o">[</span>osds<span class="o">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>and once installed, import the class in your runtime and create an instance using:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">kaen.torch</span> <span class="kn">import</span> <span class="n">ObjectStorageDataset</span> <span class="k">as</span> <span class="n">osds</span>
+<span class="n">BUCKET_ID</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">]</span>
+<span class="n">AWS_DEFAULT_REGION</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_DEFAULT_REGION&#39;</span><span class="p">]</span>
+
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">20</span> <span class="c1"># 1_048_576 </span>
+
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">osds</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;s3://dc-taxi-</span><span class="si">{</span><span class="n">BUCKET_ID</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">AWS_DEFAULT_REGION</span><span class="si">}</span><span class="s2">/csv/dev/part*.csv&quot;</span><span class="p">,</span> 
+                <span class="n">storage_options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;anon&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+                <span class="n">batch_size</span> <span class="o">=</span> <span class="n">BATCH_SIZE</span><span class="p">)</span>
+<span class="n">train_ds</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The <code>shards_glob</code> parameter of the <code>ObjectStorageDataset</code> points to the metadata file about the CSV part files that match the <code>/csv/dev/part*.csv</code> glob. You can preview the metadata as a Pandas data frame.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="n">shards_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;s3://dc-taxi-</span><span class="si">{</span><span class="n">BUCKET_ID</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">AWS_DEFAULT_REGION</span><span class="si">}</span><span class="s2">/csv/dev/.meta/shards/*.csv&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">shards_df</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_ds</span><span class="p">)))</span>
+
+<span class="n">batch</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">batch</span><span class="o">.</span><span class="n">dtype</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">batch</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">pt</span>
+
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">TensorDataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">kaen.torch</span> <span class="kn">import</span> <span class="n">ObjectStorageDataset</span> <span class="k">as</span> <span class="n">osds</span>
+
+<span class="n">pt</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="n">pt</span><span class="o">.</span><span class="n">set_default_dtype</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+<span class="n">BUCKET_ID</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">]</span>
+<span class="n">AWS_DEFAULT_REGION</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_DEFAULT_REGION&#39;</span><span class="p">]</span>
+
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="mi">20</span> <span class="c1">#evaluates to 1_048_576</span>
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">osds</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;s3://dc-taxi-</span><span class="si">{</span><span class="n">BUCKET_ID</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">AWS_DEFAULT_REGION</span><span class="si">}</span><span class="s2">/csv/dev/part*.csv&quot;</span><span class="p">,</span> 
+                <span class="n">storage_options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;anon&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+                <span class="n">batch_size</span> <span class="o">=</span> <span class="n">BATCH_SIZE</span><span class="p">)</span>
+
+<span class="n">train_dl</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="n">FEATURE_COUNT</span> <span class="o">=</span> <span class="mi">8</span>
+
+<span class="n">w</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">kaiming_uniform_</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">FEATURE_COUNT</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">kaiming_uniform_</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">True</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">batchToXy</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+  <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">squeeze_</span><span class="p">()</span>  
+  <span class="k">return</span> <span class="n">batch</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">batch</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+  <span class="n">y_est</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">w</span> <span class="o">+</span> <span class="n">b</span>
+  <span class="k">return</span> <span class="n">y_est</span><span class="o">.</span><span class="n">squeeze_</span><span class="p">()</span>
+
+<span class="n">LEARNING_RATE</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">([</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">lr</span> <span class="o">=</span> <span class="n">LEARNING_RATE</span><span class="p">)</span>
+
+<span class="n">GRADIENT_NORM</span> <span class="o">=</span> <span class="o">.</span><span class="mi">5</span>
+
+<span class="n">ITERATION_COUNT</span> <span class="o">=</span> <span class="mi">50</span>
+
+<span class="k">for</span> <span class="n">iter_idx</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">ITERATION_COUNT</span><span class="p">),</span> <span class="n">train_dl</span><span class="p">):</span>
+  <span class="n">start_ts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+
+  <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">batchToXy</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+
+  <span class="n">y_est</span> <span class="o">=</span> <span class="n">forward</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+  <span class="n">mse</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">y_est</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+  <span class="n">mse</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+  <span class="n">pt</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">([</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">GRADIENT_NORM</span><span class="p">)</span> <span class="k">if</span> <span class="n">GRADIENT_NORM</span> <span class="k">else</span> <span class="kc">None</span>
+
+  <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+  <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+  <span class="n">sec_iter</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_ts</span>
+
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration: </span><span class="si">{</span><span class="n">iter_idx</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">, Seconds/Iteration: </span><span class="si">{</span><span class="n">sec_iter</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> MSE: </span><span class="si">{</span><span class="n">mse</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Faster-PyTorch-tensor-operations-with-Graphical-Processing-Units">Faster PyTorch tensor operations with Graphical Processing Units<a class="anchor-link" href="#Faster-PyTorch-tensor-operations-with-Graphical-Processing-Units"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To find out exactly the number of CPU cores available to PyTorch</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In PyTorch it is customary to initialize the device variable as follows before using the GPU</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">pt</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To find out the number of ALUs you have available, you need to first use the <code>get_device_capability</code> method to find out your CUDA compute capability profile:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">pt</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">pt</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">get_device_properties</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">())])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>nvidia-smi
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>PyTorch defaults to using the CPU-based tensors</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pt</span><span class="o">.</span><span class="n">set_default_dtype</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+<span class="n">tensor</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To specify the CUDA-based implementation as default you can use the <code>set_default_tensor_type</code> method</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">pt</span><span class="o">.</span><span class="n">set_default_tensor_type</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">)</span>
+<span class="n">pt</span><span class="o">.</span><span class="n">set_default_dtype</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+<span class="n">tensor</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>A better practice when using a GPU for tensor operations, is to create tensors directly on a desired device. Assuming that you initialize the <code>device</code> variable, you can create a tensor on a specific device by setting the <code>device</code> named parameter as shown here:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">device</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">pt</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+
+<span class="n">tensor</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">timeit</span>
+<span class="n">MAX_SIZE</span> <span class="o">=</span> <span class="mi">28</span>
+
+<span class="k">def</span> <span class="nf">benchmark_cpu_gpu</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">sizes</span><span class="p">):</span>
+  <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="s2">&quot;cuda&quot;</span><span class="p">]:</span>
+    <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">sizes</span><span class="p">:</span>
+      <span class="n">a</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+      <span class="n">b</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+      <span class="k">yield</span> <span class="n">timeit</span><span class="o">.</span><span class="n">timeit</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="n">n</span><span class="p">)</span>
+
+<span class="n">sizes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span> <span class="o">**</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAX_SIZE</span><span class="p">)]</span>
+<span class="n">measurements</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">benchmark_cpu_gpu</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sizes</span><span class="p">))</span>
+<span class="n">cpu</span> <span class="o">=</span> <span class="n">measurements</span><span class="p">[:</span><span class="n">MAX_SIZE</span><span class="p">]</span>
+<span class="n">gpu</span> <span class="o">=</span> <span class="n">measurements</span><span class="p">[</span><span class="n">MAX_SIZE</span><span class="p">:]</span>
+<span class="n">ratios</span> <span class="o">=</span> <span class="p">[</span><span class="n">cpu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">/</span> <span class="n">gpu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cpu</span><span class="p">))]</span>
+<span class="n">ratios</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;xtick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;ytick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">2</span> <span class="o">**</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">MAX_SIZE</span><span class="p">)],</span> <span class="n">ratios</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">basex</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span><span class="mi">6</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sizes</span><span class="p">[:</span><span class="mi">16</span><span class="p">],</span> <span class="n">ratios</span><span class="p">[:</span><span class="mi">16</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xscale</span><span class="p">(</span><span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="n">basex</span><span class="o">=</span><span class="mi">2</span><span class="p">);</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;xtick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rc</span><span class="p">(</span><span class="s1">&#39;ytick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Scaling-up-to-use-GPU-cores">Scaling up to use GPU cores<a class="anchor-link" href="#Scaling-up-to-use-GPU-cores"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">pt</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">kaen.torch</span> <span class="kn">import</span> <span class="n">ObjectStorageDataset</span> <span class="k">as</span> <span class="n">osds</span>
+
+<span class="n">pt</span><span class="o">.</span><span class="n">manual_seed</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="n">pt</span><span class="o">.</span><span class="n">set_default_dtype</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">1_048_576</span> <span class="c1"># = 2 ** 20</span>
+
+<span class="n">train_ds</span> <span class="o">=</span> <span class="n">osds</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;s3://dc-taxi-</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;BUCKET_ID&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;AWS_DEFAULT_REGION&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">/csv/dev/part*.csv&quot;</span><span class="p">,</span> 
+    <span class="n">storage_options</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;anon&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="n">BATCH_SIZE</span><span class="p">)</span>
+  
+<span class="n">train_dl</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_ds</span><span class="p">,</span> 
+                      <span class="n">pin_memory</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> 
+
+<span class="n">FEATURE_COUNT</span> <span class="o">=</span> <span class="mi">8</span>
+
+<span class="n">w</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">kaiming_uniform_</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">FEATURE_COUNT</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">kaiming_uniform_</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">requires_grad</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">))</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">pt</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">batchToXy</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+  <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">squeeze_</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">batch</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">batch</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">X</span><span class="p">):</span>
+  <span class="n">y_pred</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">w</span> <span class="o">+</span> <span class="n">b</span>
+  <span class="k">return</span> <span class="n">y_pred</span><span class="o">.</span><span class="n">squeeze_</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">loss</span><span class="p">(</span><span class="n">y_est</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+  <span class="n">mse_loss</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">y_est</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+  <span class="k">return</span> <span class="n">mse_loss</span>
+
+<span class="n">LEARNING_RATE</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">pt</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">([</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">lr</span> <span class="o">=</span> <span class="n">LEARNING_RATE</span><span class="p">)</span>
+
+<span class="n">GRADIENT_NORM</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+<span class="n">ITERATION_COUNT</span> <span class="o">=</span> <span class="mi">50</span>
+
+<span class="k">for</span> <span class="n">iter_idx</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">ITERATION_COUNT</span><span class="p">),</span> <span class="n">train_dl</span><span class="p">):</span>
+  <span class="n">start_ts</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+
+  <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">batchToXy</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+
+  <span class="n">y_est</span> <span class="o">=</span> <span class="n">forward</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+  <span class="n">mse</span> <span class="o">=</span> <span class="n">loss</span><span class="p">(</span><span class="n">y_est</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+  <span class="n">mse</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+
+  <span class="n">pt</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">clip_grad_norm_</span><span class="p">([</span><span class="n">w</span><span class="p">,</span> <span class="n">b</span><span class="p">],</span> <span class="n">GRADIENT_NORM</span><span class="p">)</span> <span class="k">if</span> <span class="n">GRADIENT_NORM</span> <span class="k">else</span> <span class="kc">None</span>
+
+  <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+  <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+
+  <span class="n">sec_iter</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_ts</span>
+
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Iteration: </span><span class="si">{</span><span class="n">iter_idx</span><span class="si">:</span><span class="s2">03d</span><span class="si">}</span><span class="s2">, Seconds/Iteration: </span><span class="si">{</span><span class="n">sec_iter</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2"> MSE: </span><span class="si">{</span><span class="n">mse</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Copyright 2021 CounterFactual.AI LLC. All Rights Reserved.</p>
+<p>Licensed under the GNU General Public License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.</p>
+<p>You may obtain a copy of the License at</p>
+<p><a href="https://github.com/osipov/smlbook/blob/master/LICENSE">https://github.com/osipov/smlbook/blob/master/LICENSE</a></p>
+<p>Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/08/ml-pytorch-aws.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

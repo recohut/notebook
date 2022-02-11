@@ -1,0 +1,3076 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Operationalize end-to-end Amazon Personalize model deployment process using AWS Step Functions Data Science SDK | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Operationalize end-to-end Amazon Personalize model deployment process using AWS Step Functions Data Science SDK" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/09/personalize-deployment.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/09/personalize-deployment.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-09T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Operationalize end-to-end Amazon Personalize model deployment process using AWS Step Functions Data Science SDK" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-09T00:00:00-06:00","datePublished":"2022-01-09T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Operationalize end-to-end Amazon Personalize model deployment process using AWS Step Functions Data Science SDK","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/09/personalize-deployment.html"},"url":"https://nb.recohut.com/2022/01/09/personalize-deployment.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Operationalize end-to-end Amazon Personalize model deployment process using AWS Step Functions Data Science SDK</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-09T00:00:00-06:00" itemprop="datePublished">
+        Jan 9, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      18 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-09-personalize-deployment.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-09-personalize-deployment.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-09-personalize-deployment.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-09-personalize-deployment.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-09-personalize-deployment.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction">Introduction<a class="anchor-link" href="#Introduction"> </a></h2><p>This notebook describes using the AWS Step Functions Data Science SDK to create and manage an Amazon Personalize workflow. The Step Functions SDK is an open source library that allows data scientists to easily create and execute machine learning workflows using AWS Step Functions. For more information on Step Functions SDK, see the following.</p>
+<ul>
+<li><a href="https://aws.amazon.com/step-functions/">AWS Step Functions</a></li>
+<li><a href="https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html">AWS Step Functions Developer Guide</a></li>
+<li><a href="https://aws-step-functions-data-science-sdk.readthedocs.io">AWS Step Functions Data Science SDK</a></li>
+</ul>
+<p>In this notebook we will use the SDK to create steps to create Personalize resources, link them together to create a workflow, and execute the workflow in AWS Step Functions.</p>
+<p>For more information, on Amazon Personalize see the following.</p>
+<ul>
+<li><a href="https://aws.amazon.com/personalize/">Amazon Personalize</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Import-required-modules-from-the-SDK">Import required modules from the SDK<a class="anchor-link" href="#Import-required-modules-from-the-SDK"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">~/.</span><span class="n">aws</span> <span class="o">&amp;&amp;</span> <span class="n">cp</span> <span class="o">/</span><span class="n">content</span><span class="o">/</span><span class="n">drive</span><span class="o">/</span><span class="n">MyDrive</span><span class="o">/</span><span class="n">AWS</span><span class="o">/</span><span class="n">d01_admin</span><span class="o">/*</span> <span class="o">~/.</span><span class="n">aws</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">boto3</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">stepfunctions</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">boto3</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">import</span> <span class="nn">stepfunctions</span>
+<span class="kn">from</span> <span class="nn">stepfunctions.steps</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">stepfunctions.workflow</span> <span class="kn">import</span> <span class="n">Workflow</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">personalize</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">&#39;personalize&#39;</span><span class="p">)</span>
+<span class="n">personalize_runtime</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s1">&#39;personalize-runtime&#39;</span><span class="p">)</span>
+<span class="n">stepfunctions</span><span class="o">.</span><span class="n">set_stream_logger</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">aws</span><span class="o">-</span><span class="n">samples</span><span class="o">/</span><span class="n">personalize</span><span class="o">-</span><span class="n">data</span><span class="o">-</span><span class="n">science</span><span class="o">-</span><span class="n">sdk</span><span class="o">-</span><span class="n">workflow</span><span class="o">.</span><span class="n">git</span>
+<span class="o">%</span><span class="n">cd</span> <span class="n">personalize</span><span class="o">-</span><span class="n">data</span><span class="o">-</span><span class="n">science</span><span class="o">-</span><span class="n">sdk</span><span class="o">-</span><span class="n">workflow</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>/content/personalize-data-science-sdk-workflow
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Setup-S3-location-and-filename">Setup S3 location and filename<a class="anchor-link" href="#Setup-S3-location-and-filename"> </a></h3><p>create an Amazon S3 bucket to store the training dataset and provide the Amazon S3 bucket name and file name in the walkthrough notebook  step Setup S3 location and filename below:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">bucket</span> <span class="o">=</span> <span class="s2">&quot;reco-tut-aps&quot;</span>       <span class="c1"># replace with the name of your S3 bucket</span>
+<span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;namemovie-lens-100k.csv&quot;</span>  <span class="c1"># replace with a name that you want to save the dataset under</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Setup-IAM-Roles">Setup IAM Roles<a class="anchor-link" href="#Setup-IAM-Roles"> </a></h3><h4 id="Create-an-execution-role-for-Step-Functions">Create an execution role for Step Functions<a class="anchor-link" href="#Create-an-execution-role-for-Step-Functions"> </a></h4><p>You need an execution role so that you can create and execute workflows in Step Functions.</p>
+<ol>
+<li>Go to the <a href="https://console.aws.amazon.com/iam/">IAM console</a></li>
+<li>Select <strong>Roles</strong> and then <strong>Create role</strong>.</li>
+<li>Under <strong>Choose the service that will use this role</strong> select <strong>Step Functions</strong></li>
+<li>Choose <strong>Next</strong> until you can enter a <strong>Role name</strong></li>
+<li>Enter a name such as <code>StepFunctionsWorkflowExecutionRole</code> and then select <strong>Create role</strong></li>
+</ol>
+<p>Attach a policy to the role you created. The following steps attach a policy that provides full access to Step Functions, however as a good practice you should only provide access to the resources you need.</p>
+<ol>
+<li>Under the <strong>Permissions</strong> tab, click <strong>Add inline policy</strong></li>
+<li>Enter the following in the <strong>JSON</strong> tab</li>
+</ol>
+<div class="highlight"><pre><span></span><span class="p">{</span>
+    <span class="nt">&quot;Version&quot;</span><span class="p">:</span> <span class="s2">&quot;2012-10-17&quot;</span><span class="p">,</span>
+    <span class="nt">&quot;Statement&quot;</span><span class="p">:</span> <span class="p">[</span>
+
+        <span class="p">{</span>
+            <span class="nt">&quot;Effect&quot;</span><span class="p">:</span> <span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;Action&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;personalize:*&quot;</span>
+            <span class="p">],</span>
+            <span class="nt">&quot;Resource&quot;</span><span class="p">:</span> <span class="s2">&quot;*&quot;</span>
+        <span class="p">},</span>   
+
+        <span class="p">{</span>
+            <span class="nt">&quot;Effect&quot;</span><span class="p">:</span> <span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;Action&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;lambda:InvokeFunction&quot;</span>
+            <span class="p">],</span>
+            <span class="nt">&quot;Resource&quot;</span><span class="p">:</span> <span class="s2">&quot;*&quot;</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="nt">&quot;Effect&quot;</span><span class="p">:</span> <span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;Action&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;iam:PassRole&quot;</span>
+            <span class="p">],</span>
+            <span class="nt">&quot;Resource&quot;</span><span class="p">:</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="nt">&quot;Effect&quot;</span><span class="p">:</span> <span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+            <span class="nt">&quot;Action&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;events:PutTargets&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;events:PutRule&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;events:DescribeRule&quot;</span>
+            <span class="p">],</span>
+            <span class="nt">&quot;Resource&quot;</span><span class="p">:</span> <span class="s2">&quot;*&quot;</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+<ol>
+<li>Choose <strong>Review policy</strong> and give the policy a name such as <code>StepFunctionsWorkflowExecutionPolicy</code></li>
+<li>Choose <strong>Create policy</strong>. You will be redirected to the details page for the role.</li>
+<li>Copy the <strong>Role ARN</strong> at the top of the <strong>Summary</strong></li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">workflow_execution_role</span> <span class="o">=</span> <span class="s2">&quot;arn:aws:iam::746888961694:role/StepFunctionsWorkflowExecutionRole&quot;</span> <span class="c1"># paste the StepFunctionsWorkflowExecutionRole ARN from above</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_role</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;create bucket and role&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_create_personalize_role&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;bucket&quot;</span><span class="p">:</span> <span class="n">bucket</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span><span class="o">=</span><span class="s1">&#39;$&#39;</span>
+ 
+<span class="p">)</span>
+
+<span class="n">lambda_state_role</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_role</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;CreateRoleTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Attach-Policy-to-S3-Bucket">Attach Policy to S3 Bucket<a class="anchor-link" href="#Attach-Policy-to-S3-Bucket"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">s3</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s2">&quot;s3&quot;</span><span class="p">)</span>
+
+<span class="n">policy</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Version&quot;</span><span class="p">:</span> <span class="s2">&quot;2012-10-17&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Id&quot;</span><span class="p">:</span> <span class="s2">&quot;PersonalizeS3BucketAccessPolicy&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Statement&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;Sid&quot;</span><span class="p">:</span> <span class="s2">&quot;PersonalizeS3BucketAccessPolicy&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Effect&quot;</span><span class="p">:</span> <span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;Principal&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;Service&quot;</span><span class="p">:</span> <span class="s2">&quot;personalize.amazonaws.com&quot;</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;Action&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;s3:GetObject&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;s3:ListBucket&quot;</span>
+            <span class="p">],</span>
+            <span class="s2">&quot;Resource&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="s2">&quot;arn:aws:s3:::</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bucket</span><span class="p">),</span>
+                <span class="s2">&quot;arn:aws:s3:::</span><span class="si">{}</span><span class="s2">/*&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bucket</span><span class="p">)</span>
+                
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">s3</span><span class="o">.</span><span class="n">put_bucket_policy</span><span class="p">(</span><span class="n">Bucket</span><span class="o">=</span><span class="n">bucket</span><span class="p">,</span> <span class="n">Policy</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">policy</span><span class="p">))</span>
+
+<span class="c1"># AmazonPersonalizeFullAccess provides access to any S3 bucket with a name that includes &quot;personalize&quot; or &quot;Personalize&quot; </span>
+<span class="c1"># if you would like to use a bucket with a different name, please consider creating and attaching a new policy</span>
+<span class="c1"># that provides read access to your bucket or attaching the AmazonS3ReadOnlyAccess policy to the role</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>{&#39;ResponseMetadata&#39;: {&#39;HTTPHeaders&#39;: {&#39;date&#39;: &#39;Tue, 24 Aug 2021 05:42:17 GMT&#39;,
+   &#39;server&#39;: &#39;AmazonS3&#39;,
+   &#39;x-amz-id-2&#39;: &#39;ufh+JaJboYdCWQ1JZGoa6yJlmF8y1g/UKO/pc8ApXmSO3FTaLFVtpqNVy7GX/iWn0DocpqKiZUA=&#39;,
+   &#39;x-amz-request-id&#39;: &#39;WBPMB91YF2AF6E1P&#39;},
+  &#39;HTTPStatusCode&#39;: 204,
+  &#39;HostId&#39;: &#39;ufh+JaJboYdCWQ1JZGoa6yJlmF8y1g/UKO/pc8ApXmSO3FTaLFVtpqNVy7GX/iWn0DocpqKiZUA=&#39;,
+  &#39;RequestId&#39;: &#39;WBPMB91YF2AF6E1P&#39;,
+  &#39;RetryAttempts&#39;: 1}}</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Personalize-Role">Create Personalize Role<a class="anchor-link" href="#Create-Personalize-Role"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">iam</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s2">&quot;iam&quot;</span><span class="p">)</span>
+
+<span class="n">role_name</span> <span class="o">=</span> <span class="s2">&quot;personalize-role&quot;</span> <span class="c1"># Create a personalize role</span>
+
+<span class="n">assume_role_policy_document</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;Version&quot;</span><span class="p">:</span> <span class="s2">&quot;2012-10-17&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Statement&quot;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">{</span>
+          <span class="s2">&quot;Effect&quot;</span><span class="p">:</span> <span class="s2">&quot;Allow&quot;</span><span class="p">,</span>
+          <span class="s2">&quot;Principal&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;Service&quot;</span><span class="p">:</span> <span class="s2">&quot;personalize.amazonaws.com&quot;</span>
+          <span class="p">},</span>
+          <span class="s2">&quot;Action&quot;</span><span class="p">:</span> <span class="s2">&quot;sts:AssumeRole&quot;</span>
+        <span class="p">}</span>
+    <span class="p">]</span>
+<span class="p">}</span>
+
+<span class="n">create_role_response</span> <span class="o">=</span> <span class="n">iam</span><span class="o">.</span><span class="n">create_role</span><span class="p">(</span>
+    <span class="n">RoleName</span> <span class="o">=</span> <span class="n">role_name</span><span class="p">,</span>
+    <span class="n">AssumeRolePolicyDocument</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">assume_role_policy_document</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="n">policy_arn</span> <span class="o">=</span> <span class="s2">&quot;arn:aws:iam::aws:policy/service-role/AmazonPersonalizeFullAccess&quot;</span>
+<span class="n">iam</span><span class="o">.</span><span class="n">attach_role_policy</span><span class="p">(</span>
+    <span class="n">RoleName</span> <span class="o">=</span> <span class="n">role_name</span><span class="p">,</span>
+    <span class="n">PolicyArn</span> <span class="o">=</span> <span class="n">policy_arn</span>
+<span class="p">)</span>
+
+<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">60</span><span class="p">)</span> <span class="c1"># wait for a minute to allow IAM role policy attachment to propagate</span>
+
+<span class="n">role_arn</span> <span class="o">=</span> <span class="n">create_role_response</span><span class="p">[</span><span class="s2">&quot;Role&quot;</span><span class="p">][</span><span class="s2">&quot;Arn&quot;</span><span class="p">]</span>
+<span class="n">role_arn</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;arn:aws:iam::746888961694:role/personalize-role&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">role_arn</span> <span class="o">=</span> <span class="s2">&quot;arn:aws:iam::746888961694:role/personalize-role&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data-Preparation">Data-Preparation<a class="anchor-link" href="#Data-Preparation"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Download,-Prepare,-and-Upload-Training-Data">Download, Prepare, and Upload Training Data<a class="anchor-link" href="#Download,-Prepare,-and-Upload-Training-Data"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">N</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">files</span><span class="o">.</span><span class="n">grouplens</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">movielens</span><span class="o">/</span><span class="n">ml</span><span class="o">-</span><span class="mi">100</span><span class="n">k</span><span class="o">.</span><span class="n">zip</span>
+<span class="err">!</span><span class="n">unzip</span> <span class="o">-</span><span class="n">o</span> <span class="n">ml</span><span class="o">-</span><span class="mi">100</span><span class="n">k</span><span class="o">.</span><span class="n">zip</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;./ml-100k/u.data&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;USER_ID&#39;</span><span class="p">,</span> <span class="s1">&#39;ITEM_ID&#39;</span><span class="p">,</span> <span class="s1">&#39;RATING&#39;</span><span class="p">,</span> <span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">])</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;display.max_rows&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>--2021-08-24 05:46:29--  http://files.grouplens.org/datasets/movielens/ml-100k.zip
+Resolving files.grouplens.org (files.grouplens.org)... 128.101.65.152
+Connecting to files.grouplens.org (files.grouplens.org)|128.101.65.152|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 4924029 (4.7M) [application/zip]
+Saving to: ‘ml-100k.zip’
+
+ml-100k.zip         100%[===================&gt;]   4.70M  9.89MB/s    in 0.5s    
+
+2021-08-24 05:46:30 (9.89 MB/s) - ‘ml-100k.zip’ saved [4924029/4924029]
+
+Archive:  ml-100k.zip
+   creating: ml-100k/
+  inflating: ml-100k/allbut.pl       
+  inflating: ml-100k/mku.sh          
+  inflating: ml-100k/README          
+  inflating: ml-100k/u.data          
+  inflating: ml-100k/u.genre         
+  inflating: ml-100k/u.info          
+  inflating: ml-100k/u.item          
+  inflating: ml-100k/u.occupation    
+  inflating: ml-100k/u.user          
+  inflating: ml-100k/u1.base         
+  inflating: ml-100k/u1.test         
+  inflating: ml-100k/u2.base         
+  inflating: ml-100k/u2.test         
+  inflating: ml-100k/u3.base         
+  inflating: ml-100k/u3.test         
+  inflating: ml-100k/u4.base         
+  inflating: ml-100k/u4.test         
+  inflating: ml-100k/u5.base         
+  inflating: ml-100k/u5.test         
+  inflating: ml-100k/ua.base         
+  inflating: ml-100k/ua.test         
+  inflating: ml-100k/ub.base         
+  inflating: ml-100k/ub.test         
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>USER_ID</th>
+      <th>ITEM_ID</th>
+      <th>RATING</th>
+      <th>TIMESTAMP</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>196</td>
+      <td>242</td>
+      <td>3</td>
+      <td>881250949</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>186</td>
+      <td>302</td>
+      <td>3</td>
+      <td>891717742</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>22</td>
+      <td>377</td>
+      <td>1</td>
+      <td>878887116</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>244</td>
+      <td>51</td>
+      <td>2</td>
+      <td>880606923</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>166</td>
+      <td>346</td>
+      <td>1</td>
+      <td>886397596</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;RATING&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">]</span>                <span class="c1"># keep only movies rated 2 and above</span>
+<span class="n">data2</span> <span class="o">=</span> <span class="n">data</span><span class="p">[[</span><span class="s1">&#39;USER_ID&#39;</span><span class="p">,</span> <span class="s1">&#39;ITEM_ID&#39;</span><span class="p">,</span> <span class="s1">&#39;TIMESTAMP&#39;</span><span class="p">]]</span> 
+<span class="n">data2</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">boto3</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s1">&#39;s3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Bucket</span><span class="p">(</span><span class="n">bucket</span><span class="p">)</span><span class="o">.</span><span class="n">Object</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Task-States">Task-States<a class="anchor-link" href="#Task-States"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Lambda-Task-state">Lambda Task state<a class="anchor-link" href="#Lambda-Task-state"> </a></h3><p>A <code>Task</code> State in Step Functions represents a single unit of work performed by a workflow. Tasks can call Lambda functions and orchestrate other AWS services. See <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-service-integrations.html">AWS Service Integrations</a> in the <em>AWS Step Functions Developer Guide</em>.</p>
+<p>The following creates a <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/compute.html#stepfunctions.steps.compute.LambdaStep">LambdaStep</a> called <code>lambda_state</code>, and then configures the options to <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error">Retry</a> if the Lambda function fails.</p>
+<h4 id="Create-a-Lambda-functions">Create a Lambda functions<a class="anchor-link" href="#Create-a-Lambda-functions"> </a></h4><p>The Lambda task states in this workflow uses Lambda function <strong>(Python 3.x)</strong> that returns a Personalize resources such as Schema, Datasetgroup, Dataset, Solution, SolutionVersion, etc. Create the following functions in the <a href="https://console.aws.amazon.com/lambda/">Lambda console</a>.</p>
+<ol>
+<li>stepfunction-create-schema</li>
+<li>stepfunctioncreatedatagroup</li>
+<li>stepfunctioncreatedataset</li>
+<li>stepfunction-createdatasetimportjob</li>
+<li>stepfunction_select-recipe_create-solution</li>
+<li>stepfunction_create_solution_version</li>
+<li>stepfunction_getsolution_metric_create_campaign</li>
+</ol>
+<p>Copy/Paste the corresponding lambda function code from ./Lambda/ folder in the repo</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Schema">Create Schema<a class="anchor-link" href="#Create-Schema"> </a></h4><p>Before you add a dataset to Amazon Personalize, you must define a schema for that dataset. Once you define the schema and create the dataset, you can't make changes to the schema.for more information refer this documentation.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_schema</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;create schema&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction-create-schema&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;personalize-stepfunction-schema3484&quot;</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span><span class="o">=</span><span class="s1">&#39;$&#39;</span>    
+<span class="p">)</span>
+
+<span class="n">lambda_state_schema</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_schema</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;CreateSchemaTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Datasetgroup">Create Datasetgroup<a class="anchor-link" href="#Create-Datasetgroup"> </a></h4><p>Craete Datasetgroup: Creates an empty dataset group. A dataset group contains related datasets that supply data for training a model. A dataset group can contain at most three datasets, one for each type of dataset:
+•   Interactions
+•   Items
+•   Users
+To train a model (create a solution), a dataset group that contains an Interactions dataset is required. Call CreateDataset to add a dataset to the group.</p>
+<p>After you have created a schema , we will create another Stepfunction state based on this lambda function stepfunctioncreatedatagroup.py  below in github lambdas folder by running the Create Datasetgroup¶ step of the notebook. We are using python boto3 APIs to create_dataset_group.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_datasetgroup</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;create dataset Group&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunctioncreatedatagroup&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="s2">&quot;personalize-stepfunction-dataset-group&quot;</span><span class="p">,</span> 
+           <span class="s2">&quot;schemaArn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.schemaArn&#39;</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+
+    <span class="n">result_path</span><span class="o">=</span><span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+
+
+<span class="n">lambda_state_datasetgroup</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+
+<span class="n">lambda_state_datasetgroup</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;CreateDataSetGroupTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Dataset">Create Dataset<a class="anchor-link" href="#Create-Dataset"> </a></h4><p>Creates an empty dataset and adds it to the specified dataset group. Use CreateDatasetImportJob to import your training data to a dataset.</p>
+<p>There are three types of datasets:</p>
+<p>Interactions</p>
+<p>Items</p>
+<p>Users</p>
+<p>Each dataset type has an associated schema with required field types. Only the Interactions dataset is required in order to train a model (also referred to as creating a solution).</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_createdataset</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;create dataset&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunctioncreatedataset&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+<span class="c1">#        &quot;Payload&quot;: {  </span>
+<span class="c1">#           &quot;schemaArn.$&quot;: &#39;$.Payload.schemaArn&#39;,</span>
+<span class="c1">#           &quot;datasetGroupArn.$&quot;: &#39;$.Payload.datasetGroupArn&#39;,</span>
+            
+            
+<span class="c1">#        }</span>
+        
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;schemaArn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.schemaArn&#39;</span><span class="p">,</span>
+           <span class="s2">&quot;datasetGroupArn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.datasetGroupArn&#39;</span><span class="p">,</span>        
+        <span class="p">}</span> 
+        
+        
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_state_createdataset</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_createdataset</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;CreateDataSetTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Dataset-Import-Job">Create Dataset Import Job<a class="anchor-link" href="#Create-Dataset-Import-Job"> </a></h4><p>When you have completed Step 1: Creating a Dataset Group and Step 2: Creating a Dataset and a Schema, you are ready to import your training data into Amazon Personalize. When you import data, you can choose to import records in bulk, import records individually, or both, depending on your business requirements and the amount of historical data you have collected. If you have a large amount of historical records, 
+we recommend you first import data in bulk and then add data incrementally as necessary.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_datasetimportjob</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;create dataset import job&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction-createdatasetimportjob&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;datasetimportjob&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction-createdatasetimportjob&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;dataset_arn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.dataset_arn&#39;</span><span class="p">,</span>
+           <span class="s2">&quot;datasetGroupArn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.datasetGroupArn&#39;</span><span class="p">,</span>
+           <span class="s2">&quot;bucket_name&quot;</span><span class="p">:</span> <span class="n">bucket</span><span class="p">,</span>
+           <span class="s2">&quot;file_name&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+           <span class="s2">&quot;role_arn&quot;</span><span class="p">:</span> <span class="n">role_arn</span>
+            
+        <span class="p">}</span>
+    <span class="p">},</span>
+
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_state_datasetimportjob</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_datasetimportjob</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;DatasetImportJobTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Solution">Create Solution<a class="anchor-link" href="#Create-Solution"> </a></h4><p>Once you have finished Preparing and Importing Data, you are ready to create a Solution. A Solution refers to the combination of an Amazon Personalize recipe, customized parameters, and one or more solution versions (trained models). Once you create a solution with a solution version, you can create a campaign to deploy the solution version and get recommendations.</p>
+<p>To create a solution in Amazon Personalize, you do the following:</p>
+<p>Choose a recipe – A recipe is an Amazon Personalize term specifying an appropriate algorithm to train for a given use case. See Step 1: Choosing a Recipe.</p>
+<p>Configure a solution – Customize solution parameters and recipe-specific hyperparameters so the model meets your specific business needs. See Step 2: Configuring a Solution.</p>
+<p>Create a solution version (train a model) – Train the machine learning model Amazon Personalize will use to generate recommendations for your customers. See Step 3: Creating a Solution Version.</p>
+<p>Evaluate the solution version – Use the metrics Amazon Personalize generates from the new solution version to evaluate the performance of the model. See Step 4: Evaluating the Solution Version.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Choosing-a-Recipe-and-Configuring-a-Solution">Choosing a Recipe and Configuring a Solution<a class="anchor-link" href="#Choosing-a-Recipe-and-Configuring-a-Solution"> </a></h4><p>A recipe is an Amazon Personalize term specifying an appropriate algorithm to train for a given use case.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_select_receipe_create_solution</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;select receipe and create solution&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_select-recipe_create-solution&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="c1">#&quot;dataset_group_arn.$&quot;: &#39;$.Payload.datasetGroupArn&#39; </span>
+            <span class="s2">&quot;dataset_group_arn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.datasetGroupArn&#39;</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_state_select_receipe_create_solution</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_select_receipe_create_solution</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;DatasetReceiptCreateSolutionTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Solution-Version">Create Solution Version<a class="anchor-link" href="#Create-Solution-Version"> </a></h4><p>Once you have completed Choosing a Recipe and Configuring a Solution, you are ready to create a Solution Version. A Solution Version refers to a trained machine learning model you can deploy to get recommendations for customers. You can create a solution version using the console, AWS Command Line Interface (AWS CLI), or AWS SDK.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_create_solution_version</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;create solution version&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_create_solution_version&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;solution_arn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.solution_arn&#39;</span>           
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_create_solution_version</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_create_solution_version</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;CreateSolutionVersionTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-Campaign">Create Campaign<a class="anchor-link" href="#Create-Campaign"> </a></h4><p>A campaign is used to make recommendations for your users. You create a campaign by deploying a solution version</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_create_campaign</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;create campaign&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_getsolution_metric_create_campaign&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+            <span class="c1">#&quot;solution_version_arn.$&quot;: &#39;$.Payload.solution_version_arn&#39;  </span>
+            <span class="s2">&quot;solution_version_arn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.solution_version_arn&#39;</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_create_campaign</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_create_campaign</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;CreateCampaignTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Wait-States">Wait-States<a class="anchor-link" href="#Wait-States"> </a></h2><h4 id="A-Wait-state-in-Step-Functions-waits-a-specific-amount-of-time.-See-Wait-in-the-AWS-Step-Functions-Data-Science-SDK-documentation.">A <code>Wait</code> state in Step Functions waits a specific amount of time. See <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/states.html#stepfunctions.steps.states.Wait">Wait</a> in the AWS Step Functions Data Science SDK documentation.<a class="anchor-link" href="#A-Wait-state-in-Step-Functions-waits-a-specific-amount-of-time.-See-Wait-in-the-AWS-Step-Functions-Data-Science-SDK-documentation."> </a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Schema-to-be-ready">Wait for Schema to be ready<a class="anchor-link" href="#Wait-for-Schema-to-be-ready"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">wait_state_schema</span> <span class="o">=</span> <span class="n">Wait</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Wait for create schema - 5 secs&quot;</span><span class="p">,</span>
+    <span class="n">seconds</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Datasetgroup-to-be-ready">Wait for Datasetgroup to be ready<a class="anchor-link" href="#Wait-for-Datasetgroup-to-be-ready"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">wait_state_datasetgroup</span> <span class="o">=</span> <span class="n">Wait</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Wait for datasetgroup - 30 secs&quot;</span><span class="p">,</span>
+    <span class="n">seconds</span><span class="o">=</span><span class="mi">30</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Dataset-to-be-ready">Wait for Dataset to be ready<a class="anchor-link" href="#Wait-for-Dataset-to-be-ready"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">wait_state_dataset</span> <span class="o">=</span> <span class="n">Wait</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;wait for dataset - 30 secs&quot;</span><span class="p">,</span>
+    <span class="n">seconds</span><span class="o">=</span><span class="mi">30</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Dataset-Import-Job-to-be-ACTIVE">Wait for Dataset Import Job to be ACTIVE<a class="anchor-link" href="#Wait-for-Dataset-Import-Job-to-be-ACTIVE"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">wait_state_datasetimportjob</span> <span class="o">=</span> <span class="n">Wait</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Wait for datasetimportjob - 30 secs&quot;</span><span class="p">,</span>
+    <span class="n">seconds</span><span class="o">=</span><span class="mi">30</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Receipe-to-ready">Wait for Receipe to ready<a class="anchor-link" href="#Wait-for-Receipe-to-ready"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">wait_state_receipe</span> <span class="o">=</span> <span class="n">Wait</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Wait for receipe - 30 secs&quot;</span><span class="p">,</span>
+    <span class="n">seconds</span><span class="o">=</span><span class="mi">30</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Solution-Version-to-be-ACTIVE">Wait for Solution Version to be ACTIVE<a class="anchor-link" href="#Wait-for-Solution-Version-to-be-ACTIVE"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">wait_state_solutionversion</span> <span class="o">=</span> <span class="n">Wait</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Wait for solution version - 60 secs&quot;</span><span class="p">,</span>
+    <span class="n">seconds</span><span class="o">=</span><span class="mi">60</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Wait-for-Campaign-to-be-ACTIVE">Wait for Campaign to be ACTIVE<a class="anchor-link" href="#Wait-for-Campaign-to-be-ACTIVE"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">wait_state_campaign</span> <span class="o">=</span> <span class="n">Wait</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Wait for Campaign - 30 secs&quot;</span><span class="p">,</span>
+    <span class="n">seconds</span><span class="o">=</span><span class="mi">30</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Check-status-of-the-lambda-task-and-take-action-accordingly">Check status of the lambda task and take action accordingly<a class="anchor-link" href="#Check-status-of-the-lambda-task-and-take-action-accordingly"> </a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="If-a-state-fails,-move-it-to-Fail-state.-See-Fail-in-the-AWS-Step-Functions-Data-Science-SDK-documentation.">If a state fails, move it to <code>Fail</code> state. See <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/states.html#stepfunctions.steps.states.Fail">Fail</a> in the AWS Step Functions Data Science SDK documentation.<a class="anchor-link" href="#If-a-state-fails,-move-it-to-Fail-state.-See-Fail-in-the-AWS-Step-Functions-Data-Science-SDK-documentation."> </a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="check-datasetgroup-status">check datasetgroup status<a class="anchor-link" href="#check-datasetgroup-status"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_datasetgroupstatus</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;check dataset Group status&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_waitforDatasetGroup&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;input.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.datasetGroupArn&#39;</span><span class="p">,</span>
+           <span class="s2">&quot;schemaArn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.schemaArn&#39;</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_state_datasetgroupstatus</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_datasetgroupstatus</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;DatasetGroupStatusTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="check-dataset-import-job-status">check dataset import job status<a class="anchor-link" href="#check-dataset-import-job-status"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_datasetimportjob_status</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;check dataset import job status&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_waitfordatasetimportjob&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;dataset_import_job_arn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.dataset_import_job_arn&#39;</span><span class="p">,</span>
+           <span class="s2">&quot;datasetGroupArn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.datasetGroupArn&#39;</span>
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_state_datasetimportjob_status</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_datasetimportjob_status</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;DatasetImportJobStatusTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="check-solution-version-status">check solution version status<a class="anchor-link" href="#check-solution-version-status"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">solutionversion_succeed_state</span> <span class="o">=</span> <span class="n">Succeed</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;The Solution Version ready?&quot;</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_solutionversion_status</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;check solution version status&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_waitforSolutionVersion&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;solution_version_arn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.solution_version_arn&#39;</span>           
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_state_solutionversion_status</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_solutionversion_status</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;SolutionVersionStatusTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="check-campaign-status">check campaign status<a class="anchor-link" href="#check-campaign-status"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_campaign_status</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;check campaign status&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_waitforCampaign&quot;</span><span class="p">,</span> <span class="c1">#replace with the name of the function you created</span>
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;campaign_arn.$&quot;</span><span class="p">:</span> <span class="s1">&#39;$.Payload.campaign_arn&#39;</span>           
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_state_campaign_status</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_campaign_status</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;CampaignStatusTaskFailed&quot;</span><span class="p">)</span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Choice-States">Choice-States<a class="anchor-link" href="#Choice-States"> </a></h2><p>Now, attach branches to the Choice state you created earlier. See <em>Choice Rules</em> in the <a href="https://aws-step-functions-data-science-sdk.readthedocs.io">AWS Step Functions Data Science SDK documentation</a> .</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Chain-together-steps-for-the-define-the-workflow-path">Chain together steps for the define the workflow path<a class="anchor-link" href="#Chain-together-steps-for-the-define-the-workflow-path"> </a></h4><p>The following cell links together the steps you've created above into a sequential group. The new path sequentially includes the Lambda state, Wait state, and the Succeed state that you created earlier.</p>
+<h4 id="After-chaining-together-the-steps-for-the-workflow-path,-we-will-define-and-visualize-the-workflow.">After chaining together the steps for the workflow path, we will define and visualize the workflow.<a class="anchor-link" href="#After-chaining-together-the-steps-for-the-workflow-path,-we-will-define-and-visualize-the-workflow."> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">create_campaign_choice_state</span> <span class="o">=</span> <span class="n">Choice</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Is the Campaign ready?&quot;</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">create_campaign_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">rule</span><span class="o">=</span><span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_campaign_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;ACTIVE&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Succeed</span><span class="p">(</span><span class="s2">&quot;CampaignCreatedSuccessfully&quot;</span><span class="p">)</span>     
+<span class="p">)</span>
+<span class="n">create_campaign_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_campaign_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;CREATE PENDING&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">wait_state_campaign</span>
+<span class="p">)</span>
+<span class="n">create_campaign_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_campaign_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;CREATE IN_PROGRESS&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">wait_state_campaign</span>
+<span class="p">)</span>
+
+<span class="n">create_campaign_choice_state</span><span class="o">.</span><span class="n">default_choice</span><span class="p">(</span><span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;CreateCampaignFailed&quot;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">solutionversion_choice_state</span> <span class="o">=</span> <span class="n">Choice</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Is the Solution Version ready?&quot;</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">solutionversion_succeed_state</span> <span class="o">=</span> <span class="n">Succeed</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;The Solution Version ready?&quot;</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">solutionversion_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">rule</span><span class="o">=</span><span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_solutionversion_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;ACTIVE&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">solutionversion_succeed_state</span>   
+<span class="p">)</span>
+<span class="n">solutionversion_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_solutionversion_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;CREATE PENDING&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">wait_state_solutionversion</span>
+<span class="p">)</span>
+<span class="n">solutionversion_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_solutionversion_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;CREATE IN_PROGRESS&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">wait_state_solutionversion</span>
+<span class="p">)</span>
+
+<span class="n">solutionversion_choice_state</span><span class="o">.</span><span class="n">default_choice</span><span class="p">(</span><span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;create_solution_version_failed&quot;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">datasetimportjob_succeed_state</span> <span class="o">=</span> <span class="n">Succeed</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;The Solution Version ready?&quot;</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">datasetimportjob_choice_state</span> <span class="o">=</span> <span class="n">Choice</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Is the DataSet Import Job ready?&quot;</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">datasetimportjob_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">rule</span><span class="o">=</span><span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_datasetimportjob_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;ACTIVE&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">datasetimportjob_succeed_state</span>   
+<span class="p">)</span>
+<span class="n">datasetimportjob_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_datasetimportjob_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;CREATE PENDING&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">wait_state_datasetimportjob</span>
+<span class="p">)</span>
+<span class="n">datasetimportjob_choice_state</span><span class="o">.</span><span class="n">add_choice</span><span class="p">(</span>
+    <span class="n">ChoiceRule</span><span class="o">.</span><span class="n">StringEquals</span><span class="p">(</span><span class="n">variable</span><span class="o">=</span><span class="n">lambda_state_datasetimportjob_status</span><span class="o">.</span><span class="n">output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;status&#39;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;CREATE IN_PROGRESS&#39;</span><span class="p">),</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">wait_state_datasetimportjob</span>
+<span class="p">)</span>
+
+
+<span class="n">datasetimportjob_choice_state</span><span class="o">.</span><span class="n">default_choice</span><span class="p">(</span><span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;dataset_import_job_failed&quot;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">datasetgroupstatus_choice_state</span> <span class="o">=</span> <span class="n">Choice</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Is the DataSetGroup ready?&quot;</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Workflow">Workflow<a class="anchor-link" href="#Workflow"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Define-Workflow">Define Workflow<a class="anchor-link" href="#Define-Workflow"> </a></h3><p>In the following cell, you will define the step that you will use in our workflow.  Then you will create, visualize and execute the workflow.</p>
+<p>Steps relate to states in AWS Step Functions. For more information, see <a href="https://docs.aws.amazon.com/step-functions/latest/dg/concepts-states.html">States</a> in the <em>AWS Step Functions Developer Guide</em>. For more information on the AWS Step Functions Data Science SDK APIs, see: <a href="https://aws-step-functions-data-science-sdk.readthedocs.io">https://aws-step-functions-data-science-sdk.readthedocs.io</a>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Dataset-workflow">Dataset workflow<a class="anchor-link" href="#Dataset-workflow"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Dataset_workflow_definition</span><span class="o">=</span><span class="n">Chain</span><span class="p">([</span><span class="n">lambda_state_schema</span><span class="p">,</span>
+                                   <span class="n">wait_state_schema</span><span class="p">,</span>
+                                   <span class="n">lambda_state_datasetgroup</span><span class="p">,</span>
+                                   <span class="n">wait_state_datasetgroup</span><span class="p">,</span>
+                                   <span class="n">lambda_state_datasetgroupstatus</span>
+                                  <span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Dataset_workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Dataset-workflow&quot;</span><span class="p">,</span>
+    <span class="n">definition</span><span class="o">=</span><span class="n">Dataset_workflow_definition</span><span class="p">,</span>
+    <span class="n">role</span><span class="o">=</span><span class="n">workflow_execution_role</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Dataset_workflow</span><span class="o">.</span><span class="n">render_graph</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">DatasetWorkflowArn</span> <span class="o">=</span> <span class="n">Dataset_workflow</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow created successfully on AWS Step Functions.</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="DatasetImportWorkflow">DatasetImportWorkflow<a class="anchor-link" href="#DatasetImportWorkflow"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">DatasetImport_workflow_definition</span><span class="o">=</span><span class="n">Chain</span><span class="p">([</span><span class="n">lambda_state_createdataset</span><span class="p">,</span>
+                                   <span class="n">wait_state_dataset</span><span class="p">,</span>
+                                   <span class="n">lambda_state_datasetimportjob</span><span class="p">,</span>
+                                   <span class="n">wait_state_datasetimportjob</span><span class="p">,</span>
+                                   <span class="n">lambda_state_datasetimportjob_status</span><span class="p">,</span>
+                                   <span class="n">datasetimportjob_choice_state</span>
+                                  <span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">DatasetImport_workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;DatasetImport-workflow&quot;</span><span class="p">,</span>
+    <span class="n">definition</span><span class="o">=</span><span class="n">DatasetImport_workflow_definition</span><span class="p">,</span>
+    <span class="n">role</span><span class="o">=</span><span class="n">workflow_execution_role</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">DatasetImport_workflow</span><span class="o">.</span><span class="n">render_graph</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">DatasetImportflowArn</span> <span class="o">=</span> <span class="n">DatasetImport_workflow</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow created successfully on AWS Step Functions.</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Recepie and Solution workflow</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Create_receipe_sol_workflow_definition</span><span class="o">=</span><span class="n">Chain</span><span class="p">([</span><span class="n">lambda_state_select_receipe_create_solution</span><span class="p">,</span>
+                                   <span class="n">wait_state_receipe</span><span class="p">,</span>
+                                   <span class="n">lambda_create_solution_version</span><span class="p">,</span>
+                                   <span class="n">wait_state_solutionversion</span><span class="p">,</span>
+                                   <span class="n">lambda_state_solutionversion_status</span><span class="p">,</span>
+                                   <span class="n">solutionversion_choice_state</span>
+                                  <span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Create_receipe_sol_workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Create_receipe_sol-workflow&quot;</span><span class="p">,</span>
+    <span class="n">definition</span><span class="o">=</span><span class="n">Create_receipe_sol_workflow_definition</span><span class="p">,</span>
+    <span class="n">role</span><span class="o">=</span><span class="n">workflow_execution_role</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Create_receipe_sol_workflow</span><span class="o">.</span><span class="n">render_graph</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">CreateReceipeArn</span> <span class="o">=</span> <span class="n">Create_receipe_sol_workflow</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow created successfully on AWS Step Functions.</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Create Campaign Workflow</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Create_Campaign_workflow_definition</span><span class="o">=</span><span class="n">Chain</span><span class="p">([</span><span class="n">lambda_create_campaign</span><span class="p">,</span>
+                                   <span class="n">wait_state_campaign</span><span class="p">,</span>
+                                   <span class="n">lambda_state_campaign_status</span><span class="p">,</span>
+                                   <span class="n">wait_state_datasetimportjob</span><span class="p">,</span>
+                                   <span class="n">create_campaign_choice_state</span>
+                                  <span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Campaign_workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Campaign-workflow&quot;</span><span class="p">,</span>
+    <span class="n">definition</span><span class="o">=</span><span class="n">Create_Campaign_workflow_definition</span><span class="p">,</span>
+    <span class="n">role</span><span class="o">=</span><span class="n">workflow_execution_role</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Campaign_workflow</span><span class="o">.</span><span class="n">render_graph</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">CreateCampaignArn</span> <span class="o">=</span> <span class="n">Campaign_workflow</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow created successfully on AWS Step Functions.</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Main workflow</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">call_dataset_workflow_state</span> <span class="o">=</span> <span class="n">Task</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;DataSetWorkflow&quot;</span><span class="p">,</span>
+    <span class="n">resource</span><span class="o">=</span><span class="s2">&quot;arn:aws:states:::states:startExecution.sync:2&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+                                <span class="s2">&quot;Input&quot;</span><span class="p">:</span> <span class="s2">&quot;true&quot;</span><span class="p">,</span>
+                                <span class="c1">#&quot;StateMachineArn&quot;: &quot;arn:aws:states:us-east-1:444602785259:stateMachine:Dataset-workflow&quot;,</span>
+                                <span class="s2">&quot;StateMachineArn&quot;</span><span class="p">:</span> <span class="n">DatasetWorkflowArn</span>
+                <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">call_datasetImport_workflow_state</span> <span class="o">=</span> <span class="n">Task</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;DataSetImportWorkflow&quot;</span><span class="p">,</span>
+    <span class="n">resource</span><span class="o">=</span><span class="s2">&quot;arn:aws:states:::states:startExecution.sync:2&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+                                 <span class="s2">&quot;Input&quot;</span><span class="p">:{</span>
+                                    <span class="s2">&quot;schemaArn.$&quot;</span><span class="p">:</span> <span class="s2">&quot;$.Output.Payload.schemaArn&quot;</span><span class="p">,</span>
+                                    <span class="s2">&quot;datasetGroupArn.$&quot;</span><span class="p">:</span> <span class="s2">&quot;$.Output.Payload.datasetGroupArn&quot;</span>
+                                   <span class="p">},</span>
+                                <span class="s2">&quot;StateMachineArn&quot;</span><span class="p">:</span> <span class="n">DatasetImportflowArn</span><span class="p">,</span>
+                <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">call_receipe_solution_workflow_state</span> <span class="o">=</span> <span class="n">Task</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;ReceipeSolutionWorkflow&quot;</span><span class="p">,</span>
+    <span class="n">resource</span><span class="o">=</span><span class="s2">&quot;arn:aws:states:::states:startExecution.sync:2&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+                                 <span class="s2">&quot;Input&quot;</span><span class="p">:{</span>
+                                    <span class="s2">&quot;datasetGroupArn.$&quot;</span><span class="p">:</span> <span class="s2">&quot;$.Output.Payload.datasetGroupArn&quot;</span>
+
+                                   <span class="p">},</span>
+                                <span class="s2">&quot;StateMachineArn&quot;</span><span class="p">:</span> <span class="n">CreateReceipeArn</span>
+                <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">call_campaign_solution_workflow_state</span> <span class="o">=</span> <span class="n">Task</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;CampaignWorkflow&quot;</span><span class="p">,</span>
+    <span class="n">resource</span><span class="o">=</span><span class="s2">&quot;arn:aws:states:::states:startExecution.sync:2&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>
+                                 <span class="s2">&quot;Input&quot;</span><span class="p">:{</span>
+                                    <span class="s2">&quot;solution_version_arn.$&quot;</span><span class="p">:</span> <span class="s2">&quot;$.Output.Payload.solution_version_arn&quot;</span>
+
+                                   <span class="p">},</span>
+                                <span class="s2">&quot;StateMachineArn&quot;</span><span class="p">:</span> <span class="n">CreateCampaignArn</span>
+                <span class="p">}</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Main_workflow_definition</span><span class="o">=</span><span class="n">Chain</span><span class="p">([</span><span class="n">call_dataset_workflow_state</span><span class="p">,</span>
+                                <span class="n">call_datasetImport_workflow_state</span><span class="p">,</span>
+                                <span class="n">call_receipe_solution_workflow_state</span><span class="p">,</span>
+                                <span class="n">call_campaign_solution_workflow_state</span>
+                               <span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Main_workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Main-workflow&quot;</span><span class="p">,</span>
+    <span class="n">definition</span><span class="o">=</span><span class="n">Main_workflow_definition</span><span class="p">,</span>
+    <span class="n">role</span><span class="o">=</span><span class="n">workflow_execution_role</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Main_workflow</span><span class="o">.</span><span class="n">render_graph</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Main_workflow</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow created successfully on AWS Step Functions.</span>
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;arn:aws:states:us-east-1:261602857181:stateMachine:Main-workflow&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Main_workflow_execution</span> <span class="o">=</span> <span class="n">Main_workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow execution started successfully on AWS Step Functions.</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Main_workflow_execution = Workflow(
+    name="Campaign_Workflow",
+    definition=path1,
+    role=workflow_execution_role
+)</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Create-and-execute-the-workflow">Create and execute the workflow<a class="anchor-link" href="#Create-and-execute-the-workflow"> </a></h3><p>In the next cells, we will create the branching happy workflow in AWS Step Functions with <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/workflow.html#stepfunctions.workflow.Workflow.create">create</a> and execute it with <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/workflow.html#stepfunctions.workflow.Workflow.execute">execute</a>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Review-the-workflow-progress">Review the workflow progress<a class="anchor-link" href="#Review-the-workflow-progress"> </a></h3><p>Review the workflow progress with the <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/workflow.html#stepfunctions.workflow.Execution.render_progress">render_progress</a>.</p>
+<p>Review the execution history by calling <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/workflow.html#stepfunctions.workflow.Execution.list_events">list_events</a> to list all events in the workflow execution.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Main_workflow_execution</span><span class="o">.</span><span class="n">render_progress</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Main_workflow_execution</span><span class="o">.</span><span class="n">list_events</span><span class="p">(</span><span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Generate-Recommendations">Generate-Recommendations<a class="anchor-link" href="#Generate-Recommendations"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Now-that-we-have-a-successful-campaign,-let's-generate-recommendations-for-the-campaign">Now that we have a successful campaign, let's generate recommendations for the campaign<a class="anchor-link" href="#Now-that-we-have-a-successful-campaign,-let's-generate-recommendations-for-the-campaign"> </a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Select-a-User-and-an-Item">Select a User and an Item<a class="anchor-link" href="#Select-a-User-and-an-Item"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">items</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;./ml-100k/u.item&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;|&#39;</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;latin-1&#39;</span><span class="p">)</span>
+<span class="n">items</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ITEM_ID&#39;</span><span class="p">,</span> <span class="s1">&#39;TITLE&#39;</span><span class="p">]</span>
+
+
+<span class="n">user_id</span><span class="p">,</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">rating</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">user_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+<span class="n">item_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">item_id</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span><span class="n">user_id</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;items&quot;</span><span class="p">,</span><span class="n">items</span><span class="p">)</span>
+
+
+<span class="n">item_title</span> <span class="o">=</span> <span class="n">items</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">items</span><span class="p">[</span><span class="s1">&#39;ITEM_ID&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">item_id</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;USER: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">user_id</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ITEM: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_title</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;ITEM ID: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_id</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>user_id 402
+items       ITEM_ID                                      TITLE
+0           2                           GoldenEye (1995)
+1           3                          Four Rooms (1995)
+...       ...                                        ...
+1679     1681                        You So Crazy (1994)
+1680     1682  Scream of Stone (Schrei aus Stein) (1991)
+
+[1681 rows x 2 columns]
+USER: 402
+ITEM: Aladdin (1992)
+ITEM ID: 95
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">wait_recommendations</span> <span class="o">=</span> <span class="n">Wait</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;Wait for recommendations - 10 secs&quot;</span><span class="p">,</span>
+    <span class="n">seconds</span><span class="o">=</span><span class="mi">10</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Lambda-Task">Lambda Task<a class="anchor-link" href="#Lambda-Task"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">lambda_state_get_recommendations</span> <span class="o">=</span> <span class="n">LambdaStep</span><span class="p">(</span>
+    <span class="n">state_id</span><span class="o">=</span><span class="s2">&quot;get recommendations&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span>  
+        <span class="s2">&quot;FunctionName&quot;</span><span class="p">:</span> <span class="s2">&quot;stepfunction_getRecommendations&quot;</span><span class="p">,</span> 
+        <span class="s2">&quot;Payload&quot;</span><span class="p">:</span> <span class="p">{</span>  
+           <span class="s2">&quot;campaign_arn&quot;</span><span class="p">:</span> <span class="s1">&#39;arn:aws:personalize:us-east-1:261602857181:campaign/stepfunction-campaign&#39;</span><span class="p">,</span>            
+           <span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="n">user_id</span><span class="p">,</span>  
+           <span class="s2">&quot;item_id&quot;</span><span class="p">:</span> <span class="n">item_id</span>             
+        <span class="p">}</span>
+    <span class="p">},</span>
+    <span class="n">result_path</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span>
+<span class="p">)</span>
+
+<span class="n">lambda_state_get_recommendations</span><span class="o">.</span><span class="n">add_retry</span><span class="p">(</span><span class="n">Retry</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">interval_seconds</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">max_attempts</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_rate</span><span class="o">=</span><span class="mf">4.0</span>
+<span class="p">))</span>
+
+<span class="n">lambda_state_get_recommendations</span><span class="o">.</span><span class="n">add_catch</span><span class="p">(</span><span class="n">Catch</span><span class="p">(</span>
+    <span class="n">error_equals</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;States.TaskFailed&quot;</span><span class="p">],</span>
+    <span class="n">next_step</span><span class="o">=</span><span class="n">Fail</span><span class="p">(</span><span class="s2">&quot;GetRecommendationTaskFailed&quot;</span><span class="p">)</span>
+    <span class="c1">#next_step=recommendation_path   </span>
+<span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Create-a-Succeed-State">Create a Succeed State<a class="anchor-link" href="#Create-a-Succeed-State"> </a></h4>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">workflow_complete</span> <span class="o">=</span> <span class="n">Succeed</span><span class="p">(</span><span class="s2">&quot;WorkflowComplete&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommendation_path</span> <span class="o">=</span> <span class="n">Chain</span><span class="p">([</span> 
+<span class="n">lambda_state_get_recommendations</span><span class="p">,</span>
+<span class="n">wait_recommendations</span><span class="p">,</span>
+<span class="n">workflow_complete</span>
+<span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Define,-Create,-Render,-and-Execute-Recommendation-Workflow">Define, Create, Render, and Execute Recommendation Workflow<a class="anchor-link" href="#Define,-Create,-Render,-and-Execute-Recommendation-Workflow"> </a></h3><p>In the next cells, we will create a workflow in AWS Step Functions with <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/workflow.html#stepfunctions.workflow.Workflow.create">create</a> and execute it with <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/workflow.html#stepfunctions.workflow.Workflow.execute">execute</a>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommendation_workflow</span> <span class="o">=</span> <span class="n">Workflow</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Recommendation_Workflow4&quot;</span><span class="p">,</span>
+    <span class="n">definition</span><span class="o">=</span><span class="n">recommendation_path</span><span class="p">,</span>
+    <span class="n">role</span><span class="o">=</span><span class="n">workflow_execution_role</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommendation_workflow</span><span class="o">.</span><span class="n">render_graph</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommendation_workflow</span><span class="o">.</span><span class="n">create</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow created successfully on AWS Step Functions.</span>
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;arn:aws:states:us-east-1:261602857181:stateMachine:Recommendation_Workflow4&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommendation_workflow_execution</span> <span class="o">=</span> <span class="n">recommendation_workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow execution started successfully on AWS Step Functions.</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Review-progress">Review progress<a class="anchor-link" href="#Review-progress"> </a></h3><p>Review workflow progress with the <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/workflow.html#stepfunctions.workflow.Execution.render_progress">render_progress</a>.</p>
+<p>Review execution history by calling <a href="https://aws-step-functions-data-science-sdk.readthedocs.io/en/latest/workflow.html#stepfunctions.workflow.Execution.list_events">list_events</a> to list all events in the workflow execution.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommendation_workflow_execution</span><span class="o">.</span><span class="n">render_progress</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommendation_workflow_execution</span><span class="o">.</span><span class="n">list_events</span><span class="p">(</span><span class="n">html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">item_list</span> <span class="o">=</span> <span class="n">recommendation_workflow_execution</span><span class="o">.</span><span class="n">get_output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;item_list&#39;</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Get-Recommendations">Get Recommendations<a class="anchor-link" href="#Get-Recommendations"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">item_list</span> <span class="o">=</span> <span class="n">recommendation_workflow_execution</span><span class="o">.</span><span class="n">get_output</span><span class="p">()[</span><span class="s1">&#39;Payload&#39;</span><span class="p">][</span><span class="s1">&#39;item_list&#39;</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recommendations:&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">item_list</span><span class="p">:</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;itemId&#39;</span><span class="p">])</span>
+    <span class="n">item_title</span> <span class="o">=</span> <span class="n">items</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">items</span><span class="p">[</span><span class="s1">&#39;ITEM_ID&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s1">&#39;itemId&#39;</span><span class="p">])]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">item_title</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Recommendations:
+Sound of Music, The (1965)
+Raiders of the Lost Ark (1981)
+Beauty and the Beast (1991)
+Snow White and the Seven Dwarfs (1937)
+Indiana Jones and the Last Crusade (1989)
+Fantasia (1940)
+Princess Bride, The (1987)
+Empire Strikes Back, The (1980)
+Terminator, The (1984)
+One Flew Over the Cuckoo&#39;s Nest (1975)
+Casablanca (1942)
+Dead Poets Society (1989)
+Fugitive, The (1993)
+Graduate, The (1967)
+M*A*S*H (1970)
+Monty Python and the Holy Grail (1974)
+Lion King, The (1994)
+Apollo 13 (1995)
+When Harry Met Sally... (1989)
+My Fair Lady (1964)
+Patton (1970)
+Winnie the Pooh and the Blustery Day (1968)
+Vertigo (1958)
+Aladdin (1992)
+Schindler&#39;s List (1993)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Clean-up-Amazon-Personalize-resources">Clean up Amazon Personalize resources<a class="anchor-link" href="#Clean-up-Amazon-Personalize-resources"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Make sure to clean up the Amazon Personalize and the state machines created blog. Login to Amazon Personalize console and delete resources such as Dataset Groups, Dataset, Solutions, Receipts, and Campaign.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Clean-up-State-Machine-resources">Clean up State Machine resources<a class="anchor-link" href="#Clean-up-State-Machine-resources"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">Campaign_workflow</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+
+<span class="n">recommendation_workflow</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+
+<span class="n">Main_workflow</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+
+<span class="n">Create_receipe_sol_workflow</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+
+<span class="n">DatasetImport_workflow</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+
+<span class="n">Dataset_workflow</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">[INFO] Workflow has been marked for deletion. If the workflow has running executions, it will be deleted when all executions are stopped.</span>
+<span class="ansi-green-fg">[INFO] Workflow has been marked for deletion. If the workflow has running executions, it will be deleted when all executions are stopped.</span>
+<span class="ansi-green-fg">[INFO] Workflow has been marked for deletion. If the workflow has running executions, it will be deleted when all executions are stopped.</span>
+<span class="ansi-green-fg">[INFO] Workflow has been marked for deletion. If the workflow has running executions, it will be deleted when all executions are stopped.</span>
+<span class="ansi-green-fg">[INFO] Workflow has been marked for deletion. If the workflow has running executions, it will be deleted when all executions are stopped.</span>
+<span class="ansi-green-fg">[INFO] Workflow has been marked for deletion. If the workflow has running executions, it will be deleted when all executions are stopped.</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/09/personalize-deployment.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
