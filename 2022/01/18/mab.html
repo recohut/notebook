@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Multi-armed Bandit for Banner Ad | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Multi-armed Bandit for Banner Ad" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Multi-armed Bandit for Banner Ad and 4 Exploration Strategies" />
+<meta property="og:description" content="Multi-armed Bandit for Banner Ad and 4 Exploration Strategies" />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/18/mab.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/18/mab.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-18T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Multi-armed Bandit for Banner Ad" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-18T00:00:00-06:00","datePublished":"2022-01-18T00:00:00-06:00","description":"Multi-armed Bandit for Banner Ad and 4 Exploration Strategies","headline":"Multi-armed Bandit for Banner Ad","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/18/mab.html"},"url":"https://nb.recohut.com/2022/01/18/mab.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Multi-armed Bandit for Banner Ad</h1><p class="page-description">Multi-armed Bandit for Banner Ad and 4 Exploration Strategies</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-18T00:00:00-06:00" itemprop="datePublished">
+        Jan 18, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      17 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-18-mab.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-18-mab.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-18-mab.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-18-mab.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-18-mab.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Installations">Installations<a class="anchor-link" href="#Installations"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Imports">Imports<a class="anchor-link" href="#Imports"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+
+<span class="kn">import</span> <span class="nn">gym</span>
+<span class="kn">from</span> <span class="nn">gym</span> <span class="kn">import</span> <span class="n">spaces</span>
+<span class="kn">from</span> <span class="nn">gym.utils</span> <span class="kn">import</span> <span class="n">seeding</span>
+<span class="c1"># from gym.scoreboard.registration import add_task, add_group</span>
+
+<span class="kn">from</span> <span class="nn">gym.envs.registration</span> <span class="kn">import</span> <span class="n">register</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+
+<span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;ggplot&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Environments">Environments<a class="anchor-link" href="#Environments"> </a></h3><ul>
+<li><code>BanditTwoArmedDeterministicFixed-v0</code>: Simplest case where one bandit always pays, and the other always doesn't. Each bandit takes in a probability distribution, which is the likelihood of the action paying out, and a reward distribution, which is the value or distribution of what the agent will be rewarded the bandit does payout.<ul>
+<li>p_dist = [1, 0]</li>
+<li>r_dist = [1, 1]</li>
+</ul>
+</li>
+<li><code>BanditTwoArmedHighLowFixed-v0</code>: Stochastic version with a large difference between which bandit pays out of two choices. Each bandit takes in a probability distribution, which is the likelihood of the action paying out, and a reward distribution, which is the value or distribution of what the agent will be rewarded the bandit does payout.<ul>
+<li>p_dist = [0.8, 0.2]</li>
+<li>r_dist = [1, 1]</li>
+</ul>
+</li>
+<li><code>BanditTwoArmedHighHighFixed-v0</code>: Stochastic version with a small difference between which bandit pays where both are good. Each bandit takes in a probability distribution, which is the likelihood of the action paying out, and a reward distribution, which is the value or distribution of what the agent will be rewarded the bandit does payout.<ul>
+<li>p_dist = [0.8, 0.9]</li>
+<li>r_dist = [1, 1]</li>
+</ul>
+</li>
+<li><code>BanditTwoArmedLowLowFixed-v0</code>: Stochastic version with a small difference between which bandit pays where both are bad. Each bandit takes in a probability distribution, which is the likelihood of the action paying out, and a reward distribution, which is the value or distribution of what the agent will be rewarded the bandit does payout.<ul>
+<li>p_dist = [0.1, 0.2]</li>
+<li>r_dist = [1, 1]</li>
+</ul>
+</li>
+<li><code>BanditTenArmedRandomFixed-v0</code>: 10 armed bandit with random probabilities assigned to payouts. Each bandit takes in a probability distribution, which is the likelihood of the action paying out, and a reward distribution, which is the value or distribution of what the agent will be rewarded the bandit does payout.<ul>
+<li>p_dist = numpy.random.uniform(size=10)</li>
+<li>r_dist = numpy.full(bandits, 1)</li>
+<li>Bandits have a uniform probability of rewarding and always reward 1</li>
+</ul>
+</li>
+<li><code>BanditTenArmedRandomRandom-v0</code>: 10 armed bandit with random probabilities assigned to both payouts and rewards. Each bandit takes in a probability distribution, which is the likelihood of the action paying out, and a reward distribution, which is the value or distribution of what the agent will be rewarded the bandit does payout.<ul>
+<li>p_dist = numpy.random.uniform(size=10)</li>
+<li>r_dist = numpy.random.uniform(size=10)</li>
+<li>Bandits have uniform probability of paying out and payout a reward of uniform probability</li>
+</ul>
+</li>
+<li><code>BanditTenArmedUniformDistributedReward-v0</code>: 10 armed bandit with that always pays out with a reward selected from a uniform distribution. Each bandit takes in a probability distribution, which is the likelihood of the action paying out, and a reward distribution, which is the value or distribution of what the agent will be rewarded  the bandit does payout.<ul>
+<li>p_dist = numpy.full(bandits, 1)</li>
+<li>r_dist = numpy.random.uniform(size=10)</li>
+<li>Bandits always pay out. Reward is selected from uniform distribution</li>
+</ul>
+</li>
+<li><code>BanditTenArmedGaussian-v0</code>: 10 armed bandit mentioned on page 30 of <a href="https://www.dropbox.com/s/b3psxv2r0ccmf80/book2015oct.pdf?dl=0">Reinforcement Learning: An Introduction</a> (Sutton and Barto). Each bandit takes in a probability distribution, which is the likelihood of the action paying out, and a reward distribution, which is the value or distribution of what the agent will be rewarded the bandit does payout.<ul>
+<li>p_dist = [1] (* 10)</li>
+<li>r_dist = [numpy.random.normal(0, 1), 1] (* 10)</li>
+<li>Every bandit always pays out</li>
+<li>Each action has a reward mean (selected from a normal distribution with mean 0 and std 1), and the actual reward returns is selected with a std of 1 around the selected mean.</li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">BanditEnv</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">Env</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Bandit environment base to allow agents to interact with the class n-armed bandit</span>
+<span class="sd">    in different variations</span>
+<span class="sd">    p_dist:</span>
+<span class="sd">        A list of probabilities of the likelihood that a particular bandit will pay out</span>
+<span class="sd">    r_dist:</span>
+<span class="sd">        A list of either rewards (if number) or means and standard deviations (if list)</span>
+<span class="sd">        of the payout that bandit has</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="p">,</span> <span class="n">r_dist</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_dist</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">r_dist</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Probability and Reward distribution must be the same length&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">p_dist</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">max</span><span class="p">(</span><span class="n">p_dist</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;All probabilities must be between 0 and 1&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">reward</span> <span class="ow">in</span> <span class="n">r_dist</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reward</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">reward</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Standard deviation in rewards must all be greater than 0&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">p_dist</span> <span class="o">=</span> <span class="n">p_dist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r_dist</span> <span class="o">=</span> <span class="n">r_dist</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_bandits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">p_dist</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span> <span class="o">=</span> <span class="n">spaces</span><span class="o">.</span><span class="n">Discrete</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_bandits</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span> <span class="o">=</span> <span class="n">spaces</span><span class="o">.</span><span class="n">Discrete</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_seed</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_seed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">np_random</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">seeding</span><span class="o">.</span><span class="n">np_random</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">seed</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+
+        <span class="n">reward</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">done</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_dist</span><span class="p">[</span><span class="n">action</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r_dist</span><span class="p">[</span><span class="n">action</span><span class="p">],</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">reward</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_dist</span><span class="p">[</span><span class="n">action</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">reward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">r_dist</span><span class="p">[</span><span class="n">action</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">r_dist</span><span class="p">[</span><span class="n">action</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;human&#39;</span><span class="p">,</span> <span class="n">close</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">BanditTwoArmedDeterministicFixed</span><span class="p">(</span><span class="n">BanditEnv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simplest case where one bandit always pays, and the other always doesn&#39;t&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">BanditEnv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">r_dist</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">BanditTwoArmedHighLowFixed</span><span class="p">(</span><span class="n">BanditEnv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Stochastic version with a large difference between which bandit pays out of two choices&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">BanditEnv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="o">=</span><span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="n">r_dist</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">BanditTwoArmedHighHighFixed</span><span class="p">(</span><span class="n">BanditEnv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Stochastic version with a small difference between which bandit pays where both are good&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">BanditEnv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="o">=</span><span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span> <span class="n">r_dist</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">BanditTwoArmedLowLowFixed</span><span class="p">(</span><span class="n">BanditEnv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Stochastic version with a small difference between which bandit pays where both are bad&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">BanditEnv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="n">r_dist</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">BanditTenArmedRandomFixed</span><span class="p">(</span><span class="n">BanditEnv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;10 armed bandit with random probabilities assigned to payouts&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bandits</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">p_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">bandits</span><span class="p">)</span>
+        <span class="n">r_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">bandits</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">BanditEnv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="o">=</span><span class="n">p_dist</span><span class="p">,</span> <span class="n">r_dist</span><span class="o">=</span><span class="n">r_dist</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">BanditTenArmedUniformDistributedReward</span><span class="p">(</span><span class="n">BanditEnv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;10 armed bandit with that always pays out with a reward selected from a uniform distribution&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bandits</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">p_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">bandits</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">r_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">bandits</span><span class="p">)</span>
+        <span class="n">BanditEnv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="o">=</span><span class="n">p_dist</span><span class="p">,</span> <span class="n">r_dist</span><span class="o">=</span><span class="n">r_dist</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">BanditTenArmedRandomRandom</span><span class="p">(</span><span class="n">BanditEnv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;10 armed bandit with random probabilities assigned to both payouts and rewards&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bandits</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">p_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">bandits</span><span class="p">)</span>
+        <span class="n">r_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">bandits</span><span class="p">)</span>
+        <span class="n">BanditEnv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="o">=</span><span class="n">p_dist</span><span class="p">,</span> <span class="n">r_dist</span><span class="o">=</span><span class="n">r_dist</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">BanditTenArmedGaussian</span><span class="p">(</span><span class="n">BanditEnv</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    10 armed bandit mentioned on page 30 of Sutton and Barto&#39;s</span>
+<span class="sd">    [Reinforcement Learning: An Introduction](https://www.dropbox.com/s/b3psxv2r0ccmf80/book2015oct.pdf?dl=0)</span>
+<span class="sd">    Actions always pay out</span>
+<span class="sd">    Mean of payout is pulled from a normal distribution (0, 1) (called q*(a))</span>
+<span class="sd">    Actual reward is drawn from a normal distribution (q*(a), 1)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bandits</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+        <span class="n">p_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">bandits</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">r_dist</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bandits</span><span class="p">):</span>
+            <span class="n">r_dist</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">BanditEnv</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">p_dist</span><span class="o">=</span><span class="n">p_dist</span><span class="p">,</span> <span class="n">r_dist</span><span class="o">=</span><span class="n">r_dist</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Create-the-Bandit-environment-in-Gym">Create the Bandit environment in Gym<a class="anchor-link" href="#Create-the-Bandit-environment-in-Gym"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">register</span><span class="p">(</span>
+    <span class="nb">id</span><span class="o">=</span><span class="s1">&#39;BanditTwoArmedHighLowFixed-v0&#39;</span><span class="p">,</span>
+    <span class="n">entry_point</span><span class="o">=</span><span class="s1">&#39;__main__:BanditTwoArmedHighLowFixed&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="s2">&quot;BanditTwoArmedHighLowFixed-v0&quot;</span><span class="p">)</span>
+
+<span class="c1"># Since we created a 2-armed bandit, our action space will be 2 (as there are two arms), as shown here:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">n</span><span class="p">)</span>    <span class="c1"># The preceding code will print: 2</span>
+
+<span class="c1"># We can also check the probability distribution of the arm with:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">p_dist</span><span class="p">)</span> 
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>[2021-10-20 14:19:45,784] Making new env: BanditTwoArmedHighLowFixed-v0
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>2
+[0.8, 0.2]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="$\epsilon$-Greedy">$\epsilon$-Greedy<a class="anchor-link" href="#$\epsilon$-Greedy"> </a></h2><blockquote><p>Find the best bandit arm with Epsilon-Greedy method</p>
+</blockquote>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Initialize the count for storing the number of times an arm is pulled:</span>
+<span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize sum_rewards for storing the sum of rewards of each arm:</span>
+<span class="n">sum_rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize Q for storing the average reward of each arm:</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Set the number of rounds (iterations):</span>
+<span class="n">num_rounds</span> <span class="o">=</span> <span class="mi">100</span>
+
+
+<span class="c1"># Now, let&#39;s define the epsilon_greedy function.</span>
+<span class="k">def</span> <span class="nf">epsilon_greedy</span><span class="p">(</span><span class="n">epsilon</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;First, we generate a random number from a uniform distribution. If the random </span>
+<span class="sd">    number is less than epsilon, then we pull the random arm; else, we pull </span>
+<span class="sd">    the best arm that has the maximum average reward&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">epsilon</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+
+
+<span class="c1"># Now, let&#39;s play the game and try to find the best arm using the epsilon-greedy method.</span>
+<span class="c1"># For each round:</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_rounds</span><span class="p">):</span>
+  <span class="c1"># Select the arm based on the epsilon-greedy method:</span>
+  <span class="n">arm</span> <span class="o">=</span> <span class="n">epsilon_greedy</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+  <span class="c1"># Pull the arm and store the reward and next state information:</span>
+  <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">arm</span><span class="p">)</span>
+  <span class="c1"># Increment the count of the arm by 1:</span>
+  <span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+  <span class="c1"># Update the sum of rewards of the arm:</span>
+  <span class="n">sum_rewards</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span><span class="o">+=</span><span class="n">reward</span>
+  <span class="c1"># Update the average reward of the arm:</span>
+  <span class="n">Q</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_rewards</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span><span class="o">/</span><span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span>
+  
+<span class="c1"># After all the rounds, we look at the average reward obtained from each of the arms:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>    <span class="c1"># The preceding code will print something like this: [0.xx 0.yy]</span>
+
+<span class="c1"># Now, we can select the optimal arm as the one that has the maximum average reward:</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The optimal arm is arm </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[0.80263158 0.33333333]
+The optimal arm is arm 1
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Softmax">Softmax<a class="anchor-link" href="#Softmax"> </a></h2><blockquote><p>Find the best bandit arm with Softmax method.</p>
+</blockquote>
+<p>We define the softmax function with the temperature T:$$\large P_i=\frac{e^{\frac{y_i}T}}{\sum_{k=1}^n e^{\frac{y_k}T}}$$</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Initialize the count for storing the number of times an arm is pulled:</span>
+<span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize sum_rewards for storing the sum of rewards of each arm:</span>
+<span class="n">sum_rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize Q for storing the average reward of each arm:</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Set the number of rounds (iterations):</span>
+<span class="n">num_rounds</span> <span class="o">=</span> <span class="mi">100</span>
+
+
+<span class="c1"># Now, we define the softmax function with the temperature T:</span>
+<span class="k">def</span> <span class="nf">softmax</span><span class="p">(</span><span class="n">T</span><span class="p">):</span>
+  <span class="c1"># Compute the probability of each arm based on the temperature equation:</span>
+  <span class="n">denom</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">i</span><span class="o">/</span><span class="n">T</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">Q</span><span class="p">])</span>
+  <span class="n">probs</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">i</span><span class="o">/</span><span class="n">T</span><span class="p">)</span><span class="o">/</span><span class="n">denom</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">Q</span><span class="p">]</span>
+  <span class="c1"># Select the arm based on the computed probability distribution of arms:</span>
+  <span class="n">arm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">probs</span><span class="p">)</span>  
+  <span class="k">return</span> <span class="n">arm</span>
+
+
+<span class="c1"># Now, let&#39;s play the game and try to find the best arm using the softmax exploration method.</span>
+<span class="c1"># Let&#39;s begin by setting the temperature T to a high number, say, 50:</span>
+<span class="n">T</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="c1"># For each round:</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_rounds</span><span class="p">):</span>
+  <span class="c1"># Select the arm based on the softmax exploration method:</span>
+  <span class="n">arm</span> <span class="o">=</span> <span class="n">softmax</span><span class="p">(</span><span class="n">T</span><span class="p">)</span>
+  <span class="c1"># Pull the arm and store the reward and next state information:</span>
+  <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">arm</span><span class="p">)</span>
+  <span class="c1"># Increment the count of the arm by 1:</span>
+  <span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+  <span class="c1"># Update the sum of rewards of the arm:</span>
+  <span class="n">sum_rewards</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span><span class="o">+=</span><span class="n">reward</span>
+  <span class="c1"># Update the average reward of the arm:</span>
+  <span class="n">Q</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_rewards</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span><span class="o">/</span><span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span>
+  <span class="c1"># Reduce the temperature T:</span>
+  <span class="n">T</span> <span class="o">=</span> <span class="n">T</span><span class="o">*</span><span class="mf">0.99</span>
+
+<span class="c1"># After all the rounds, we check the Q value, that is, the average reward of all the arms:</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>    <span class="c1"># The preceding code will print something like this: [0.xx 0.yy]</span>
+
+<span class="c1"># Now, we can select the optimal arm as the one that has the maximum average reward:</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The optimal arm is arm </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[0.80392157 0.20408163]
+The optimal arm is arm 1
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="UCB">UCB<a class="anchor-link" href="#UCB"> </a></h2><blockquote><p>Find the best bandit arm with Upper Confidence Bound method</p>
+</blockquote>
+<p>The algorithm of UCB is given as follows:1. Select the arm whose upper confidence bound is high2. Pull the arm and receive a reward</p>
+<ol>
+<li>Update the arm's mean reward and confidence interval</li>
+<li>Repeat <em>steps 1</em> to <em>3</em> for several rounds</li>
+</ol>
+<p>Let N(a) be the number of times arm a was pulled and t be the total number of rounds, then the upper confidence bound of arm a can be computed as:</p>
+<p>
+$$A_t \dot{=} \operatorname{argmax}_a \left[ Q_t(a) + c \sqrt{ \frac{\ln t}{N_t(a)} } \right]$$
+</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Initialize the count for storing the number of times an arm is pulled:</span>
+<span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize sum_rewards for storing the sum of rewards of each arm:</span>
+<span class="n">sum_rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize Q for storing the average reward of each arm:</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Set the number of rounds (iterations):</span>
+<span class="n">num_rounds</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="c1"># Now, we define the UCB function, which returns the best arm as the </span>
+<span class="c1"># one that has the highest UCB:</span>
+<span class="k">def</span> <span class="nf">UCB</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+  <span class="c1"># Initialize the numpy array for storing the UCB of all the arms:</span>
+  <span class="n">ucb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+  <span class="c1"># Before computing the UCB, we explore all the arms at least once, so for the </span>
+  <span class="c1"># first 2 rounds, we directly select the arm corresponding to the round number:</span>
+  <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">i</span>
+  <span class="c1"># If the round is greater than 2, then we compute the UCB of all the arms as </span>
+  <span class="c1"># specified in the UCB equation and return the arm that has the highest UCB:</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">arm</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+      <span class="n">ucb</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">=</span> <span class="n">Q</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">count</span><span class="p">)))</span> <span class="o">/</span> <span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">])</span>
+  <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ucb</span><span class="p">))</span>
+
+<span class="c1"># Now, let&#39;s play the game and try to find the best arm using the UCB method.</span>
+<span class="c1"># For each round:</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_rounds</span><span class="p">):</span>
+  <span class="c1"># Select the arm based on the UCB method:</span>
+  <span class="n">arm</span> <span class="o">=</span> <span class="n">UCB</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+  <span class="c1"># Pull the arm and store the reward and next state information:</span>
+  <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">arm</span><span class="p">)</span>
+  <span class="c1"># Increment the count of the arm by 1:</span>
+  <span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+  <span class="c1"># Update the sum of rewards of the arm:</span>
+  <span class="n">sum_rewards</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span><span class="o">+=</span><span class="n">reward</span>
+  <span class="c1"># Update the average reward of the arm:</span>
+  <span class="n">Q</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_rewards</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span><span class="o">/</span><span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span>
+
+<span class="c1"># Now, we can select the optimal arm as the one that has the maximum average reward:</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The optimal arm is arm </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>The optimal arm is arm 1
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="TS">TS<a class="anchor-link" href="#TS"> </a></h2><blockquote><p>Find the best bandit arm with Thompson Sampling method</p>
+</blockquote>
+<p>The steps involved in the Thomson sampling method are given here:1. Initialize the beta distribution with alpha and beta set to equal values for all <em>k</em> arms2. Sample a value from the beta distribution of all <em>k</em> arms</p>
+<ol>
+<li>Pull the arm whose sampled value is high</li>
+<li>If we win the game, then update the alpha value of the distribution to $\alpha = \alpha + 1$</li>
+<li>If we lose the game, then update the beta value of the distribution to $\beta = \beta + 1$</li>
+<li>Repeat steps 2 to <em>5</em> for many rounds</li>
+</ol>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Initialize the count for storing the number of times an arm is pulled:</span>
+<span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize sum_rewards for storing the sum of rewards of each arm:</span>
+<span class="n">sum_rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize Q for storing the average reward of each arm:</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize the alpha value as 1 for both arms:</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Initialize the beta value as 1 for both arms:</span>
+<span class="n">beta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># Set the number of rounds (iterations):</span>
+<span class="n">num_rounds</span> <span class="o">=</span> <span class="mi">100</span>
+
+
+<span class="c1"># Now, let&#39;s define the thompson_sampling function</span>
+<span class="k">def</span> <span class="nf">thompson_sampling</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;we randomly sample values from the beta distributions of both arms and </span>
+<span class="sd">  return the arm that has the maximum sampled value&quot;&quot;&quot;</span>
+  <span class="n">samples</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">beta</span><span class="p">(</span><span class="n">alpha</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">beta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)]</span>
+  <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span>
+
+
+<span class="c1"># Now, let&#39;s play the game and try to find the best arm using the Thompson sampling method.</span>
+<span class="c1"># For each round:</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_rounds</span><span class="p">):</span>
+  <span class="c1"># Select the arm based on the Thompson sampling method:</span>
+  <span class="n">arm</span> <span class="o">=</span> <span class="n">thompson_sampling</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span><span class="n">beta</span><span class="p">)</span>
+  <span class="c1"># Pull the arm and store the reward and next state information:</span>
+  <span class="n">next_state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">arm</span><span class="p">)</span> 
+  <span class="c1"># Increment the count of the arm by 1:</span>
+  <span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+  <span class="c1"># Update the sum of rewards of the arm:</span>
+  <span class="n">sum_rewards</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span><span class="o">+=</span><span class="n">reward</span>
+  <span class="c1"># Update the average reward of the arm:</span>
+  <span class="n">Q</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_rewards</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span><span class="o">/</span><span class="n">count</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span>
+  <span class="c1"># If we win the game, that is, if the reward is equal to 1, then we update </span>
+  <span class="c1"># the value of alpha to alpha+1, else we update the value of beta to beta+1:</span>
+  <span class="k">if</span> <span class="n">reward</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+    <span class="n">alpha</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="n">beta</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">=</span> <span class="n">beta</span><span class="p">[</span><span class="n">arm</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+<span class="c1"># After all the rounds, we can select the optimal arm as the one that has the highest average reward:</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The optimal arm is arm </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>The optimal arm is arm 1
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Finding-the-best-advertisement-banner-using-bandits">Finding the best advertisement banner using bandits<a class="anchor-link" href="#Finding-the-best-advertisement-banner-using-bandits"> </a></h2><p>Bandits can be used as an alternative to AB testing. AB testing is one of the most commonly used classic methods of testing. Say we have two versions of the landing page of our website. Suppose we want to know which version of the landing page is most liked by the users. In this case, we conduct AB testing to understand which version of the landing page is most liked by the users. So, we show version 1 of the landing page to a particular set of users and version 2 of the landing page to other set of users. Then we measure several metrics, such as click-through rate, average time spent on the website, and so on, to understand which version of the landing page is most liked by the users. Once we understand which version of the landing page is most liked by the users, then we will start showing that version to all the users.</p>
+<p>Thus, in AB testing, we schedule a separate time for exploration and exploitation. That is, AB testing has two different dedicated periods for exploration and exploitation. But the problem with AB testing is that it will incur high regret. We can minimize the regret using the various exploration strategies that we have used to solve the MAB problem. So, instead of performing complete exploration and exploitation separately, we can perform exploration and exploitation simultaneously in an adaptive fashion with the various exploration strategies</p>
+<p>Suppose we are running a website and we have five different banners for a single advertisement on our website and say we want to figure out which advertisement banner is most liked by the users. We can frame this problem as a MAB problem. The five advertisement banners represent the five arms of the bandit, and we assign +1 reward if the user clicks the advertisement and 0 rewards if the user does not click the advertisement. So, to find out which advertisement banner is most clicked by the users, that is, which advertisement banner can give us the maximum reward, we can use various exploration strategies.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># We generate a dataset with five columns denoting the five advertisement banners, </span>
+<span class="c1"># where the values in the rows will be either 0 or 1, indicating whether the </span>
+<span class="c1"># advertisement banner has been clicked (1) or not clicked (0) by the user:</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+  <span class="n">df</span><span class="p">[</span><span class="s1">&#39;Banner_type_&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">100000</span><span class="p">)</span>
+
+<span class="c1"># Now, let&#39;s initialize some of the important variables.</span>
+<span class="c1"># Set the number of iterations:</span>
+<span class="n">num_iterations</span> <span class="o">=</span> <span class="mi">100000</span>
+
+<span class="c1"># Define the number of banners:</span>
+<span class="n">num_banner</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># Initialize count for storing the number of times the banner was clicked:</span>
+<span class="n">count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_banner</span><span class="p">)</span>
+
+<span class="c1"># Initialize sum_rewards for storing the sum of rewards obtained from each banner:</span>
+<span class="n">sum_rewards</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_banner</span><span class="p">)</span>
+
+<span class="c1"># Initialize Q for storing the mean reward of each banner:</span>
+<span class="n">Q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_banner</span><span class="p">)</span>
+
+<span class="c1"># Define a list for storing the selected banners:</span>
+<span class="n">banner_selected</span> <span class="o">=</span> <span class="p">[]</span>
+
+
+<span class="c1"># Now, let&#39;s define the epsilon-greedy method:</span>
+<span class="k">def</span> <span class="nf">epsilon_greedy_policy</span><span class="p">(</span><span class="n">epsilon</span><span class="p">):</span>
+  <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">epsilon</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">num_banner</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Q</span><span class="p">)</span>
+
+<span class="c1"># Now, we run the epsilon-greedy policy to find out which advertisement banner is the best.</span>
+<span class="c1"># For each iteration:</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iterations</span><span class="p">):</span>
+  <span class="c1"># Select the banner using the epsilon-greedy policy:</span>
+  <span class="n">banner</span> <span class="o">=</span> <span class="n">epsilon_greedy_policy</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+  <span class="c1"># Get the reward of the banner:</span>
+  <span class="n">reward</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">banner</span><span class="p">]</span>
+  <span class="c1"># Increment the counter:</span>
+  <span class="n">count</span><span class="p">[</span><span class="n">banner</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+  <span class="c1"># Store the sum of rewards:</span>
+  <span class="n">sum_rewards</span><span class="p">[</span><span class="n">banner</span><span class="p">]</span><span class="o">+=</span><span class="n">reward</span>
+  <span class="c1"># Compute the average reward:</span>
+  <span class="n">Q</span><span class="p">[</span><span class="n">banner</span><span class="p">]</span> <span class="o">=</span> <span class="n">sum_rewards</span><span class="p">[</span><span class="n">banner</span><span class="p">]</span><span class="o">/</span><span class="n">count</span><span class="p">[</span><span class="n">banner</span><span class="p">]</span>
+  <span class="c1"># Store the banner to the banner selected list:</span>
+  <span class="n">banner_selected</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">banner</span><span class="p">)</span>
+
+<span class="c1"># After all the rounds, we can select the best banner as the one that has the maximum average reward:</span>
+<span class="nb">print</span><span class="p">(</span> <span class="s1">&#39;The best banner is banner </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">Q</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>The best banner is banner 4
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ax</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">countplot</span><span class="p">(</span><span class="n">banner_selected</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Banner&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;Count&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+" />
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Contextual-bandits">Contextual bandits<a class="anchor-link" href="#Contextual-bandits"> </a></h2><p>The banner preference varies from user to user. That is, user A likes banner 1, but user B might like banner 3, and so on. Each user has their own preferences. So, we have to personalize advertisement banners according to each user. How can we do that? This is where we use contextual bandits. In the MAB problem, we just perform the action and receive a reward. But with contextual bandits, we take actions based on the state of the environment and the state holds the context. For instance, in the advertisement banner example, the state specifies the user behavior and we will take action (show the banner) according to the state (user behavior) that will result in the maximum reward (ad clicks). Contextual bandits are widely used for personalizing content according to the user's behavior. They are also used to solve the cold-start problems faced by recommendation systems. Netflix uses contextual bandits for personalizing the artwork for TV shows according to user behavior.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/18/mab.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

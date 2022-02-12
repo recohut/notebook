@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Predictability limits in session-based next item recommendation on Retailrocket data | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Predictability limits in session-based next item recommendation on Retailrocket data" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/14/sess-retailrocket.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/14/sess-retailrocket.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-14T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Predictability limits in session-based next item recommendation on Retailrocket data" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-14T00:00:00-06:00","datePublished":"2022-01-14T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Predictability limits in session-based next item recommendation on Retailrocket data","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/14/sess-retailrocket.html"},"url":"https://nb.recohut.com/2022/01/14/sess-retailrocket.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Predictability limits in session-based next item recommendation on Retailrocket data</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-14T00:00:00-06:00" itemprop="datePublished">
+        Jan 14, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      21 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-14-sess-retailrocket.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-14-sess-retailrocket.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-14-sess-retailrocket.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-14-sess-retailrocket.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-14-sess-retailrocket.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Estimate the predictability limits due to randomness and due to algorithm design in some methods of session-based recommendation.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Preprocessing-RetailRocket-Session-Dataset">Preprocessing RetailRocket Session Dataset<a class="anchor-link" href="#Preprocessing-RetailRocket-Session-Dataset"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">timezone</span><span class="p">,</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+<span class="kn">import</span> <span class="nn">time</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">preprocessing method [&quot;info&quot;,&quot;org&quot;,&quot;org_min_date&quot;,&quot;days_test&quot;,&quot;slice&quot;,&quot;buys&quot;]</span>
+<span class="sd">    info: just load and show info</span>
+<span class="sd">    org: from gru4rec (last day =&gt; test set)</span>
+<span class="sd">    org_min_date: from gru4rec (last day =&gt; test set) but from a minimal date onwards</span>
+<span class="sd">    days_test: adapted from gru4rec (last N days =&gt; test set)</span>
+<span class="sd">    slice: new (create multiple train-test-combinations with a sliding window approach  </span>
+<span class="sd">    buys: load buys and safe file to prepared</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="c1"># METHOD = &quot;slice&quot;</span>
+<span class="n">METHOD</span> <span class="o">=</span> <span class="nb">input</span><span class="p">(</span><span class="s1">&#39;Preprocessing method (info/org/org_min_date/days_test/slice/buys):&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;slice&#39;</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">METHOD</span> <span class="ow">in</span> <span class="s1">&#39;info/org/org_min_date/days_test/slice/buys&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)),</span> <span class="s1">&#39;Invalid Preprocessing method.&#39;</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">data config (all methods)</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">PATH</span> <span class="o">=</span> <span class="s1">&#39;./retailrocket/&#39;</span>
+<span class="n">PATH_PROCESSED</span> <span class="o">=</span> <span class="s1">&#39;./retailrocket/slices/&#39;</span>
+<span class="n">FILE</span> <span class="o">=</span> <span class="s1">&#39;events&#39;</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">org_min_date config</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">MIN_DATE</span> <span class="o">=</span> <span class="s1">&#39;2015-09-02&#39;</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">filtering config (all methods)</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">SESSION_LENGTH</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">*</span> <span class="mi">60</span> <span class="c1">#30 minutes</span>
+<span class="n">MIN_SESSION_LENGTH</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">MIN_ITEM_SUPPORT</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">MIN_DATE</span> <span class="o">=</span> <span class="s1">&#39;2014-04-01&#39;</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">days test default config</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">DAYS_TEST</span> <span class="o">=</span> <span class="mi">2</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">slicing default config</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">NUM_SLICES</span> <span class="o">=</span> <span class="mi">5</span> <span class="c1">#offset in days from the first date in the data set</span>
+<span class="n">DAYS_OFFSET</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1">#number of days the training start date is shifted after creating one slice</span>
+<span class="n">DAYS_SHIFT</span> <span class="o">=</span> <span class="mi">27</span>
+<span class="c1">#each slice consists of...</span>
+<span class="n">DAYS_TRAIN</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="n">DAYS_TEST</span> <span class="o">=</span> <span class="mi">2</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Preprocessing method (info/org/org_min_date/days_test/slice/buys):slice
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">RecoHut</span><span class="o">-</span><span class="n">Datasets</span><span class="o">/</span><span class="n">retail_rocket</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">v2</span><span class="o">/</span><span class="n">retailrocket</span><span class="o">.</span><span class="n">zip</span>
+<span class="err">!</span><span class="n">unzip</span> <span class="n">retailrocket</span><span class="o">.</span><span class="n">zip</span>
+<span class="err">!</span><span class="n">mkdir</span> <span class="n">retailrocket</span><span class="o">/</span><span class="n">slices</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>retailrocket.zip    100%[===================&gt;]  32.00M   147MB/s    in 0.2s    
+Archive:  retailrocket.zip
+   creating: retailrocket/
+  inflating: retailrocket/events.csv  
+   creating: retailrocket/prepared_window/
+  inflating: retailrocket/prepared_window/events.0.hdf  
+  inflating: retailrocket/prepared_window/events.1.hdf  
+  inflating: retailrocket/prepared_window/events.2.hdf  
+  inflating: retailrocket/prepared_window/events.3.hdf  
+  inflating: retailrocket/prepared_window/events.4.hdf  
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">preprocess_org</span><span class="p">(</span> <span class="n">path</span><span class="o">=</span><span class="n">PATH</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">=</span><span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">min_item_support</span><span class="o">=</span><span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">min_session_length</span><span class="o">=</span><span class="n">MIN_SESSION_LENGTH</span> <span class="p">):</span>
+    
+    <span class="n">data</span><span class="p">,</span> <span class="n">buys</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span> <span class="n">path</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_item_support</span><span class="p">,</span> <span class="n">min_session_length</span> <span class="p">)</span>
+    <span class="n">split_data_org</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+
+<span class="c1">#preprocessing from original gru4rec but from a certain point in time</span>
+<span class="k">def</span> <span class="nf">preprocess_org_min_date</span><span class="p">(</span> <span class="n">path</span><span class="o">=</span><span class="n">PATH</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">=</span><span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">min_item_support</span><span class="o">=</span><span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">min_session_length</span><span class="o">=</span><span class="n">MIN_SESSION_LENGTH</span><span class="p">,</span> <span class="n">min_date</span><span class="o">=</span><span class="n">MIN_DATE</span> <span class="p">):</span>
+    
+    <span class="n">data</span><span class="p">,</span> <span class="n">buys</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span> <span class="n">path</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_item_support</span><span class="p">,</span> <span class="n">min_session_length</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_min_date</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_date</span> <span class="p">)</span>
+    <span class="n">split_data_org</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+
+<span class="c1">#preprocessing adapted from original gru4rec</span>
+<span class="k">def</span> <span class="nf">preprocess_days_test</span><span class="p">(</span> <span class="n">path</span><span class="o">=</span><span class="n">PATH</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">=</span><span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">min_item_support</span><span class="o">=</span><span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">min_session_length</span><span class="o">=</span><span class="n">MIN_SESSION_LENGTH</span><span class="p">,</span> <span class="n">days_test</span><span class="o">=</span><span class="n">DAYS_TEST</span> <span class="p">):</span>
+    
+    <span class="n">data</span><span class="p">,</span> <span class="n">buys</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span> <span class="n">path</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_item_support</span><span class="p">,</span> <span class="n">min_session_length</span> <span class="p">)</span>
+    <span class="n">split_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">+</span><span class="n">file</span><span class="p">,</span> <span class="n">days_test</span> <span class="p">)</span>
+
+<span class="c1">#preprocessing from original gru4rec but from a certain point in time</span>
+<span class="k">def</span> <span class="nf">preprocess_days_test_min_date</span><span class="p">(</span> <span class="n">path</span><span class="o">=</span><span class="n">PATH</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">=</span><span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">min_item_support</span><span class="o">=</span><span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">min_session_length</span><span class="o">=</span><span class="n">MIN_SESSION_LENGTH</span><span class="p">,</span> <span class="n">days_test</span><span class="o">=</span><span class="n">DAYS_TEST</span><span class="p">,</span> <span class="n">min_date</span><span class="o">=</span><span class="n">MIN_DATE</span> <span class="p">):</span>
+    
+    <span class="n">data</span><span class="p">,</span> <span class="n">buys</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span> <span class="n">path</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_item_support</span><span class="p">,</span> <span class="n">min_session_length</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_min_date</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_date</span> <span class="p">)</span>
+    <span class="n">split_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">+</span><span class="n">file</span><span class="p">,</span> <span class="n">days_test</span> <span class="p">)</span>
+
+<span class="c1">#preprocessing to create data slices with a sliding window</span>
+<span class="k">def</span> <span class="nf">preprocess_slices</span><span class="p">(</span> <span class="n">path</span><span class="o">=</span><span class="n">PATH</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">=</span><span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">min_item_support</span><span class="o">=</span><span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">min_session_length</span><span class="o">=</span><span class="n">MIN_SESSION_LENGTH</span><span class="p">,</span>
+                       <span class="n">num_slices</span> <span class="o">=</span> <span class="n">NUM_SLICES</span><span class="p">,</span> <span class="n">days_offset</span> <span class="o">=</span> <span class="n">DAYS_OFFSET</span><span class="p">,</span> <span class="n">days_shift</span> <span class="o">=</span> <span class="n">DAYS_SHIFT</span><span class="p">,</span> <span class="n">days_train</span> <span class="o">=</span> <span class="n">DAYS_TRAIN</span><span class="p">,</span> <span class="n">days_test</span><span class="o">=</span><span class="n">DAYS_TEST</span> <span class="p">):</span>
+    
+    <span class="n">data</span><span class="p">,</span> <span class="n">buys</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span> <span class="n">path</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_item_support</span><span class="p">,</span> <span class="n">min_session_length</span> <span class="p">)</span>
+    <span class="n">slice_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">+</span><span class="n">file</span><span class="p">,</span> <span class="n">num_slices</span><span class="p">,</span> <span class="n">days_offset</span><span class="p">,</span> <span class="n">days_shift</span><span class="p">,</span> <span class="n">days_train</span><span class="p">,</span> <span class="n">days_test</span> <span class="p">)</span>
+    
+<span class="c1">#just load and show info</span>
+<span class="k">def</span> <span class="nf">preprocess_info</span><span class="p">(</span> <span class="n">path</span><span class="o">=</span><span class="n">PATH</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">=</span><span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">min_item_support</span><span class="o">=</span><span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">min_session_length</span><span class="o">=</span><span class="n">MIN_SESSION_LENGTH</span> <span class="p">):</span>
+    
+    <span class="n">data</span><span class="p">,</span> <span class="n">buys</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span> <span class="n">path</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_item_support</span><span class="p">,</span> <span class="n">min_session_length</span> <span class="p">)</span>
+    
+<span class="k">def</span> <span class="nf">preprocess_save</span><span class="p">(</span> <span class="n">path</span><span class="o">=</span><span class="n">PATH</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">=</span><span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">min_item_support</span><span class="o">=</span><span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">min_session_length</span><span class="o">=</span><span class="n">MIN_SESSION_LENGTH</span> <span class="p">):</span>
+    
+    <span class="n">data</span><span class="p">,</span> <span class="n">buys</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span> <span class="n">path</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">filter_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_item_support</span><span class="p">,</span> <span class="n">min_session_length</span> <span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">path_proc</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;_preprocessed.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+<span class="c1">#preprocessing to create a file with buy actions</span>
+<span class="k">def</span> <span class="nf">preprocess_buys</span><span class="p">(</span> <span class="n">path</span><span class="o">=</span><span class="n">PATH</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">FILE</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">=</span><span class="n">PATH_PROCESSED</span> <span class="p">):</span> 
+    <span class="n">data</span><span class="p">,</span> <span class="n">buys</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span> <span class="n">path</span><span class="o">+</span><span class="n">file</span> <span class="p">)</span>
+    <span class="n">store_buys</span><span class="p">(</span><span class="n">buys</span><span class="p">,</span> <span class="n">path_proc</span><span class="o">+</span><span class="n">file</span><span class="p">)</span>
+    
+<span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span> <span class="n">file</span> <span class="p">)</span> <span class="p">:</span> 
+    
+    <span class="c1">#load csv</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span> <span class="n">file</span><span class="o">+</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">usecols</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">})</span>
+    <span class="c1">#specify header names</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">,</span><span class="s1">&#39;UserId&#39;</span><span class="p">,</span><span class="s1">&#39;Type&#39;</span><span class="p">,</span><span class="s1">&#39;ItemId&#39;</span><span class="p">]</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">Time</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span> <span class="nb">int</span> <span class="p">)</span>
+    
+    <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span> <span class="p">[</span><span class="s1">&#39;UserId&#39;</span><span class="p">,</span><span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span>
+    
+    <span class="c1">#sessionize    </span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeTmp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+    
+    <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span> <span class="p">[</span><span class="s1">&#39;UserId&#39;</span><span class="p">,</span><span class="s1">&#39;TimeTmp&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span>
+<span class="c1">#     users = data.groupby(&#39;UserId&#39;)</span>
+    
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeShift&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeTmp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeDiff&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeTmp&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeShift&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">dt</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;SessionIdTmp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeDiff&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">SESSION_LENGTH</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span> <span class="nb">int</span> <span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;SessionId&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;SessionIdTmp&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span> <span class="n">skipna</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span>
+    <span class="k">del</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;SessionIdTmp&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeShift&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeDiff&#39;</span><span class="p">]</span>
+    
+    
+    <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span> <span class="p">[</span><span class="s1">&#39;SessionId&#39;</span><span class="p">,</span><span class="s1">&#39;Time&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span>
+    
+    <span class="n">cart</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">Type</span> <span class="o">==</span> <span class="s1">&#39;addtocart&#39;</span><span class="p">]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">Type</span> <span class="o">==</span> <span class="s1">&#39;view&#39;</span><span class="p">]</span>
+    <span class="k">del</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;Type&#39;</span><span class="p">]</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    
+    <span class="c1">#output</span>
+    
+    <span class="nb">print</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="p">)</span>
+    <span class="n">data_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    <span class="n">data_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    
+    <span class="k">del</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;TimeTmp&#39;</span><span class="p">]</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loaded data set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data_start</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">data_end</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">cart</span><span class="p">;</span>
+
+
+<span class="k">def</span> <span class="nf">filter_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_item_support</span><span class="p">,</span> <span class="n">min_session_length</span> <span class="p">)</span> <span class="p">:</span> 
+    
+    <span class="c1">#y?</span>
+    <span class="n">session_lengths</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_lengths</span><span class="p">[</span> <span class="n">session_lengths</span><span class="o">&gt;</span><span class="mi">1</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    
+    <span class="c1">#filter item support</span>
+    <span class="n">item_supports</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;ItemId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">item_supports</span><span class="p">[</span> <span class="n">item_supports</span><span class="o">&gt;=</span> <span class="n">min_item_support</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    
+    <span class="c1">#filter session length</span>
+    <span class="n">session_lengths</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_lengths</span><span class="p">[</span> <span class="n">session_lengths</span><span class="o">&gt;=</span> <span class="n">min_session_length</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    
+    <span class="c1">#output</span>
+    <span class="n">data_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    <span class="n">data_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Filtered data set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data_start</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">data_end</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">data</span><span class="p">;</span>
+
+<span class="k">def</span> <span class="nf">filter_min_date</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">min_date</span><span class="o">=</span><span class="s1">&#39;2014-04-01&#39;</span> <span class="p">)</span> <span class="p">:</span>
+    
+    <span class="n">min_datetime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">min_date</span> <span class="o">+</span> <span class="s1">&#39; 00:00:00&#39;</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span>
+    
+    <span class="c1">#filter</span>
+    <span class="n">session_max_times</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">session_keep</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span> <span class="n">session_max_times</span> <span class="o">&gt;</span> <span class="n">min_datetime</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span>
+    
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_keep</span><span class="p">)</span> <span class="p">]</span>
+    
+    <span class="c1">#output</span>
+    <span class="n">data_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    <span class="n">data_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Filtered data set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data_start</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">data_end</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">data</span><span class="p">;</span>
+
+
+
+<span class="k">def</span> <span class="nf">split_data_org</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">output_file</span> <span class="p">)</span> <span class="p">:</span>
+    
+    <span class="n">tmax</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">session_max_times</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">session_train</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span><span class="n">session_max_times</span> <span class="o">&lt;</span> <span class="n">tmax</span><span class="o">-</span><span class="mi">86400</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">session_test</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span><span class="n">session_max_times</span> <span class="o">&gt;=</span> <span class="n">tmax</span><span class="o">-</span><span class="mi">86400</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">train</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_train</span><span class="p">)]</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_test</span><span class="p">)]</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)]</span>
+    <span class="n">tslength</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">tslength</span><span class="p">[</span><span class="n">tslength</span><span class="o">&gt;=</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Full train set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">),</span> <span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">()))</span>
+    <span class="n">train</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_train_full.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Test set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test</span><span class="p">),</span> <span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">()))</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_test.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    <span class="n">tmax</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">session_max_times</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">session_train</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span><span class="n">session_max_times</span> <span class="o">&lt;</span> <span class="n">tmax</span><span class="o">-</span><span class="mi">86400</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">session_valid</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span><span class="n">session_max_times</span> <span class="o">&gt;=</span> <span class="n">tmax</span><span class="o">-</span><span class="mi">86400</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">train_tr</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_train</span><span class="p">)]</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_valid</span><span class="p">)]</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">valid</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">valid</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">train_tr</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)]</span>
+    <span class="n">tslength</span> <span class="o">=</span> <span class="n">valid</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">valid</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">valid</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">tslength</span><span class="p">[</span><span class="n">tslength</span><span class="o">&gt;=</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Train set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_tr</span><span class="p">),</span> <span class="n">train_tr</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">train_tr</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">()))</span>
+    <span class="n">train_tr</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_train_tr.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Validation set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">valid</span><span class="p">),</span> <span class="n">valid</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">valid</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">()))</span>
+    <span class="n">valid</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span> <span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_train_valid.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    
+    
+<span class="k">def</span> <span class="nf">split_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">days_test</span> <span class="p">)</span> <span class="p">:</span>
+    
+    <span class="n">data_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    <span class="n">test_from</span> <span class="o">=</span> <span class="n">data_end</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span> <span class="n">days_test</span> <span class="p">)</span>
+    
+    <span class="n">session_max_times</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">session_train</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span> <span class="n">session_max_times</span> <span class="o">&lt;</span> <span class="n">test_from</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">session_test</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span> <span class="n">session_max_times</span> <span class="o">&gt;=</span> <span class="n">test_from</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">train</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_train</span><span class="p">)]</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_test</span><span class="p">)]</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)]</span>
+    <span class="n">tslength</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">tslength</span><span class="p">[</span><span class="n">tslength</span><span class="o">&gt;=</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Full train set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">),</span> <span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">()))</span>
+    <span class="n">train</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_train_full.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Test set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test</span><span class="p">),</span> <span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">()))</span>
+    <span class="n">test</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_test.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    
+    
+<span class="k">def</span> <span class="nf">slice_data</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">num_slices</span><span class="p">,</span> <span class="n">days_offset</span><span class="p">,</span> <span class="n">days_shift</span><span class="p">,</span> <span class="n">days_train</span><span class="p">,</span> <span class="n">days_test</span> <span class="p">):</span> 
+    
+    <span class="k">for</span> <span class="n">slice_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span> <span class="mi">0</span><span class="p">,</span> <span class="n">num_slices</span> <span class="p">)</span> <span class="p">:</span>
+        <span class="n">split_data_slice</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">days_offset</span><span class="o">+</span><span class="p">(</span><span class="n">slice_id</span><span class="o">*</span><span class="n">days_shift</span><span class="p">),</span> <span class="n">days_train</span><span class="p">,</span> <span class="n">days_test</span> <span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">split_data_slice</span><span class="p">(</span> <span class="n">data</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">slice_id</span><span class="p">,</span> <span class="n">days_offset</span><span class="p">,</span> <span class="n">days_train</span><span class="p">,</span> <span class="n">days_test</span> <span class="p">)</span> <span class="p">:</span>
+    
+    <span class="n">data_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    <span class="n">data_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Full data set </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="n">slice_id</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data_start</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">data_end</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    
+    <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">data</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span> <span class="n">days_offset</span> <span class="p">)</span> 
+    <span class="n">middle</span> <span class="o">=</span>  <span class="n">start</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span> <span class="n">days_train</span> <span class="p">)</span>
+    <span class="n">end</span> <span class="o">=</span>  <span class="n">middle</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span> <span class="n">days_test</span> <span class="p">)</span>
+    
+    <span class="c1">#prefilter the timespan</span>
+    <span class="n">session_max_times</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">greater_start</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span><span class="n">session_max_times</span> <span class="o">&gt;=</span> <span class="n">start</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">lower_end</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span><span class="n">session_max_times</span> <span class="o">&lt;=</span> <span class="n">end</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">data_filtered</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">greater_start</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span> <span class="n">lower_end</span> <span class="p">))]</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Slice data set </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="n">slice_id</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_filtered</span><span class="p">),</span> <span class="n">data_filtered</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data_filtered</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">start</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">middle</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">end</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    <span class="c1">#split to train and test</span>
+    <span class="n">session_max_times</span> <span class="o">=</span> <span class="n">data_filtered</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">sessions_train</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span><span class="n">session_max_times</span> <span class="o">&lt;</span> <span class="n">middle</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()]</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">sessions_test</span> <span class="o">=</span> <span class="n">session_max_times</span><span class="p">[</span><span class="n">session_max_times</span> <span class="o">&gt;=</span> <span class="n">middle</span><span class="o">.</span><span class="n">timestamp</span><span class="p">()]</span><span class="o">.</span><span class="n">index</span>
+    
+    <span class="n">train</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">sessions_train</span><span class="p">)]</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Train set </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="n">slice_id</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">),</span> <span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">start</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">middle</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    <span class="n">train</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_train_full.&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">slice_id</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    
+    <span class="n">test</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">sessions_test</span><span class="p">)]</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)]</span>
+    
+    <span class="n">tslength</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">tslength</span><span class="p">[</span><span class="n">tslength</span><span class="o">&gt;=</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Test set </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1"> </span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="n">slice_id</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">test</span><span class="p">),</span> <span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">middle</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">end</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    <span class="n">test</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">output_file</span> <span class="o">+</span> <span class="s1">&#39;_test.&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">slice_id</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">store_buys</span><span class="p">(</span> <span class="n">buys</span><span class="p">,</span> <span class="n">target</span> <span class="p">):</span>
+    <span class="n">buys</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span> <span class="n">target</span> <span class="o">+</span> <span class="s1">&#39;_buys.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Run the preprocessing configured above.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="nb">print</span><span class="p">(</span> <span class="s2">&quot;START preprocessing &quot;</span><span class="p">,</span> <span class="n">METHOD</span> <span class="p">)</span>
+    <span class="n">sc</span><span class="p">,</span> <span class="n">st</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">METHOD</span> <span class="o">==</span> <span class="s2">&quot;info&quot;</span><span class="p">:</span>
+        <span class="n">preprocess_info</span><span class="p">(</span> <span class="n">PATH</span><span class="p">,</span> <span class="n">FILE</span><span class="p">,</span> <span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">MIN_SESSION_LENGTH</span> <span class="p">)</span>
+    
+    <span class="k">elif</span> <span class="n">METHOD</span> <span class="o">==</span> <span class="s2">&quot;org&quot;</span><span class="p">:</span>
+        <span class="n">preprocess_org</span><span class="p">(</span> <span class="n">PATH</span><span class="p">,</span> <span class="n">FILE</span><span class="p">,</span> <span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">MIN_SESSION_LENGTH</span> <span class="p">)</span>
+     
+    <span class="k">elif</span> <span class="n">METHOD</span> <span class="o">==</span> <span class="s2">&quot;org_min_date&quot;</span><span class="p">:</span>
+        <span class="n">preprocess_org_min_date</span><span class="p">(</span> <span class="n">PATH</span><span class="p">,</span> <span class="n">FILE</span><span class="p">,</span> <span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">MIN_SESSION_LENGTH</span><span class="p">,</span> <span class="n">MIN_DATE</span> <span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">METHOD</span> <span class="o">==</span> <span class="s2">&quot;day_test&quot;</span><span class="p">:</span>
+        <span class="n">preprocess_days_test</span><span class="p">(</span> <span class="n">PATH</span><span class="p">,</span> <span class="n">FILE</span><span class="p">,</span> <span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">MIN_SESSION_LENGTH</span><span class="p">,</span> <span class="n">DAYS_TEST</span> <span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">METHOD</span> <span class="o">==</span> <span class="s2">&quot;day_test_min_date&quot;</span><span class="p">:</span>
+        <span class="n">preprocess_days_test_min_date</span><span class="p">(</span> <span class="n">PATH</span><span class="p">,</span> <span class="n">FILE</span><span class="p">,</span> <span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">MIN_SESSION_LENGTH</span><span class="p">,</span> <span class="n">DAYS_TEST</span><span class="p">,</span> <span class="n">MIN_DATE</span> <span class="p">)</span>
+    
+    <span class="k">elif</span> <span class="n">METHOD</span> <span class="o">==</span> <span class="s2">&quot;slice&quot;</span><span class="p">:</span>
+        <span class="n">preprocess_slices</span><span class="p">(</span> <span class="n">PATH</span><span class="p">,</span> <span class="n">FILE</span><span class="p">,</span> <span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">MIN_SESSION_LENGTH</span><span class="p">,</span> <span class="n">NUM_SLICES</span><span class="p">,</span> <span class="n">DAYS_OFFSET</span><span class="p">,</span> <span class="n">DAYS_SHIFT</span><span class="p">,</span> <span class="n">DAYS_TRAIN</span><span class="p">,</span> <span class="n">DAYS_TEST</span> <span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">METHOD</span> <span class="o">==</span> <span class="s2">&quot;buys&quot;</span><span class="p">:</span>
+        <span class="n">preprocess_buys</span><span class="p">(</span> <span class="n">PATH</span><span class="p">,</span> <span class="n">FILE</span><span class="p">,</span> <span class="n">PATH_PROCESSED</span> <span class="p">)</span>
+        
+    <span class="k">elif</span> <span class="n">METHOD</span> <span class="o">==</span> <span class="s2">&quot;save&quot;</span><span class="p">:</span>
+        <span class="n">preprocess_save</span><span class="p">(</span> <span class="n">PATH</span><span class="p">,</span> <span class="n">FILE</span><span class="p">,</span> <span class="n">PATH_PROCESSED</span><span class="p">,</span> <span class="n">MIN_ITEM_SUPPORT</span><span class="p">,</span> <span class="n">MIN_SESSION_LENGTH</span> <span class="p">)</span>
+        
+    <span class="k">else</span><span class="p">:</span> 
+        <span class="nb">print</span><span class="p">(</span> <span class="s2">&quot;Invalid method &quot;</span><span class="p">,</span> <span class="n">METHOD</span> <span class="p">)</span>
+        
+    <span class="nb">print</span><span class="p">(</span> <span class="s2">&quot;END preproccessing &quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">sc</span><span class="p">),</span> <span class="s2">&quot;c &quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">st</span><span class="p">),</span> <span class="s2">&quot;s&quot;</span> <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>START preprocessing  slice
+               Time   UserId  ItemId             TimeTmp  SessionId
+1361687  1442004589        0  285930 2015-09-11 20:49:49          0
+1367212  1442004759        0  357564 2015-09-11 20:52:39          0
+1367342  1442004917        0   67045 2015-09-11 20:55:17          0
+830385   1439487966        1   72028 2015-08-13 17:46:06          1
+742616   1438969904        2  325215 2015-08-07 17:51:44          2
+...             ...      ...     ...                 ...        ...
+206556   1433972768  1407575  121220 2015-06-10 21:46:08    1761093
+47311    1433343689  1407576  356208 2015-06-03 15:01:29    1761094
+1762583  1431899284  1407577  427784 2015-05-17 21:48:04    1761095
+1744277  1431825683  1407578  188736 2015-05-17 01:21:23    1761096
+482559   1435184526  1407579    2521 2015-06-24 22:22:06    1761097
+
+[2664312 rows x 5 columns]
+1430622011
+1442545187
+Loaded data set
+	Events: 2664312
+	Sessions: 1755206
+	Items: 234838
+	Span: 2015-05-03 / 2015-09-18
+
+
+Filtered data set
+	Events: 1085763
+	Sessions: 306919
+	Items: 49070
+	Span: 2015-05-03 / 2015-09-18
+
+
+Full data set 0
+	Events: 1085763
+	Sessions: 306919
+	Items: 49070
+	Span: 2015-05-03T03:00:33+00:00 / 2015-09-18T02:58:58+00:00
+Slice data set 0
+	Events: 230003
+	Sessions: 63746
+	Items: 32977
+	Span: 2015-05-03 / 2015-05-28 / 2015-05-30
+Train set 0
+	Events: 213660
+	Sessions: 59110
+	Items: 32052
+	Span: 2015-05-03 / 2015-05-28
+Test set 0
+	Events: 14457
+	Sessions: 4136
+	Items: 6506
+	Span: 2015-05-28 / 2015-05-30 
+
+
+Full data set 1
+	Events: 1085763
+	Sessions: 306919
+	Items: 49070
+	Span: 2015-05-03T03:00:33+00:00 / 2015-09-18T02:58:58+00:00
+Slice data set 1
+	Events: 229891
+	Sessions: 62631
+	Items: 33577
+	Span: 2015-05-30 / 2015-06-24 / 2015-06-26
+Train set 1
+	Events: 212266
+	Sessions: 57795
+	Items: 32529
+	Span: 2015-05-30 / 2015-06-24
+Test set 1
+	Events: 15425
+	Sessions: 4260
+	Items: 6801
+	Span: 2015-06-24 / 2015-06-26 
+
+
+Full data set 2
+	Events: 1085763
+	Sessions: 306919
+	Items: 49070
+	Span: 2015-05-03T03:00:33+00:00 / 2015-09-18T02:58:58+00:00
+Slice data set 2
+	Events: 224835
+	Sessions: 62257
+	Items: 34396
+	Span: 2015-06-26 / 2015-07-21 / 2015-07-23
+Train set 2
+	Events: 207176
+	Sessions: 57229
+	Items: 33453
+	Span: 2015-06-26 / 2015-07-21
+Test set 2
+	Events: 15650
+	Sessions: 4486
+	Items: 6937
+	Span: 2015-07-21 / 2015-07-23 
+
+
+Full data set 3
+	Events: 1085763
+	Sessions: 306919
+	Items: 49070
+	Span: 2015-05-03T03:00:33+00:00 / 2015-09-18T02:58:58+00:00
+Slice data set 3
+	Events: 206774
+	Sessions: 60383
+	Items: 33305
+	Span: 2015-07-23 / 2015-08-17 / 2015-08-19
+Train set 3
+	Events: 191128
+	Sessions: 55786
+	Items: 32263
+	Span: 2015-07-23 / 2015-08-17
+Test set 3
+	Events: 13486
+	Sessions: 3959
+	Items: 6065
+	Span: 2015-08-17 / 2015-08-19 
+
+
+Full data set 4
+	Events: 1085763
+	Sessions: 306919
+	Items: 49070
+	Span: 2015-05-03T03:00:33+00:00 / 2015-09-18T02:58:58+00:00
+Slice data set 4
+	Events: 179452
+	Sessions: 53595
+	Items: 30420
+	Span: 2015-08-19 / 2015-09-13 / 2015-09-15
+Train set 4
+	Events: 166160
+	Sessions: 49492
+	Items: 29543
+	Span: 2015-08-19 / 2015-09-13
+Test set 4
+	Events: 11502
+	Sessions: 3561
+	Items: 5329
+	Span: 2015-09-13 / 2015-09-15 
+
+
+END preproccessing  17.43916940689087 c  17.43917155265808 s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Limit-using-entropy-rate-estimation">Limit using entropy rate estimation<a class="anchor-link" href="#Limit-using-entropy-rate-estimation"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Convert-the-session-data-into-a-sequence-format-file">Convert the session data into a sequence format file<a class="anchor-link" href="#Convert-the-session-data-into-a-sequence-format-file"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">_datetime</span> <span class="kn">import</span> <span class="n">timezone</span><span class="p">,</span> <span class="n">datetime</span>
+
+
+<span class="k">def</span> <span class="nf">load_data</span><span class="p">(</span> <span class="n">path</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">rows_train</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows_test</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">slice_num</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">train_eval</span><span class="o">=</span><span class="kc">False</span> <span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Loads a tuple of training and test set with the given parameters. </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    --------</span>
+<span class="sd">    path : string</span>
+<span class="sd">        Base path to look in for the prepared data files</span>
+<span class="sd">    file : string</span>
+<span class="sd">        Prefix of  the dataset you want to use.</span>
+<span class="sd">        &quot;yoochoose-clicks-full&quot; loads yoochoose-clicks-full_train_full.txt and yoochoose-clicks-full_test.txt</span>
+<span class="sd">    rows_train : int or None</span>
+<span class="sd">        Number of rows to load from the training set file. </span>
+<span class="sd">        This option will automatically filter the test set to only retain items included in the training set.  </span>
+<span class="sd">    rows_test : int or None</span>
+<span class="sd">        Number of rows to load from the test set file. </span>
+<span class="sd">    slice_num : </span>
+<span class="sd">        Adds a slice index to the constructed file_path</span>
+<span class="sd">        yoochoose-clicks-full_train_full.0.txt</span>
+<span class="sd">    density : float</span>
+<span class="sd">        Percentage of the sessions to randomly retain from the original data (0-1). </span>
+<span class="sd">        The result is cached for the execution of multiple experiments. </span>
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    out : tuple of pandas.DataFrame</span>
+<span class="sd">        (train, test)</span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;START load data&#39;</span><span class="p">)</span> 
+    <span class="n">st</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    
+    <span class="n">split</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">slice_num</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">slice_num</span><span class="p">,</span> <span class="nb">int</span> <span class="p">)</span> <span class="p">):</span>
+        <span class="n">split</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">slice_num</span><span class="p">)</span>
+    
+    <span class="n">train_appendix</span> <span class="o">=</span> <span class="s1">&#39;_train_full&#39;</span>
+    <span class="n">test_appendix</span> <span class="o">=</span> <span class="s1">&#39;_test&#39;</span>
+    <span class="k">if</span> <span class="n">train_eval</span><span class="p">:</span>
+        <span class="n">train_appendix</span> <span class="o">=</span> <span class="s1">&#39;_train_tr&#39;</span>
+        <span class="n">test_appendix</span> <span class="o">=</span> <span class="s1">&#39;_train_valid&#39;</span>
+    
+    <span class="n">density_appendix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">if</span><span class="p">(</span> <span class="n">density</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="p">):</span> <span class="c1">#create sample</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span> <span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">train_appendix</span> <span class="o">+</span> <span class="n">split</span> <span class="o">+</span> <span class="s1">&#39;.txt.&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span> <span class="n">density</span> <span class="p">)</span> <span class="p">)</span> <span class="p">:</span>
+            
+            <span class="n">train</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">train_appendix</span> <span class="o">+</span> <span class="n">split</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ItemId&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">})</span>
+            <span class="n">test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">test_appendix</span> <span class="o">+</span> <span class="n">split</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ItemId&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">}</span> <span class="p">)</span>
+            
+            <span class="n">sessions</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span> 
+            <span class="n">drop_n</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">sessions</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sessions</span><span class="p">)</span> <span class="o">*</span> <span class="n">density</span><span class="p">)</span> <span class="p">)</span>
+            <span class="n">drop_sessions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">drop_n</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">train</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span> <span class="o">~</span><span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span> <span class="n">drop_sessions</span> <span class="p">)</span> <span class="p">]</span>
+            <span class="n">train</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span> <span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">train_appendix</span> <span class="o">+</span><span class="n">split</span><span class="o">+</span><span class="s1">&#39;.txt.&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">density</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span>
+            
+            <span class="n">sessions</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span> 
+            <span class="n">drop_n</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">sessions</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sessions</span><span class="p">)</span> <span class="o">*</span> <span class="n">density</span><span class="p">)</span> <span class="p">)</span>
+            <span class="n">drop_sessions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">drop_n</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span> <span class="o">~</span><span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span> <span class="n">drop_sessions</span> <span class="p">)</span> <span class="p">]</span>
+            <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)]</span>
+            <span class="n">test</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span> <span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">test_appendix</span> <span class="o">+</span><span class="n">split</span><span class="o">+</span><span class="s1">&#39;.txt.&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">density</span><span class="p">),</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span> <span class="p">)</span>
+    
+        <span class="n">density_appendix</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">density</span><span class="p">)</span>
+            
+    <span class="k">if</span><span class="p">(</span> <span class="n">rows_train</span> <span class="o">==</span> <span class="kc">None</span> <span class="p">):</span>
+        <span class="n">train</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">train_appendix</span> <span class="o">+</span><span class="n">split</span><span class="o">+</span><span class="s1">&#39;.txt&#39;</span><span class="o">+</span><span class="n">density_appendix</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ItemId&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">train</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">train_appendix</span> <span class="o">+</span><span class="n">split</span><span class="o">+</span><span class="s1">&#39;.txt&#39;</span><span class="o">+</span><span class="n">density_appendix</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ItemId&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">},</span> <span class="n">nrows</span><span class="o">=</span><span class="n">rows_train</span><span class="p">)</span>
+        <span class="n">session_lengths</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="n">train</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_lengths</span><span class="p">[</span> <span class="n">session_lengths</span><span class="o">&gt;</span><span class="mi">1</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>     
+    
+    <span class="k">if</span><span class="p">(</span> <span class="n">rows_test</span> <span class="o">==</span> <span class="kc">None</span> <span class="p">):</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">test_appendix</span> <span class="o">+</span><span class="n">split</span><span class="o">+</span><span class="s1">&#39;.txt&#39;</span><span class="o">+</span><span class="n">density_appendix</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ItemId&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">}</span> <span class="p">)</span>
+    <span class="k">else</span> <span class="p">:</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="n">test_appendix</span> <span class="o">+</span><span class="n">split</span><span class="o">+</span><span class="s1">&#39;.txt&#39;</span><span class="o">+</span><span class="n">density_appendix</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ItemId&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">},</span> <span class="n">nrows</span><span class="o">=</span><span class="n">rows_test</span> <span class="p">)</span>
+        <span class="n">session_lengths</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_lengths</span><span class="p">[</span> <span class="n">session_lengths</span><span class="o">&gt;</span><span class="mi">1</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    
+<span class="c1">#     rows_train = 10000</span>
+<span class="c1">#     train = train.tail(10000)</span>
+        
+    <span class="k">if</span><span class="p">(</span> <span class="n">rows_train</span> <span class="o">!=</span> <span class="kc">None</span> <span class="p">):</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="p">)]</span>
+        <span class="n">session_lengths</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;SessionId&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="p">,</span> <span class="n">session_lengths</span><span class="p">[</span> <span class="n">session_lengths</span><span class="o">&gt;</span><span class="mi">1</span> <span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+          
+    <span class="c1">#output</span>
+    <span class="n">data_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">train</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    <span class="n">data_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">train</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loaded train set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">train</span><span class="p">),</span> <span class="n">train</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">train</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data_start</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">data_end</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    <span class="n">data_start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">test</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    <span class="n">data_end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span> <span class="n">test</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">timezone</span><span class="o">.</span><span class="n">utc</span> <span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Loaded test set</span><span class="se">\n\t</span><span class="s1">Events: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Sessions: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Items: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Span: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span>
+          <span class="nb">format</span><span class="p">(</span> <span class="nb">len</span><span class="p">(</span><span class="n">test</span><span class="p">),</span> <span class="n">test</span><span class="o">.</span><span class="n">SessionId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">test</span><span class="o">.</span><span class="n">ItemId</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data_start</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">data_end</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="p">)</span> <span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span> <span class="s1">&#39;END load data &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">sc</span><span class="p">),</span> <span class="s1">&#39;c / &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">st</span><span class="p">),</span> <span class="s1">&#39;s&#39;</span> <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">test</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">load_buys</span><span class="p">(</span> <span class="n">path</span><span class="p">,</span> <span class="n">file</span> <span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Load all buy events from the youchoose file, retains events fitting in the given test set and merges both data sets into one</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    --------</span>
+<span class="sd">    path : string</span>
+<span class="sd">        Base path to look in for the prepared data files</span>
+<span class="sd">    file : string</span>
+<span class="sd">        Prefix of  the dataset you want to use.</span>
+<span class="sd">        &quot;yoochoose-clicks-full&quot; loads yoochoose-clicks-full_train_full.txt and yoochoose-clicks-full_test.txt</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    --------</span>
+<span class="sd">    out : pandas.DataFrame</span>
+<span class="sd">        test with buys</span>
+<span class="sd">    </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;START load buys&#39;</span><span class="p">)</span> 
+    <span class="n">st</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">sc</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        
+    <span class="c1">#load csv</span>
+    <span class="n">buys</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="n">file</span> <span class="o">+</span> <span class="s1">&#39;.txt&#39;</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;ItemId&#39;</span><span class="p">:</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">})</span>
+        
+    <span class="nb">print</span><span class="p">(</span> <span class="s1">&#39;END load buys &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">sc</span><span class="p">),</span> <span class="s1">&#39;c / &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">st</span><span class="p">),</span> <span class="s1">&#39;s&#39;</span> <span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">buys</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">dump_sequence</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">file_prefix</span><span class="p">,</span> <span class="n">out_fn</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">slic</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert training/testing slices into a sequence format</span>
+<span class="sd">        suitable for entropy rate estimation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">file_prefix</span><span class="p">,</span>
+        <span class="n">rows_train</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows_test</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span>
+        <span class="n">slice_num</span><span class="o">=</span><span class="n">slic</span><span class="p">)</span>
+
+    <span class="c1"># append all</span>
+    <span class="n">all_data</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+
+    <span class="c1"># sort by sequence, then timestamp</span>
+    <span class="n">groupby</span> <span class="o">=</span> <span class="n">all_data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;SessionId&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_fn</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">session</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">:</span>
+            <span class="n">item_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">item_id</span> <span class="k">for</span>
+                <span class="n">item_id</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)[</span><span class="s2">&quot;ItemId&quot;</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">item_ids</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">item_id</span><span class="p">))</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;-1</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <span class="s1">&#39;./retailrocket/slices/&#39;</span>
+<span class="n">file_prefix</span> <span class="o">=</span> <span class="s1">&#39;events&#39;</span>
+<span class="n">output_file</span> <span class="o">=</span> <span class="s1">&#39;./retailrocket/seq/s0.txt&#39;</span>
+<span class="n">d</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># downsample the input data (0.1 - use only 10%% of input)</span>
+<span class="n">s</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># slice number, 0-4</span>
+
+<span class="err">!</span><span class="n">mkdir</span> <span class="o">./</span><span class="n">retailrocket</span><span class="o">/</span><span class="n">seq</span>
+<span class="n">dump_sequence</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">file_prefix</span><span class="p">,</span> <span class="n">output_file</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>START load data
+Loaded train set
+	Events: 213660
+	Sessions: 59110
+	Items: 32052
+	Span: 2015-05-03 / 2015-05-28
+
+Loaded test set
+	Events: 14457
+	Sessions: 4136
+	Items: 6506
+	Span: 2015-05-28 / 2015-05-30
+
+END load data  0.10811591148376465 c /  0.10811710357666016 s
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Entropy-rate-estimation">Entropy rate estimation<a class="anchor-link" href="#Entropy-rate-estimation"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="k">def</span> <span class="nf">calc_entropy2</span><span class="p">(</span><span class="n">in_fn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Entropy rate estimation for a sequence</span>
+<span class="sd">        input: file with each sequence element (integer) on its own row</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">in_fn</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">f</span><span class="p">]</span>
+
+    <span class="c1"># calculate Lempel-Ziv estimate of entropy</span>
+    <span class="n">lambda_sum</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">seq1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>                <span class="c1"># single item sequences</span>
+    <span class="n">seq2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>                <span class="c1"># two-item sequences</span>
+    <span class="n">seq3</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>    <span class="c1"># three-item sequences index</span>
+
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">in_fn</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">timestep</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">10</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">k_max</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1"># single item</span>
+        <span class="k">if</span> <span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="n">seq1</span><span class="p">:</span>
+            <span class="n">k_max</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="c1"># two items</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="ow">and</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">2</span><span class="p">])</span> <span class="ow">in</span> <span class="n">seq2</span><span class="p">:</span>
+                <span class="n">k_max</span> <span class="o">=</span> <span class="mi">2</span>
+                <span class="c1"># three or more</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">subseq_start</span> <span class="ow">in</span> <span class="n">seq3</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">3</span><span class="p">])]:</span>
+                        <span class="n">k</span> <span class="o">=</span> <span class="mi">3</span>
+                        <span class="k">while</span> <span class="n">subseq_start</span> <span class="o">+</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">i</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">+</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">events</span><span class="p">[</span><span class="n">subseq_start</span> <span class="o">+</span> <span class="n">k</span><span class="p">]</span> <span class="o">!=</span> <span class="n">events</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">k</span><span class="p">]:</span>
+                                <span class="k">break</span>
+                            <span class="n">k</span> <span class="o">+=</span> <span class="mi">1</span>
+                        <span class="n">k_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k_max</span><span class="p">)</span>
+
+        <span class="n">lambda_sum</span> <span class="o">+=</span> <span class="p">(</span><span class="n">k_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="c1"># as in Xu, et al. (2019)</span>
+        <span class="c1">#print(i, ev, k_max)</span>
+
+        <span class="c1"># update index</span>
+        <span class="n">seq1</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">seq2</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                 <span class="n">seq3</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">events</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="n">timestep</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;done&quot;</span><span class="p">)</span>
+
+    <span class="n">S</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="n">lambda_sum</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;S:&quot;</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;m (for \Pi^max equation):&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq1</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">input_file</span> <span class="o">=</span> <span class="s1">&#39;./retailrocket/seq/s0.txt&#39;</span>
+
+<span class="n">calc_entropy2</span><span class="p">(</span><span class="n">input_file</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>./retailrocket/seq/s0.txt 291363
+29137 done
+58274 done
+87411 done
+116548 done
+145685 done
+174822 done
+203959 done
+233096 done
+262233 done
+S: 7.136608275066677
+m (for \Pi^max equation): 32053
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The predictability limit can be computed using the entropy rate estimate S and the unique event count m.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Limit-for-some-algorithms">Limit for some algorithms<a class="anchor-link" href="#Limit-for-some-algorithms"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Calculate co-occurrence of the item to predict (in a recommendation accuracy test) and the current item (given to the recommender as an input) in the training data.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">test_all</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">file_prefix</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">slic</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+    <span class="n">all_stats</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">slic</span><span class="p">:</span>
+        <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">load_data</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">file_prefix</span><span class="p">,</span>
+            <span class="n">rows_train</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rows_test</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="n">density</span><span class="p">,</span>
+            <span class="n">slice_num</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+        
+        <span class="n">s</span><span class="p">,</span> <span class="n">i2s</span> <span class="o">=</span> <span class="n">load_sessions</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">file_prefix</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">test_reachability</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">i2s</span><span class="p">,</span> <span class="n">test</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">stats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">all_stats</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+=</span> <span class="n">v</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">all_stats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">test_reachability</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">item2session</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">max_span</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Item co-occurrence in sessions&quot;&quot;&quot;</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;r_cnt&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_next&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_fwd10&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_anywhere&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_anywhere_sess&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+    <span class="n">groupby</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;SessionId&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">session</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">:</span>
+        <span class="n">item_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">item_id</span> <span class="k">for</span>
+            <span class="n">item_id</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)[</span><span class="s2">&quot;ItemId&quot;</span><span class="p">]]</span>
+
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">item_ids</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># step 1: calculate relative to current item</span>
+            <span class="c1"># MC cnt_next</span>
+            <span class="c1"># SR, windowed NB cnt_fwd10</span>
+            <span class="c1"># AR cnt_anywhere</span>
+            <span class="n">item_id</span> <span class="o">=</span> <span class="n">item_ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">target_id</span> <span class="o">=</span> <span class="n">item_ids</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">next_found</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">fwd10_found</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">any_found</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">sess_found</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">seen_sessions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+            <span class="c1"># loop through all sessions</span>
+            <span class="k">for</span> <span class="n">train_sess_id</span> <span class="ow">in</span> <span class="n">item2session</span><span class="p">[</span><span class="n">item_id</span><span class="p">]:</span>
+                <span class="n">seen_sessions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">train_sess_id</span><span class="p">)</span>
+                <span class="n">train_sess</span> <span class="o">=</span> <span class="n">sessions</span><span class="p">[</span><span class="n">train_sess_id</span><span class="p">]</span>
+                <span class="n">last_item</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">train_item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_sess</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">train_item</span> <span class="o">==</span> <span class="n">target_id</span><span class="p">:</span>
+                        <span class="n">any_found</span> <span class="o">=</span> <span class="mi">1</span>
+                        <span class="n">sess_found</span> <span class="o">=</span> <span class="mi">1</span>
+                        <span class="k">if</span> <span class="n">last_item</span> <span class="o">==</span> <span class="n">item_id</span><span class="p">:</span>
+                            <span class="n">next_found</span> <span class="o">=</span> <span class="mi">1</span>
+                            <span class="n">fwd10_found</span> <span class="o">=</span> <span class="mi">1</span>
+                            <span class="k">break</span>
+                        <span class="k">elif</span> <span class="ow">not</span> <span class="n">fwd10_found</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">train_sess</span><span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span> <span class="o">-</span> <span class="n">max_span</span><span class="p">):</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+                            <span class="n">fwd10_found</span> <span class="o">=</span> <span class="mi">1</span>
+                    <span class="n">last_item</span> <span class="o">=</span> <span class="n">train_item</span>
+
+                <span class="k">if</span> <span class="n">next_found</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="c1"># otherwise need to keep searching other sessions</span>
+
+            <span class="c1"># step 2: search using the remainder of the items seen so far</span>
+            <span class="c1"># NB cnt_anywhere_sess</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">sess_found</span><span class="p">:</span>
+                <span class="n">sess_so_far</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">item_ids</span><span class="p">[:</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">sess_so_far</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">train_sess_id</span> <span class="ow">in</span> <span class="n">item2session</span><span class="p">[</span><span class="n">item_id</span><span class="p">]:</span>
+                        <span class="k">if</span> <span class="n">train_sess_id</span> <span class="ow">in</span> <span class="n">seen_sessions</span><span class="p">:</span>
+                            <span class="k">continue</span>
+                        <span class="n">seen_sessions</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">train_sess_id</span><span class="p">)</span>
+
+                        <span class="n">train_sess</span> <span class="o">=</span> <span class="n">sessions</span><span class="p">[</span><span class="n">train_sess_id</span><span class="p">]</span>
+                        <span class="n">last_item</span> <span class="o">=</span> <span class="kc">None</span>
+                        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">train_item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_sess</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">train_item</span> <span class="o">==</span> <span class="n">target_id</span><span class="p">:</span>
+                                <span class="n">sess_found</span> <span class="o">=</span> <span class="mi">1</span>
+                                <span class="k">break</span>
+
+            <span class="c1"># summarize results</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;r_cnt&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_next&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">next_found</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_fwd10&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fwd10_found</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_anywhere&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">any_found</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_anywhere_sess&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">sess_found</span>
+
+    <span class="k">return</span> <span class="n">stats</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">test_forward_backward</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">item2session</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Statistics of whether the item to predict occurs</span>
+<span class="sd">    before or after the current item (when co-occurring in a session)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;f_cnt&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_bwd&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_fwd&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_both&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+    <span class="n">groupby</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;SessionId&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">session</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">:</span>
+        <span class="n">item_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">item_id</span> <span class="k">for</span>
+            <span class="n">item_id</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)[</span><span class="s2">&quot;ItemId&quot;</span><span class="p">]]</span>
+
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">item_ids</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">item_id</span> <span class="o">=</span> <span class="n">item_ids</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">target_id</span> <span class="o">=</span> <span class="n">item_ids</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">item_id</span> <span class="o">==</span> <span class="n">target_id</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">common_sessions</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">item2session</span><span class="p">[</span><span class="n">item_id</span><span class="p">])</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span>
+                <span class="nb">set</span><span class="p">(</span><span class="n">item2session</span><span class="p">[</span><span class="n">target_id</span><span class="p">]))</span>
+
+            <span class="n">bwd</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">fwd</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">both</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="c1"># loop through all sessions</span>
+            <span class="k">for</span> <span class="n">train_sess_id</span> <span class="ow">in</span> <span class="n">common_sessions</span><span class="p">:</span>
+                <span class="n">train_sess</span> <span class="o">=</span> <span class="n">sessions</span><span class="p">[</span><span class="n">train_sess_id</span><span class="p">]</span>
+                <span class="n">item_pos</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">target_pos</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_sess</span><span class="p">)):</span>
+                    <span class="k">if</span> <span class="n">train_sess</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">item_id</span><span class="p">:</span>
+                        <span class="n">item_pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">train_sess</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">target_id</span><span class="p">:</span>
+                        <span class="n">target_pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+                <span class="n">b</span> <span class="o">=</span> <span class="n">f</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">target_pos</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">item_pos</span><span class="p">):</span>
+                    <span class="n">b</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">item_pos</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">target_pos</span><span class="p">):</span>
+                    <span class="n">f</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">bwd</span> <span class="o">+=</span> <span class="n">b</span>
+                <span class="n">fwd</span> <span class="o">+=</span> <span class="n">f</span>
+                <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">both</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># summarize results</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;f_cnt&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">common_sessions</span><span class="p">)</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_bwd&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">bwd</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_fwd&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">fwd</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_both&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">both</span>
+
+    <span class="k">return</span> <span class="n">stats</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">test_out_edges</span><span class="p">(</span><span class="n">sessions</span><span class="p">,</span> <span class="n">item2session</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Count outgoing edges in an item-to-item graph</span>
+<span class="sd">       (edge is one item following another in a session)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;e_cnt&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_u20&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_u10&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;cnt_u05&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+    <span class="n">out_cnt</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">item_ids</span> <span class="ow">in</span> <span class="n">sessions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+        <span class="n">last_item_id</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">item_ids</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">last_item_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out_cnt</span><span class="p">[</span><span class="n">last_item_id</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item_id</span><span class="p">)</span>
+            <span class="n">last_item_id</span> <span class="o">=</span> <span class="n">item_id</span>
+
+    <span class="k">for</span> <span class="n">item_id</span><span class="p">,</span> <span class="n">out_edges</span> <span class="ow">in</span> <span class="n">out_cnt</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;e_cnt&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">out_edges</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">l</span> <span class="o">&lt;=</span> <span class="mi">20</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_u20&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">l</span> <span class="o">&lt;=</span> <span class="mi">10</span><span class="p">:</span>
+                <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_u10&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">l</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">:</span>
+                    <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;cnt_u05&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">return</span> <span class="n">stats</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">load_sessions</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Build a dictionary of sessions and a lookup map for</span>
+<span class="sd">    finding which sessions an item belongs to</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sessions</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">item2session</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="n">groupby</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;SessionId&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">session</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">:</span>
+        <span class="n">item_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">item_id</span> <span class="k">for</span>
+            <span class="n">item_id</span> <span class="ow">in</span> <span class="n">session</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;Time&quot;</span><span class="p">)[</span><span class="s2">&quot;ItemId&quot;</span><span class="p">]]</span>
+        <span class="n">sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">item_ids</span>
+
+        <span class="k">for</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">item_ids</span><span class="p">:</span>
+            <span class="n">item2session</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">session_id</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">sessions</span><span class="p">,</span> <span class="n">item2session</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="mi">1</span> <span class="c1"># downsample the input data (0.1 - use only 10%% of input)</span>
+<span class="n">data_path</span> <span class="o">=</span> <span class="s1">&#39;./retailrocket/slices/&#39;</span>
+<span class="n">file_prefix</span> <span class="o">=</span> <span class="s1">&#39;events&#39;</span>
+
+<span class="n">test_all</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="n">file_prefix</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>START load data
+Loaded train set
+	Events: 213660
+	Sessions: 59110
+	Items: 32052
+	Span: 2015-05-03 / 2015-05-28
+
+Loaded test set
+	Events: 14457
+	Sessions: 4136
+	Items: 6506
+	Span: 2015-05-28 / 2015-05-30
+
+END load data  0.10039901733398438 c /  0.10040020942687988 s
+./retailrocket/slices/ events 0
+START load data
+Loaded train set
+	Events: 212266
+	Sessions: 57795
+	Items: 32529
+	Span: 2015-05-30 / 2015-06-24
+
+Loaded test set
+	Events: 15425
+	Sessions: 4260
+	Items: 6801
+	Span: 2015-06-24 / 2015-06-26
+
+END load data  0.08721494674682617 c /  0.08721661567687988 s
+./retailrocket/slices/ events 1
+START load data
+Loaded train set
+	Events: 207176
+	Sessions: 57229
+	Items: 33453
+	Span: 2015-06-26 / 2015-07-21
+
+Loaded test set
+	Events: 15650
+	Sessions: 4486
+	Items: 6937
+	Span: 2015-07-21 / 2015-07-23
+
+END load data  0.08588290214538574 c /  0.08588480949401855 s
+./retailrocket/slices/ events 2
+START load data
+Loaded train set
+	Events: 191128
+	Sessions: 55786
+	Items: 32263
+	Span: 2015-07-23 / 2015-08-17
+
+Loaded test set
+	Events: 13486
+	Sessions: 3959
+	Items: 6065
+	Span: 2015-08-17 / 2015-08-19
+
+END load data  0.08804202079772949 c /  0.0880436897277832 s
+./retailrocket/slices/ events 3
+START load data
+Loaded train set
+	Events: 166160
+	Sessions: 49492
+	Items: 29543
+	Span: 2015-08-19 / 2015-09-13
+
+Loaded test set
+	Events: 11502
+	Sessions: 3561
+	Items: 5329
+	Span: 2015-09-13 / 2015-09-15
+
+END load data  0.07229804992675781 c /  0.07229948043823242 s
+./retailrocket/slices/ events 4
+r_cnt 50118
+cnt_next 18197
+cnt_fwd10 22035
+cnt_anywhere 28417
+cnt_anywhere_sess 40052
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><code>"r_cnt"</code> in results is the total number of test cases examined.</p>
+<p>Interpreting the results:</p>
+<table>
+<thead><tr>
+<th>Key</th>
+<th>Item to predict appears</th>
+<th>Applies to algorithm</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cnt_next</td>
+<td>next to current item</td>
+<td>MC, SF-SKNN</td>
+</tr>
+<tr>
+<td>cnt_fwd10</td>
+<td>among 10 items after current item</td>
+<td>SR</td>
+</tr>
+<tr>
+<td>cnt_anywhere</td>
+<td>anywhere in session</td>
+<td>AR, IKNN</td>
+</tr>
+<tr>
+<td>cnt_anywhere_sess</td>
+<td>in session with any current session item</td>
+<td>*SKNN</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># !rm -r sample_data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>.
+├── [217M]  retailrocket
+│   ├── [ 90M]  events.csv
+│   ├── [ 60M]  prepared_window
+│   │   ├── [ 12M]  events.0.hdf
+│   │   ├── [ 12M]  events.1.hdf
+│   │   ├── [ 12M]  events.2.hdf
+│   │   ├── [ 11M]  events.3.hdf
+│   │   └── [ 11M]  events.4.hdf
+│   └── [ 67M]  slices
+│       ├── [115K]  events_test.txt
+│       ├── [ 33M]  events_train_full.txt
+│       ├── [ 33M]  events_train_tr.txt
+│       └── [132K]  events_train_valid.txt
+└── [ 32M]  retailrocket.zip
+
+ 249M used in 3 directories, 11 files
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># %reload_ext watermark</span>
+<span class="c1"># %watermark -a &quot;Sparsh A.&quot; -m -iv -u -t -d</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Author: Sparsh A.
+
+Last updated: 2021-12-04 17:20:19
+
+Compiler    : GCC 7.5.0
+OS          : Linux
+Release     : 5.4.104+
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 2
+Architecture: 64bit
+
+IPython: 5.5.0
+pandas : 1.1.5
+numpy  : 1.19.5
+sys    : 3.7.12 (default, Sep 10 2021, 00:21:48) 
+[GCC 7.5.0]
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>END</strong></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/14/sess-retailrocket.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

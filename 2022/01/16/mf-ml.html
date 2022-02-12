@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Matrix Factorization for Recommendations in Python | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Matrix Factorization for Recommendations in Python" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/16/mf-ml.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/16/mf-ml.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-16T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Matrix Factorization for Recommendations in Python" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-16T00:00:00-06:00","datePublished":"2022-01-16T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Matrix Factorization for Recommendations in Python","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/16/mf-ml.html"},"url":"https://nb.recohut.com/2022/01/16/mf-ml.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Matrix Factorization for Recommendations in Python &lt;a class=&quot;anchor&quot; id=&quot;mfrp&quot;&gt;&lt;/a&gt;</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-16T00:00:00-06:00" itemprop="datePublished">
+        Jan 16, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      11 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-16-mf-ml.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-16-mf-ml.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-16-mf-ml.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-16-mf-ml.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-16-mf-ml.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In this post, I'll detail a basic version of low-rank matrix factorization for recommendations employ it on a dataset of 1 million movie ratings (from 1 to 5) available from the <a href="http://grouplens.org/datasets/movielens/">MovieLens</a> project. The MovieLens datasets were created collected by GroupLens Research at the University of Minnesota.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><a href="https://beckernick.github.io/music_recommender/">Previously</a>, I used item-based collaborative filtering to make music recommendations from raw artist listen-count data. I had a relatively small amount of data, and ended up making some pretty good recommendations. Collaborative filtering methods that compute distance relationships between items or users are generally thought of as "neighborhood" methods, since they center on the idea of "nearness". Unfortunately, there are two issues with taking this approach:</p>
+<ol>
+<li>It doesn't scale particularly well to massive datasets</li>
+<li>There's a theoretical concern with raw data based approaches.</li>
+</ol>
+<p>I talked about the scaling issue in the previous post, but not the conceptual issue. The key concern is that ratings matrices may be overfit and noisy representations of user tastes and preferences. When we use distance based "neighborhood" approaches on raw data, we match to sparse low-level details that we assume represent the user's preference vector instead of the vector itself. It's a subtle difference, but it's important.</p>
+<p>If I've listened to ten Red Hot Chili Peppers songs and you've listened to ten different Red Hot Chili Peppers songs, the raw user action matrix wouldn't have any overlap. We'd have nothing in common, even though it seems pretty likely we share at least some underlying preferencs.</p>
+<p>If it sounds like using song features (such as genre) could help, you're right. But, to steal Joseph Konstan's (professor at Minnesota involved with GroupLens Research who has an awesome <a href="https://www.coursera.org/specializations/recommender-systems">Coursera course</a> on Recommender Systems) example, what if we both like songs with great storytelling, regardless of the genre. So, how do we resolve this? I would need a method that can derive the tastes and preference vectors from the raw data.</p>
+<p>Low-Rank Matrix Factorization is that kind of method.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Matrix-Factorization-via-Singular-Value-Decomposition-">Matrix Factorization via Singular Value Decomposition <a class="anchor" id="subhead1" /><a class="anchor-link" href="#Matrix-Factorization-via-Singular-Value-Decomposition-"> </a></h2><p>Matrix factorization is the breaking down of one matrix in a product of multiple matrices. It's extremely well studied in mathematics, and it's highly useful. There are many different ways to factor matrices, but singular value decomposition is particularly useful for making recommendations.</p>
+<p>So what is singular value decomposition (SVD)? At a high level, SVD is an algorithm that decomposes a matrix $R$ into the best lower rank (i.e. smaller/simpler) approximation of the original matrix $R$. Mathematically, it decomposes R into a two unitary matrices and a diagonal matrix:</p>
+$$\begin{equation}
+R = U\Sigma V^{T}
+\end{equation}$$<p>where R is users's ratings matrix, $U$ is the user "features" matrix, $\Sigma$ is the diagonal matrix of singular values (essentially weights), and $V^{T}$ is the movie "features" matrix. $U$ and $V^{T}$ are orthogonal, and represent different things. $U$ represents how much users "like" each feature and $V^{T}$ represents how relevant each feature is to each movie.</p>
+<p>To get the lower rank approximation, we take these matrices and keep only the top $k$ features, which we think of as the underlying tastes and preferences vectors.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setting-Up-the-Ratings-Data">Setting Up the Ratings Data<a class="anchor-link" href="#Setting-Up-the-Ratings-Data"> </a></h2><p>Okay, enough with the math. Let's get to the code.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">ratings_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;::&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/users/nickbecker/Downloads/ml-1m/ratings.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+<span class="n">users_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;::&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/users/nickbecker/Downloads/ml-1m/users.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+<span class="n">movies_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;::&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;/users/nickbecker/Downloads/ml-1m/movies.dat&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ratings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ratings_list</span><span class="p">)</span>
+<span class="n">users</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">users_list</span><span class="p">)</span>
+<span class="n">movies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">movies_list</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ratings_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">ratings_list</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;UserID&#39;</span><span class="p">,</span> <span class="s1">&#39;MovieID&#39;</span><span class="p">,</span> <span class="s1">&#39;Rating&#39;</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">],</span> <span class="n">dtype</span> <span class="o">=</span> <span class="nb">int</span><span class="p">)</span>
+<span class="n">movies_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">movies_list</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MovieID&#39;</span><span class="p">,</span> <span class="s1">&#39;Title&#39;</span><span class="p">,</span> <span class="s1">&#39;Genres&#39;</span><span class="p">])</span>
+<span class="n">movies_df</span><span class="p">[</span><span class="s1">&#39;MovieID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">movies_df</span><span class="p">[</span><span class="s1">&#39;MovieID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>I'll also take a look at the movies and ratings dataframes.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">movies_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>MovieID</th>
+      <th>Title</th>
+      <th>Genres</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>Toy Story (1995)</td>
+      <td>Animation|Children's|Comedy</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2</td>
+      <td>Jumanji (1995)</td>
+      <td>Adventure|Children's|Fantasy</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3</td>
+      <td>Grumpier Old Men (1995)</td>
+      <td>Comedy|Romance</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4</td>
+      <td>Waiting to Exhale (1995)</td>
+      <td>Comedy|Drama</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>5</td>
+      <td>Father of the Bride Part II (1995)</td>
+      <td>Comedy</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">ratings_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>UserID</th>
+      <th>MovieID</th>
+      <th>Rating</th>
+      <th>Timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1193</td>
+      <td>5</td>
+      <td>978300760</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>661</td>
+      <td>3</td>
+      <td>978302109</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>914</td>
+      <td>3</td>
+      <td>978301968</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>3408</td>
+      <td>4</td>
+      <td>978300275</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>2355</td>
+      <td>5</td>
+      <td>978824291</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>These look good, but I want the format of my ratings matrix to be one row per user and one column per movie. I'll <code>pivot</code> <code>ratings_df</code> to get that and call the new variable <code>R</code>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">R_df</span> <span class="o">=</span> <span class="n">ratings_df</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">index</span> <span class="o">=</span> <span class="s1">&#39;UserID&#39;</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span><span class="s1">&#39;MovieID&#39;</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="s1">&#39;Rating&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">R_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>MovieID</th>
+      <th>1</th>
+      <th>2</th>
+      <th>3</th>
+      <th>4</th>
+      <th>5</th>
+      <th>6</th>
+      <th>7</th>
+      <th>8</th>
+      <th>9</th>
+      <th>10</th>
+      <th>...</th>
+      <th>3943</th>
+      <th>3944</th>
+      <th>3945</th>
+      <th>3946</th>
+      <th>3947</th>
+      <th>3948</th>
+      <th>3949</th>
+      <th>3950</th>
+      <th>3951</th>
+      <th>3952</th>
+    </tr>
+    <tr>
+      <th>UserID</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>5.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>2.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 3706 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The last thing I need to do is de-mean the data (normalize by each users mean) and convert it from a dataframe to a numpy array.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">R</span> <span class="o">=</span> <span class="n">R_df</span><span class="o">.</span><span class="n">as_matrix</span><span class="p">()</span>
+<span class="n">user_ratings_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">R</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">R_demeaned</span> <span class="o">=</span> <span class="n">R</span> <span class="o">-</span> <span class="n">user_ratings_mean</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>All set. With my ratings matrix properly formatted and normalized, I'm ready to do the singular value decomposition</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Singular-Value-Decomposition">Singular Value Decomposition<a class="anchor-link" href="#Singular-Value-Decomposition"> </a></h2><p>Scipy and Numpy both have functions to do the singular value decomposition. I'm going to use the Scipy function <code>svds</code> because it let's me choose how many latent factors I want to use to approximate the original ratings matrix (instead of having to truncate it after).</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="kn">from</span> <span class="nn">scipy.sparse.linalg</span> <span class="kn">import</span> <span class="n">svds</span>
+<span class="n">U</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">svds</span><span class="p">(</span><span class="n">R_demeaned</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">50</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Done. The function returns exactly what I detailed earlier in this post, except that the $\Sigma$ returned is just the values instead of a diagonal matrix. This is useful, but since I'm going to leverage matrix multiplication to get predictions I'll convert it to the diagonal matrix form.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Making-Predictions-from-the-Decomposed-Matrices">Making Predictions from the Decomposed Matrices<a class="anchor-link" href="#Making-Predictions-from-the-Decomposed-Matrices"> </a></h2><p>I now have everything I need to make movie ratings predictions for every user. I can do it all at once by following the math and matrix multiply $U$, $\Sigma$, and $V^{T}$ back to get the rank $k=50$ approximation of $R$.</p>
+<p>I also need to add the user means back to get the actual star ratings prediction.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">all_user_predicted_ratings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">Vt</span><span class="p">)</span> <span class="o">+</span> <span class="n">user_ratings_mean</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If I wanted to put this kind of system into production, I'd want to create a training and validation set and optimize the number of latent features ($k$) by minimizing the Root Mean Square Error. Intuitively, the Root Mean Square Error will decrease on the training set as $k$ increases (because I'm approximating the original ratings matrix with a higher rank matrix).</p>
+<p>However, for movies, between around 20 and 100 feature "preferences" vectors have been found to be optimal for generalizing to unseen data.</p>
+<p>I could create a training and validation set and optimize $k$ by minimizing RMSE, but since I'm just going through proof of concept I'll leave that for another post. I just want to see some movie recommendations.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Making-Movie-Recommendations">Making Movie Recommendations<a class="anchor-link" href="#Making-Movie-Recommendations"> </a></h2><p>Finally, it's time. With the predictions matrix for every user, I can build a function to recommend movies for any user. All I need to do is return the movies with the highest predicted rating that the specified user hasn't already rated. Though I didn't use actually use any explicit movie content features (such as genre or title), I'll merge in that information to get a more complete picture of the recommendations.</p>
+<p>I'll also return the list of movies the user has already rated, for the sake of comparison.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">preds_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">all_user_predicted_ratings</span><span class="p">,</span> <span class="n">columns</span> <span class="o">=</span> <span class="n">R_df</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">preds_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>MovieID</th>
+      <th>1</th>
+      <th>2</th>
+      <th>3</th>
+      <th>4</th>
+      <th>5</th>
+      <th>6</th>
+      <th>7</th>
+      <th>8</th>
+      <th>9</th>
+      <th>10</th>
+      <th>...</th>
+      <th>3943</th>
+      <th>3944</th>
+      <th>3945</th>
+      <th>3946</th>
+      <th>3947</th>
+      <th>3948</th>
+      <th>3949</th>
+      <th>3950</th>
+      <th>3951</th>
+      <th>3952</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>4.288861</td>
+      <td>0.143055</td>
+      <td>-0.195080</td>
+      <td>-0.018843</td>
+      <td>0.012232</td>
+      <td>-0.176604</td>
+      <td>-0.074120</td>
+      <td>0.141358</td>
+      <td>-0.059553</td>
+      <td>-0.195950</td>
+      <td>...</td>
+      <td>0.027807</td>
+      <td>0.001640</td>
+      <td>0.026395</td>
+      <td>-0.022024</td>
+      <td>-0.085415</td>
+      <td>0.403529</td>
+      <td>0.105579</td>
+      <td>0.031912</td>
+      <td>0.050450</td>
+      <td>0.088910</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>0.744716</td>
+      <td>0.169659</td>
+      <td>0.335418</td>
+      <td>0.000758</td>
+      <td>0.022475</td>
+      <td>1.353050</td>
+      <td>0.051426</td>
+      <td>0.071258</td>
+      <td>0.161601</td>
+      <td>1.567246</td>
+      <td>...</td>
+      <td>-0.056502</td>
+      <td>-0.013733</td>
+      <td>-0.010580</td>
+      <td>0.062576</td>
+      <td>-0.016248</td>
+      <td>0.155790</td>
+      <td>-0.418737</td>
+      <td>-0.101102</td>
+      <td>-0.054098</td>
+      <td>-0.140188</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1.818824</td>
+      <td>0.456136</td>
+      <td>0.090978</td>
+      <td>-0.043037</td>
+      <td>-0.025694</td>
+      <td>-0.158617</td>
+      <td>-0.131778</td>
+      <td>0.098977</td>
+      <td>0.030551</td>
+      <td>0.735470</td>
+      <td>...</td>
+      <td>0.040481</td>
+      <td>-0.005301</td>
+      <td>0.012832</td>
+      <td>0.029349</td>
+      <td>0.020866</td>
+      <td>0.121532</td>
+      <td>0.076205</td>
+      <td>0.012345</td>
+      <td>0.015148</td>
+      <td>-0.109956</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>0.408057</td>
+      <td>-0.072960</td>
+      <td>0.039642</td>
+      <td>0.089363</td>
+      <td>0.041950</td>
+      <td>0.237753</td>
+      <td>-0.049426</td>
+      <td>0.009467</td>
+      <td>0.045469</td>
+      <td>-0.111370</td>
+      <td>...</td>
+      <td>0.008571</td>
+      <td>-0.005425</td>
+      <td>-0.008500</td>
+      <td>-0.003417</td>
+      <td>-0.083982</td>
+      <td>0.094512</td>
+      <td>0.057557</td>
+      <td>-0.026050</td>
+      <td>0.014841</td>
+      <td>-0.034224</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1.574272</td>
+      <td>0.021239</td>
+      <td>-0.051300</td>
+      <td>0.246884</td>
+      <td>-0.032406</td>
+      <td>1.552281</td>
+      <td>-0.199630</td>
+      <td>-0.014920</td>
+      <td>-0.060498</td>
+      <td>0.450512</td>
+      <td>...</td>
+      <td>0.110151</td>
+      <td>0.046010</td>
+      <td>0.006934</td>
+      <td>-0.015940</td>
+      <td>-0.050080</td>
+      <td>-0.052539</td>
+      <td>0.507189</td>
+      <td>0.033830</td>
+      <td>0.125706</td>
+      <td>0.199244</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 3706 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="k">def</span> <span class="nf">recommend_movies</span><span class="p">(</span><span class="n">predictions_df</span><span class="p">,</span> <span class="n">userID</span><span class="p">,</span> <span class="n">movies_df</span><span class="p">,</span> <span class="n">original_ratings_df</span><span class="p">,</span> <span class="n">num_recommendations</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    
+    <span class="c1"># Get and sort the user&#39;s predictions</span>
+    <span class="n">user_row_number</span> <span class="o">=</span> <span class="n">userID</span> <span class="o">-</span> <span class="mi">1</span> <span class="c1"># UserID starts at 1, not 0</span>
+    <span class="n">sorted_user_predictions</span> <span class="o">=</span> <span class="n">preds_df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">user_row_number</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="c1"># UserID starts at 1</span>
+    
+    <span class="c1"># Get the user&#39;s data and merge in the movie information.</span>
+    <span class="n">user_data</span> <span class="o">=</span> <span class="n">original_ratings_df</span><span class="p">[</span><span class="n">original_ratings_df</span><span class="o">.</span><span class="n">UserID</span> <span class="o">==</span> <span class="p">(</span><span class="n">userID</span><span class="p">)]</span>
+    <span class="n">user_full</span> <span class="o">=</span> <span class="p">(</span><span class="n">user_data</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">movies_df</span><span class="p">,</span> <span class="n">how</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">left_on</span> <span class="o">=</span> <span class="s1">&#39;MovieID&#39;</span><span class="p">,</span> <span class="n">right_on</span> <span class="o">=</span> <span class="s1">&#39;MovieID&#39;</span><span class="p">)</span><span class="o">.</span>
+                     <span class="n">sort_values</span><span class="p">([</span><span class="s1">&#39;Rating&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                 <span class="p">)</span>
+
+    <span class="nb">print</span> <span class="s1">&#39;User </span><span class="si">{0}</span><span class="s1"> has already rated </span><span class="si">{1}</span><span class="s1"> movies.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">userID</span><span class="p">,</span> <span class="n">user_full</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="nb">print</span> <span class="s1">&#39;Recommending highest </span><span class="si">{0}</span><span class="s1"> predicted ratings movies not already rated.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_recommendations</span><span class="p">)</span>
+    
+    <span class="c1"># Recommend the highest predicted rating movies that the user hasn&#39;t seen yet.</span>
+    <span class="n">recommendations</span> <span class="o">=</span> <span class="p">(</span><span class="n">movies_df</span><span class="p">[</span><span class="o">~</span><span class="n">movies_df</span><span class="p">[</span><span class="s1">&#39;MovieID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">user_full</span><span class="p">[</span><span class="s1">&#39;MovieID&#39;</span><span class="p">])]</span><span class="o">.</span>
+         <span class="n">merge</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">sorted_user_predictions</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span> <span class="n">how</span> <span class="o">=</span> <span class="s1">&#39;left&#39;</span><span class="p">,</span>
+               <span class="n">left_on</span> <span class="o">=</span> <span class="s1">&#39;MovieID&#39;</span><span class="p">,</span>
+               <span class="n">right_on</span> <span class="o">=</span> <span class="s1">&#39;MovieID&#39;</span><span class="p">)</span><span class="o">.</span>
+         <span class="n">rename</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="p">{</span><span class="n">user_row_number</span><span class="p">:</span> <span class="s1">&#39;Predictions&#39;</span><span class="p">})</span><span class="o">.</span>
+         <span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;Predictions&#39;</span><span class="p">,</span> <span class="n">ascending</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span><span class="o">.</span>
+                       <span class="n">iloc</span><span class="p">[:</span><span class="n">num_recommendations</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                      <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">user_full</span><span class="p">,</span> <span class="n">recommendations</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">already_rated</span><span class="p">,</span> <span class="n">predictions</span> <span class="o">=</span> <span class="n">recommend_movies</span><span class="p">(</span><span class="n">preds_df</span><span class="p">,</span> <span class="mi">837</span><span class="p">,</span> <span class="n">movies_df</span><span class="p">,</span> <span class="n">ratings_df</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>User 837 has already rated 69 movies.
+Recommending highest 10 predicted ratings movies not already rated.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>So, how'd I do?</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">already_rated</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>UserID</th>
+      <th>MovieID</th>
+      <th>Rating</th>
+      <th>Timestamp</th>
+      <th>Title</th>
+      <th>Genres</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>36</th>
+      <td>837</td>
+      <td>858</td>
+      <td>5</td>
+      <td>975360036</td>
+      <td>Godfather, The (1972)</td>
+      <td>Action|Crime|Drama</td>
+    </tr>
+    <tr>
+      <th>35</th>
+      <td>837</td>
+      <td>1387</td>
+      <td>5</td>
+      <td>975360036</td>
+      <td>Jaws (1975)</td>
+      <td>Action|Horror</td>
+    </tr>
+    <tr>
+      <th>65</th>
+      <td>837</td>
+      <td>2028</td>
+      <td>5</td>
+      <td>975360089</td>
+      <td>Saving Private Ryan (1998)</td>
+      <td>Action|Drama|War</td>
+    </tr>
+    <tr>
+      <th>63</th>
+      <td>837</td>
+      <td>1221</td>
+      <td>5</td>
+      <td>975360036</td>
+      <td>Godfather: Part II, The (1974)</td>
+      <td>Action|Crime|Drama</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>837</td>
+      <td>913</td>
+      <td>5</td>
+      <td>975359921</td>
+      <td>Maltese Falcon, The (1941)</td>
+      <td>Film-Noir|Mystery</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>837</td>
+      <td>3417</td>
+      <td>5</td>
+      <td>975360893</td>
+      <td>Crimson Pirate, The (1952)</td>
+      <td>Adventure|Comedy|Sci-Fi</td>
+    </tr>
+    <tr>
+      <th>34</th>
+      <td>837</td>
+      <td>2186</td>
+      <td>4</td>
+      <td>975359955</td>
+      <td>Strangers on a Train (1951)</td>
+      <td>Film-Noir|Thriller</td>
+    </tr>
+    <tr>
+      <th>55</th>
+      <td>837</td>
+      <td>2791</td>
+      <td>4</td>
+      <td>975360893</td>
+      <td>Airplane! (1980)</td>
+      <td>Comedy</td>
+    </tr>
+    <tr>
+      <th>31</th>
+      <td>837</td>
+      <td>1188</td>
+      <td>4</td>
+      <td>975360920</td>
+      <td>Strictly Ballroom (1992)</td>
+      <td>Comedy|Romance</td>
+    </tr>
+    <tr>
+      <th>28</th>
+      <td>837</td>
+      <td>1304</td>
+      <td>4</td>
+      <td>975360058</td>
+      <td>Butch Cassidy and the Sundance Kid (1969)</td>
+      <td>Action|Comedy|Western</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython2"><pre><span></span><span class="n">predictions</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>MovieID</th>
+      <th>Title</th>
+      <th>Genres</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>516</th>
+      <td>527</td>
+      <td>Schindler's List (1993)</td>
+      <td>Drama|War</td>
+    </tr>
+    <tr>
+      <th>1848</th>
+      <td>1953</td>
+      <td>French Connection, The (1971)</td>
+      <td>Action|Crime|Drama|Thriller</td>
+    </tr>
+    <tr>
+      <th>596</th>
+      <td>608</td>
+      <td>Fargo (1996)</td>
+      <td>Crime|Drama|Thriller</td>
+    </tr>
+    <tr>
+      <th>1235</th>
+      <td>1284</td>
+      <td>Big Sleep, The (1946)</td>
+      <td>Film-Noir|Mystery</td>
+    </tr>
+    <tr>
+      <th>2085</th>
+      <td>2194</td>
+      <td>Untouchables, The (1987)</td>
+      <td>Action|Crime|Drama</td>
+    </tr>
+    <tr>
+      <th>1188</th>
+      <td>1230</td>
+      <td>Annie Hall (1977)</td>
+      <td>Comedy|Romance</td>
+    </tr>
+    <tr>
+      <th>1198</th>
+      <td>1242</td>
+      <td>Glory (1989)</td>
+      <td>Action|Drama|War</td>
+    </tr>
+    <tr>
+      <th>897</th>
+      <td>922</td>
+      <td>Sunset Blvd. (a.k.a. Sunset Boulevard) (1950)</td>
+      <td>Film-Noir</td>
+    </tr>
+    <tr>
+      <th>1849</th>
+      <td>1954</td>
+      <td>Rocky (1976)</td>
+      <td>Action|Drama</td>
+    </tr>
+    <tr>
+      <th>581</th>
+      <td>593</td>
+      <td>Silence of the Lambs, The (1991)</td>
+      <td>Drama|Thriller</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Pretty cool! These look like pretty good recommendations. It's also good to see that, though I didn't actually use the genre of the movie as a feature, the truncated matrix factorization features "picked up" on the underlying tastes and preferences of the user. I've recommended some film-noirs, crime, drama, and war movies - all of which were genres of some of this user's top rated movies.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Conclusion">Conclusion<a class="anchor-link" href="#Conclusion"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We've seen that we can make good recommendations with raw data based collaborative filtering methods (neighborhood models) and latent features from low-rank matrix factorization methods (factorization models).</p>
+<p>Low-dimensional matrix recommenders try to capture the underlying features driving the raw data (which we understand as tastes and preferences). From a theoretical perspective, if we want to make recommendations based on people's tastes, this seems like the better approach. This technique also scales <strong>significantly</strong> better to larger datasets.</p>
+<p>However, we still likely lose some meaningful signals by using a lower-rank matrix. And though these factorization based techniques work extremely well, there's research being done on new methods. These efforts have resulted in various types probabilistic matrix factorization (which works and scales even better) and many other approaches.</p>
+<p>One particularly cool and effective strategy is to combine factorization and neighborhood methods into one <a href="http://www.cs.rochester.edu/twiki/pub/Main/HarpSeminar/Factorization_Meets_the_Neighborhood-_a_Multifaceted_Collaborative_Filtering_Model.pdf">framework</a>. This research field is extremely active, and I highly recommend Joseph Konstan's Coursera course, <a href="https://www.coursera.org/specializations/recommender-systems">Introduction to Recommender Systems</a>, for anyone looking to get a high level overview of the field. The optional readings are influential papers in the field from the last 15-ish years, and they're really cool.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+<p>For those interested, the Jupyter Notebook with all the code can be found in the <a href="https://github.com/beckernick/matrix_factorization_recommenders">Github repository</a> for this post.</p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/16/mf-ml.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

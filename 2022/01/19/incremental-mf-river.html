@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Incremental Matrix Factorization on ML-100k using River library | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Incremental Matrix Factorization on ML-100k using River library" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/19/incremental-mf-river.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/19/incremental-mf-river.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-19T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Incremental Matrix Factorization on ML-100k using River library" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-19T00:00:00-06:00","datePublished":"2022-01-19T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Incremental Matrix Factorization on ML-100k using River library","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/19/incremental-mf-river.html"},"url":"https://nb.recohut.com/2022/01/19/incremental-mf-river.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Incremental Matrix Factorization on ML-100k using River library</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-19T00:00:00-06:00" itemprop="datePublished">
+        Jan 19, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      10 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-19-incremental-mf-river.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-19-incremental-mf-river.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-19-incremental-mf-river.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-19-incremental-mf-river.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-19-incremental-mf-river.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">river</span> <span class="n">numpy</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Restart the session at this point!</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">river</span>
+<span class="kn">from</span> <span class="nn">river.evaluate</span> <span class="kn">import</span> <span class="n">progressive_val_score</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data">Data<a class="anchor-link" href="#Data"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">model</span><span class="o">-</span><span class="n">retraining</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">bronze</span><span class="o">/</span><span class="n">ml_100k</span><span class="o">.</span><span class="n">csv</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>ml_100k.csv         100%[===================&gt;]  10.54M  --.-KB/s    in 0.1s    
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">get_data_stream</span><span class="p">():</span>
+    <span class="n">data_stream</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">iter_csv</span><span class="p">(</span><span class="s1">&#39;ml_100k.csv&#39;</span><span class="p">,</span>
+                                        <span class="n">target</span><span class="o">=</span><span class="s2">&quot;rating&quot;</span><span class="p">,</span>
+                                        <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+                                        <span class="n">converters</span><span class="o">=</span><span class="p">{</span>
+                                            <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                                            <span class="s2">&quot;release_date&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+                                            <span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                                            <span class="s2">&quot;rating&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+                                        <span class="p">})</span>
+    <span class="k">return</span> <span class="n">data_stream</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">get_data_stream</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;x = </span><span class="si">{</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s1">y = </span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">break</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>x = {
+    &#34;user&#34;: &#34;259&#34;,
+    &#34;item&#34;: &#34;255&#34;,
+    &#34;timestamp&#34;: 874731910000000000,
+    &#34;title&#34;: &#34;My Best Friend&#39;s Wedding (1997)&#34;,
+    &#34;release_date&#34;: 866764800000000000,
+    &#34;genres&#34;: &#34;comedy, romance&#34;,
+    &#34;age&#34;: 21.0,
+    &#34;gender&#34;: &#34;M&#34;,
+    &#34;occupation&#34;: &#34;student&#34;,
+    &#34;zip_code&#34;: &#34;48823&#34;
+}
+y = 4.0
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's define a routine to evaluate our different models on MovieLens 100K. Mean Absolute Error and Root Mean Squared Error will be our metrics printed alongside model's computation time and memory usage:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">X_y</span> <span class="o">=</span> <span class="n">get_data_stream</span><span class="p">()</span>
+    <span class="n">metric</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">MAE</span><span class="p">()</span> <span class="o">+</span> <span class="n">river</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">RMSE</span><span class="p">()</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">progressive_val_score</span><span class="p">(</span><span class="n">X_y</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">metric</span><span class="p">,</span> <span class="n">print_every</span><span class="o">=</span><span class="mi">25_000</span><span class="p">,</span> <span class="n">show_time</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">show_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Naive-prediction">Naive prediction<a class="anchor-link" href="#Naive-prediction"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>It's good practice in machine learning to start with a naive baseline and then iterate from simple things to complex ones observing progress incrementally. Let's start by predicing the target running mean as a first shot:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">mean</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">Mean</span><span class="p">()</span>
+<span class="n">metric</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">MAE</span><span class="p">()</span> <span class="o">+</span> <span class="n">river</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">RMSE</span><span class="p">()</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x_y</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">get_data_stream</span><span class="p">(),</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x_y</span>
+    <span class="n">metric</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">mean</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+    <span class="n">mean</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">25_000</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{</span><span class="n">i</span><span class="si">:</span><span class="s1">,d</span><span class="si">}</span><span class="s1">] </span><span class="si">{</span><span class="n">metric</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 0.934259, RMSE: 1.124469
+[50,000] MAE: 0.923893, RMSE: 1.105
+[75,000] MAE: 0.937359, RMSE: 1.123696
+[100,000] MAE: 0.942162, RMSE: 1.125783
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Parameters">Parameters<a class="anchor-link" href="#Parameters"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>let's review the important parameters to tune when dealing with this family of methods:</p>
+<ul>
+<li>n_factors: the number of latent factors. The more you set, the more items aspects and users preferences you are going to learn. Too many will cause overfitting, l2 regularization could help.</li>
+<li>*_optimizer: the optimizers. Classic stochastic gradient descent performs well, finding the good learning rate will make the difference.</li>
+<li>initializer: the latent weights initialization. Latent vectors have to be initialized with non-constant values. We generally sample them from a zero-mean normal distribution with small standard deviation.</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Baseline-model">Baseline model<a class="anchor-link" href="#Baseline-model"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now we can do machine learning and explore available models in river.reco module starting with the baseline model. It extends our naive prediction by adding to the global running mean two bias terms characterizing the user and the item discrepancy from the general tendency. This baseline model can be viewed as a linear regression where the intercept is replaced by the target running mean with the users and the items one hot encoded.</p>
+<p>All machine learning models in river expect dicts as input with feature names as keys and feature values as values. Specifically, models from river.reco expect a 'user' and an 'item' entries without any type constraint on their values (i.e. can be strings or numbers). Other entries, if exist, are simply ignored. This is quite useful as we don't need to spend time and storage doing one hot encoding.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">baseline_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.025</span><span class="p">),</span>
+    <span class="s1">&#39;l2&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+    <span class="s1">&#39;initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Zeros</span><span class="p">()</span>
+<span class="p">}</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">PredClipper</span><span class="p">(</span>
+    <span class="n">regressor</span><span class="o">=</span><span class="n">river</span><span class="o">.</span><span class="n">reco</span><span class="o">.</span><span class="n">Baseline</span><span class="p">(</span><span class="o">**</span><span class="n">baseline_params</span><span class="p">),</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 0.761844, RMSE: 0.960972 – 0:00:01.316880 – 170.36 KB
+[50,000] MAE: 0.753292, RMSE: 0.951223 – 0:00:02.651206 – 239 KB
+[75,000] MAE: 0.754177, RMSE: 0.953376 – 0:00:03.961798 – 282.81 KB
+[100,000] MAE: 0.754651, RMSE: 0.954148 – 0:00:05.297710 – 306.41 KB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Matrix-Factorization">Matrix Factorization<a class="anchor-link" href="#Matrix-Factorization"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Funk-Matrix-Factorization-(FunkMF)">Funk Matrix Factorization (FunkMF)<a class="anchor-link" href="#Funk-Matrix-Factorization-(FunkMF)"> </a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>It's the pure form of matrix factorization consisting of only learning the users and items latent representations. Simon Funk popularized its stochastic gradient descent optimization in 2006 during the Netflix Prize. FunkMF is sometimes referred as Probabilistic Matrix Factorization which is an extended probabilistic version.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">funk_mf_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;n_factors&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s1">&#39;optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.05</span><span class="p">),</span>
+    <span class="s1">&#39;l2&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="s1">&#39;initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">73</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">PredClipper</span><span class="p">(</span>
+    <span class="n">regressor</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">reco</span><span class="o">.</span><span class="n">FunkMF</span><span class="p">(</span><span class="o">**</span><span class="n">funk_mf_params</span><span class="p">),</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 1.070136, RMSE: 1.397014 – 0:00:02.411592 – 938.37 KB
+[50,000] MAE: 0.99174, RMSE: 1.290666 – 0:00:04.800103 – 1.13 MB
+[75,000] MAE: 0.961072, RMSE: 1.250842 – 0:00:07.118442 – 1.33 MB
+[100,000] MAE: 0.944883, RMSE: 1.227688 – 0:00:09.463518 – 1.5 MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Results are equivalent to our naive prediction (0.9448 vs 0.9421). By only focusing on the users preferences and the items characteristics, the model is limited in his ability to capture different views of the problem. Despite its poor performance alone, this algorithm is quite useful combined in other models or when we need to build dense representations for other tasks.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Biased-Matrix-Factorization-(BiasedMF)">Biased Matrix Factorization (BiasedMF)<a class="anchor-link" href="#Biased-Matrix-Factorization-(BiasedMF)"> </a></h3><p>It's the combination of the Baseline model and FunkMF. Biased Matrix Factorization name is used by some people but some others refer to it by SVD or Funk SVD. It's the case of Yehuda Koren and Robert Bell in Recommender Systems Handbook (Chapter 5 Advances in Collaborative Filtering) and of surprise library. Nevertheless, SVD could be confused with the original Singular Value Decomposition from which it's derived from, and Funk SVD could also be misleading because of the biased part of the model equation which doesn't come from Simon Funk's work. For those reasons, we chose to side with Biased Matrix Factorization which fits more naturally to it.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">biased_mf_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;n_factors&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s1">&#39;bias_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.025</span><span class="p">),</span>
+    <span class="s1">&#39;latent_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.05</span><span class="p">),</span>
+    <span class="s1">&#39;weight_initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Zeros</span><span class="p">(),</span>
+    <span class="s1">&#39;latent_initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">73</span><span class="p">),</span>
+    <span class="s1">&#39;l2_bias&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+    <span class="s1">&#39;l2_latent&#39;</span><span class="p">:</span> <span class="mf">0.</span>
+<span class="p">}</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">PredClipper</span><span class="p">(</span>
+    <span class="n">regressor</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">reco</span><span class="o">.</span><span class="n">BiasedMF</span><span class="p">(</span><span class="o">**</span><span class="n">biased_mf_params</span><span class="p">),</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 0.761818, RMSE: 0.961057 – 0:00:02.622680 – 1.01 MB
+[50,000] MAE: 0.751667, RMSE: 0.949443 – 0:00:05.232414 – 1.28 MB
+[75,000] MAE: 0.749653, RMSE: 0.948723 – 0:00:07.802655 – 1.51 MB
+[100,000] MAE: 0.748559, RMSE: 0.947854 – 0:00:10.396654 – 1.69 MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Results improved (0.7485 vs 0.7546) demonstrating that users and items latent representations bring additional information.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Factorization-Machines">Factorization Machines<a class="anchor-link" href="#Factorization-Machines"> </a></h2><p>Steffen Rendel came up in 2010 with Factorization Machines, an algorithm able to handle any real valued feature vector, combining the advantages of general predictors with factorization models. It became quite popular in the field of online advertising, notably after winning several Kaggle competitions. The modeling technique starts with a linear regression to capture the effects of each variable individually.</p>
+<p>Then are added interaction terms to learn features relations. Instead of learning a single and specific weight per interaction (as in polynomial regression), a set of latent factors is learnt per feature (as in MF). An interaction is calculated by multiplying involved features product with their latent vectors dot product. The degree of factorization — or model order — represents the maximum number of features per interaction considered.</p>
+<p>Strong emphasis must be placed on feature engineering as it allows FM to mimic most factorization models and significantly impact its performance. High cardinality categorical variables one hot encoding is the most frequent step before feeding the model with data. For more efficiency, river FM implementation considers string values as categorical variables and automatically one hot encode them. FM models have their own module <code>river.facto</code>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Mimic-Biased-Matrix-Factorization-(BiasedMF)">Mimic Biased Matrix Factorization (BiasedMF)<a class="anchor-link" href="#Mimic-Biased-Matrix-Factorization-(BiasedMF)"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">fm_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;n_factors&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s1">&#39;weight_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.025</span><span class="p">),</span>
+    <span class="s1">&#39;latent_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.05</span><span class="p">),</span>
+    <span class="s1">&#39;sample_normalization&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s1">&#39;l1_weight&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+    <span class="s1">&#39;l2_weight&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+    <span class="s1">&#39;l1_latent&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+    <span class="s1">&#39;l2_latent&#39;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+    <span class="s1">&#39;intercept&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;intercept_lr&#39;</span><span class="p">:</span> <span class="o">.</span><span class="mi">01</span><span class="p">,</span>
+    <span class="s1">&#39;weight_initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Zeros</span><span class="p">(),</span>
+    <span class="s1">&#39;latent_initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">73</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">regressor</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">)</span>
+<span class="n">regressor</span> <span class="o">|=</span> <span class="n">river</span><span class="o">.</span><span class="n">facto</span><span class="o">.</span><span class="n">FMRegressor</span><span class="p">(</span><span class="o">**</span><span class="n">fm_params</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">PredClipper</span><span class="p">(</span>
+    <span class="n">regressor</span><span class="o">=</span><span class="n">regressor</span><span class="p">,</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 0.761778, RMSE: 0.960803 – 0:00:07.251881 – 1.16 MB
+[50,000] MAE: 0.751986, RMSE: 0.949941 – 0:00:13.721247 – 1.36 MB
+[75,000] MAE: 0.750044, RMSE: 0.948911 – 0:00:20.654001 – 1.58 MB
+[100,000] MAE: 0.748609, RMSE: 0.947994 – 0:00:27.407404 – 1.77 MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Both MAE are very close to each other (0.7486 vs 0.7485) showing that we almost reproduced reco.BiasedMF algorithm. The cost is a naturally slower running time as FM implementation offers more flexibility.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Feature-engineering-for-FM-models">Feature engineering for FM models<a class="anchor-link" href="#Feature-engineering-for-FM-models"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">split_genres</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="n">genres</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;genres&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="sa">f</span><span class="s1">&#39;genre_</span><span class="si">{</span><span class="n">genre</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">genres</span><span class="p">)</span> <span class="k">for</span> <span class="n">genre</span> <span class="ow">in</span> <span class="n">genres</span><span class="p">}</span>
+    
+
+<span class="k">def</span> <span class="nf">bin_age</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">18</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;age_0-18&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="k">elif</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">32</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;age_19-32&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="k">elif</span> <span class="n">x</span><span class="p">[</span><span class="s1">&#39;age&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">55</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;age_33-54&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;age_55-100&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">fm_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;n_factors&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+    <span class="s1">&#39;weight_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.01</span><span class="p">),</span>
+    <span class="s1">&#39;latent_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.025</span><span class="p">),</span>
+    <span class="s1">&#39;intercept&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;latent_initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">73</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">regressor</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">)</span>
+<span class="n">regressor</span> <span class="o">+=</span> <span class="p">(</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;genres&#39;</span><span class="p">)</span> <span class="o">|</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">FuncTransformer</span><span class="p">(</span><span class="n">split_genres</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">regressor</span> <span class="o">+=</span> <span class="p">(</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;age&#39;</span><span class="p">)</span> <span class="o">|</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">FuncTransformer</span><span class="p">(</span><span class="n">bin_age</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">regressor</span> <span class="o">|=</span> <span class="n">river</span><span class="o">.</span><span class="n">facto</span><span class="o">.</span><span class="n">FMRegressor</span><span class="p">(</span><span class="o">**</span><span class="n">fm_params</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">PredClipper</span><span class="p">(</span>
+    <span class="n">regressor</span><span class="o">=</span><span class="n">regressor</span><span class="p">,</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 0.759838, RMSE: 0.961281 – 0:00:15.857599 – 1.43 MB
+[50,000] MAE: 0.751307, RMSE: 0.951391 – 0:00:33.467707 – 1.68 MB
+[75,000] MAE: 0.750361, RMSE: 0.951393 – 0:00:47.431751 – 1.95 MB
+[100,000] MAE: 0.749994, RMSE: 0.951435 – 0:01:01.239416 – 2.2 MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Higher-Order-Factorization-Machines-(HOFM)">Higher-Order Factorization Machines (HOFM)<a class="anchor-link" href="#Higher-Order-Factorization-Machines-(HOFM)"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">hofm_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;degree&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;n_factors&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+    <span class="s1">&#39;weight_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.01</span><span class="p">),</span>
+    <span class="s1">&#39;latent_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.025</span><span class="p">),</span>
+    <span class="s1">&#39;intercept&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;latent_initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">73</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">regressor</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">)</span>
+<span class="n">regressor</span> <span class="o">+=</span> <span class="p">(</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;genres&#39;</span><span class="p">)</span> <span class="o">|</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">FuncTransformer</span><span class="p">(</span><span class="n">split_genres</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">regressor</span> <span class="o">+=</span> <span class="p">(</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;age&#39;</span><span class="p">)</span> <span class="o">|</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">FuncTransformer</span><span class="p">(</span><span class="n">bin_age</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">regressor</span> <span class="o">|=</span> <span class="n">river</span><span class="o">.</span><span class="n">facto</span><span class="o">.</span><span class="n">HOFMRegressor</span><span class="p">(</span><span class="o">**</span><span class="n">hofm_params</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">PredClipper</span><span class="p">(</span>
+    <span class="n">regressor</span><span class="o">=</span><span class="n">regressor</span><span class="p">,</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 0.761297, RMSE: 0.962054 – 0:01:09.293899 – 2.64 MB
+[50,000] MAE: 0.751865, RMSE: 0.951499 – 0:02:18.506399 – 3.12 MB
+[75,000] MAE: 0.750853, RMSE: 0.951526 – 0:03:26.322158 – 3.64 MB
+[100,000] MAE: 0.750607, RMSE: 0.951982 – 0:04:34.358663 – 4.12 MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>High-order interactions are often hard to estimate due to too much sparsity, that's why we won't spend too much time here.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Field-aware-Factorization-Machines-(FFM)">Field-aware Factorization Machines (FFM)<a class="anchor-link" href="#Field-aware-Factorization-Machines-(FFM)"> </a></h3><p>Field-aware variant of FM (FFM) improved the original method by adding the notion of "fields". A "field" is a group of features that belong to a specific domain (e.g. the "users" field, the "items" field, or the "movie genres" field).</p>
+<p>FFM restricts itself to pairwise interactions and factorizes separated latent spaces — one per combination of fields (e.g. users/items, users/movie genres, or items/movie genres) — instead of a common one shared by all fields. Therefore, each feature has one latent vector per field it can interact with — so that it can learn the specific effect with each different field.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Note that FFM usually needs to learn smaller number of latent factors than FM as each latent vector only deals with one field.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">ffm_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;n_factors&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="s1">&#39;weight_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.01</span><span class="p">),</span>
+    <span class="s1">&#39;latent_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.025</span><span class="p">),</span>
+    <span class="s1">&#39;intercept&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;latent_initializer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Normal</span><span class="p">(</span><span class="n">mu</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">73</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">regressor</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">)</span>
+<span class="n">regressor</span> <span class="o">+=</span> <span class="p">(</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;genres&#39;</span><span class="p">)</span> <span class="o">|</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">FuncTransformer</span><span class="p">(</span><span class="n">split_genres</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">regressor</span> <span class="o">+=</span> <span class="p">(</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;age&#39;</span><span class="p">)</span> <span class="o">|</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">FuncTransformer</span><span class="p">(</span><span class="n">bin_age</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">regressor</span> <span class="o">|=</span> <span class="n">river</span><span class="o">.</span><span class="n">facto</span><span class="o">.</span><span class="n">FFMRegressor</span><span class="p">(</span><span class="o">**</span><span class="n">ffm_params</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">PredClipper</span><span class="p">(</span>
+    <span class="n">regressor</span><span class="o">=</span><span class="n">regressor</span><span class="p">,</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 0.757718, RMSE: 0.958158 – 0:00:21.345140 – 3.06 MB
+[50,000] MAE: 0.749502, RMSE: 0.948065 – 0:00:42.577609 – 3.62 MB
+[75,000] MAE: 0.749275, RMSE: 0.948918 – 0:01:03.900952 – 4.23 MB
+[100,000] MAE: 0.749542, RMSE: 0.949769 – 0:01:25.155978 – 4.79 MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Field-weighted-Factorization-Machines-(FwFM)">Field-weighted Factorization Machines (FwFM)<a class="anchor-link" href="#Field-weighted-Factorization-Machines-(FwFM)"> </a></h3><p>Field-weighted Factorization Machines (FwFM) address FFM memory issues caused by its large number of parameters, which is in the order of feature number times field number. As FFM, FwFM is an extension of FM restricted to pairwise interactions, but instead of factorizing separated latent spaces, it learns a specific weight for each field combination modelling the interaction strength.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">fwfm_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;n_factors&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="s1">&#39;weight_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.01</span><span class="p">),</span>
+    <span class="s1">&#39;latent_optimizer&#39;</span><span class="p">:</span> <span class="n">river</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">(</span><span class="mf">0.025</span><span class="p">),</span>
+    <span class="s1">&#39;intercept&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s1">&#39;seed&#39;</span><span class="p">:</span> <span class="mi">73</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">regressor</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">)</span>
+<span class="n">regressor</span> <span class="o">+=</span> <span class="p">(</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;genres&#39;</span><span class="p">)</span> <span class="o">|</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">FuncTransformer</span><span class="p">(</span><span class="n">split_genres</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">regressor</span> <span class="o">+=</span> <span class="p">(</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span><span class="s1">&#39;age&#39;</span><span class="p">)</span> <span class="o">|</span>
+    <span class="n">river</span><span class="o">.</span><span class="n">compose</span><span class="o">.</span><span class="n">FuncTransformer</span><span class="p">(</span><span class="n">bin_age</span><span class="p">)</span>
+<span class="p">)</span>
+<span class="n">regressor</span> <span class="o">|=</span> <span class="n">river</span><span class="o">.</span><span class="n">facto</span><span class="o">.</span><span class="n">FwFMRegressor</span><span class="p">(</span><span class="o">**</span><span class="n">fwfm_params</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">river</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">PredClipper</span><span class="p">(</span>
+    <span class="n">regressor</span><span class="o">=</span><span class="n">regressor</span><span class="p">,</span>
+    <span class="n">y_min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">y_max</span><span class="o">=</span><span class="mi">5</span>
+<span class="p">)</span>
+
+<span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[25,000] MAE: 0.761539, RMSE: 0.962241 – 0:00:25.952167 – 1.18 MB
+[50,000] MAE: 0.754089, RMSE: 0.953181 – 0:00:52.040548 – 1.38 MB
+[75,000] MAE: 0.754806, RMSE: 0.954979 – 0:01:18.107421 – 1.6 MB
+[100,000] MAE: 0.755404, RMSE: 0.95604 – 0:01:44.092305 – 1.8 MB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/19/incremental-mf-river.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

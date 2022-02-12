@@ -1,0 +1,5370 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Item-item CF and SVD on ML-1m | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Item-item CF and SVD on ML-1m" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/18/itemcf-movie.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/18/itemcf-movie.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-18T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Item-item CF and SVD on ML-1m" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-18T00:00:00-06:00","datePublished":"2022-01-18T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Item-item CF and SVD on ML-1m","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/18/itemcf-movie.html"},"url":"https://nb.recohut.com/2022/01/18/itemcf-movie.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Item-item CF and SVD on ML-1m</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-18T00:00:00-06:00" itemprop="datePublished">
+        Jan 18, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      30 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-18-itemcf-movie.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-18-itemcf-movie.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-18-itemcf-movie.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-18-itemcf-movie.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-18-itemcf-movie.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="o">-</span><span class="n">O</span> <span class="n">movies</span><span class="o">.</span><span class="n">dat</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">RecoHut</span><span class="o">-</span><span class="n">Datasets</span><span class="o">/</span><span class="n">movielens_1m</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">ml1m_items</span><span class="o">.</span><span class="n">dat</span>
+<span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="o">-</span><span class="n">O</span> <span class="n">ratings</span><span class="o">.</span><span class="n">dat</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">RecoHut</span><span class="o">-</span><span class="n">Datasets</span><span class="o">/</span><span class="n">movielens_1m</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">main</span><span class="o">/</span><span class="n">ml1m_ratings</span><span class="o">.</span><span class="n">dat</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>movies.dat          100%[===================&gt;] 159.77K  --.-KB/s    in 0.004s  
+ratings.dat         100%[===================&gt;]  20.59M  --.-KB/s    in 0.1s    
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">movie</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;movies.dat&#39;</span><span class="p">,</span>
+                     <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+                     <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">,</span>
+                     <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;movieId&#39;</span><span class="p">,</span> <span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="s1">&#39;genre&#39;</span><span class="p">])</span>
+
+<span class="n">movie</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>movieId</th>
+      <th>title</th>
+      <th>genre</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>Toy Story (1995)</td>
+      <td>Animation|Children's|Comedy</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2</td>
+      <td>Jumanji (1995)</td>
+      <td>Adventure|Children's|Fantasy</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3</td>
+      <td>Grumpier Old Men (1995)</td>
+      <td>Comedy|Romance</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4</td>
+      <td>Waiting to Exhale (1995)</td>
+      <td>Comedy|Drama</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>5</td>
+      <td>Father of the Bride Part II (1995)</td>
+      <td>Comedy</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">rating</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;ratings.dat&#39;</span><span class="p">,</span>
+                     <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span>
+                     <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">,</span>
+                     <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;userId&#39;</span><span class="p">,</span> <span class="s1">&#39;movieId&#39;</span><span class="p">,</span> <span class="s1">&#39;rating&#39;</span><span class="p">,</span> <span class="s1">&#39;time&#39;</span><span class="p">])</span>
+
+<span class="n">rating</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>movieId</th>
+      <th>rating</th>
+      <th>time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1193</td>
+      <td>5</td>
+      <td>978300760</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>1</td>
+      <td>661</td>
+      <td>3</td>
+      <td>978302109</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>1</td>
+      <td>914</td>
+      <td>3</td>
+      <td>978301968</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>1</td>
+      <td>3408</td>
+      <td>4</td>
+      <td>978300275</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>1</td>
+      <td>2355</td>
+      <td>5</td>
+      <td>978824291</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">rating</span><span class="p">,</span> <span class="n">movie</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;movieId&#39;</span><span class="p">)</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>userId</th>
+      <th>movieId</th>
+      <th>rating</th>
+      <th>time</th>
+      <th>title</th>
+      <th>genre</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>1</td>
+      <td>1193</td>
+      <td>5</td>
+      <td>978300760</td>
+      <td>One Flew Over the Cuckoo's Nest (1975)</td>
+      <td>Drama</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2</td>
+      <td>1193</td>
+      <td>5</td>
+      <td>978298413</td>
+      <td>One Flew Over the Cuckoo's Nest (1975)</td>
+      <td>Drama</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>12</td>
+      <td>1193</td>
+      <td>4</td>
+      <td>978220179</td>
+      <td>One Flew Over the Cuckoo's Nest (1975)</td>
+      <td>Drama</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>15</td>
+      <td>1193</td>
+      <td>4</td>
+      <td>978199279</td>
+      <td>One Flew Over the Cuckoo's Nest (1975)</td>
+      <td>Drama</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>17</td>
+      <td>1193</td>
+      <td>5</td>
+      <td>978158471</td>
+      <td>One Flew Over the Cuckoo's Nest (1975)</td>
+      <td>Drama</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">u_m</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">pivot_table</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="s1">&#39;userId&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s1">&#39;rating&#39;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="s1">&#39;title&#39;</span><span class="p">)</span>
+<span class="n">u_m</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>title</th>
+      <th>$1,000,000 Duck (1971)</th>
+      <th>'Night Mother (1986)</th>
+      <th>'Til There Was You (1997)</th>
+      <th>'burbs, The (1989)</th>
+      <th>...And Justice for All (1979)</th>
+      <th>1-900 (1994)</th>
+      <th>10 Things I Hate About You (1999)</th>
+      <th>101 Dalmatians (1961)</th>
+      <th>101 Dalmatians (1996)</th>
+      <th>12 Angry Men (1957)</th>
+      <th>13th Warrior, The (1999)</th>
+      <th>187 (1997)</th>
+      <th>2 Days in the Valley (1996)</th>
+      <th>20 Dates (1998)</th>
+      <th>20,000 Leagues Under the Sea (1954)</th>
+      <th>200 Cigarettes (1999)</th>
+      <th>2001: A Space Odyssey (1968)</th>
+      <th>2010 (1984)</th>
+      <th>24 7: Twenty Four Seven (1997)</th>
+      <th>24-hour Woman (1998)</th>
+      <th>28 Days (2000)</th>
+      <th>3 Ninjas: High Noon On Mega Mountain (1998)</th>
+      <th>3 Strikes (2000)</th>
+      <th>301, 302 (1995)</th>
+      <th>39 Steps, The (1935)</th>
+      <th>400 Blows, The (Les Quatre cents coups) (1959)</th>
+      <th>42 Up (1998)</th>
+      <th>52 Pick-Up (1986)</th>
+      <th>54 (1998)</th>
+      <th>7th Voyage of Sinbad, The (1958)</th>
+      <th>8 1/2 (1963)</th>
+      <th>8 1/2 Women (1999)</th>
+      <th>8 Heads in a Duffel Bag (1997)</th>
+      <th>8 Seconds (1994)</th>
+      <th>8MM (1999)</th>
+      <th>A Chef in Love (1996)</th>
+      <th>Abbott and Costello Meet Frankenstein (1948)</th>
+      <th>Abominable Snowman, The (1957)</th>
+      <th>About Adam (2000)</th>
+      <th>About Last Night... (1986)</th>
+      <th>...</th>
+      <th>Wonderland (1997)</th>
+      <th>Wonderland (1999)</th>
+      <th>Woo (1998)</th>
+      <th>Wood, The (1999)</th>
+      <th>Wooden Man's Bride, The (Wu Kui) (1994)</th>
+      <th>Working Girl (1988)</th>
+      <th>World Is Not Enough, The (1999)</th>
+      <th>World of Apu, The (Apur Sansar) (1959)</th>
+      <th>Wrong Man, The (1956)</th>
+      <th>Wrong Trousers, The (1993)</th>
+      <th>Wrongfully Accused (1998)</th>
+      <th>Wyatt Earp (1994)</th>
+      <th>X-Files: Fight the Future, The (1998)</th>
+      <th>X-Men (2000)</th>
+      <th>X: The Unknown (1956)</th>
+      <th>Xiu Xiu: The Sent-Down Girl (Tian yu) (1998)</th>
+      <th>Yankee Zulu (1994)</th>
+      <th>Yards, The (1999)</th>
+      <th>Year My Voice Broke, The (1987)</th>
+      <th>Year of Living Dangerously (1982)</th>
+      <th>Year of the Horse (1997)</th>
+      <th>Yellow Submarine (1968)</th>
+      <th>Yojimbo (1961)</th>
+      <th>You Can't Take It With You (1938)</th>
+      <th>You So Crazy (1994)</th>
+      <th>You've Got Mail (1998)</th>
+      <th>Young Doctors in Love (1982)</th>
+      <th>Young Frankenstein (1974)</th>
+      <th>Young Guns (1988)</th>
+      <th>Young Guns II (1990)</th>
+      <th>Young Poisoner's Handbook, The (1995)</th>
+      <th>Young Sherlock Holmes (1985)</th>
+      <th>Young and Innocent (1937)</th>
+      <th>Your Friends and Neighbors (1998)</th>
+      <th>Zachariah (1971)</th>
+      <th>Zed &amp; Two Noughts, A (1985)</th>
+      <th>Zero Effect (1998)</th>
+      <th>Zero Kelvin (Kjærlighetens kjøtere) (1995)</th>
+      <th>Zeus and Roxanne (1997)</th>
+      <th>eXistenZ (1999)</th>
+    </tr>
+    <tr>
+      <th>userId</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6036</th>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>1.0</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>...</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+    </tr>
+    <tr>
+      <th>6037</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6038</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6039</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>6040</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>5.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+<p>6040 rows × 3706 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> users x </span><span class="si">{}</span><span class="s1"> movies&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">u_m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">u_m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>6040 users x 3706 movies
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">m_u</span> <span class="o">=</span> <span class="n">u_m</span><span class="o">.</span><span class="n">T</span>
+<span class="n">m_u</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>userId</th>
+      <th>1</th>
+      <th>2</th>
+      <th>3</th>
+      <th>4</th>
+      <th>5</th>
+      <th>6</th>
+      <th>7</th>
+      <th>8</th>
+      <th>9</th>
+      <th>10</th>
+      <th>11</th>
+      <th>12</th>
+      <th>13</th>
+      <th>14</th>
+      <th>15</th>
+      <th>16</th>
+      <th>17</th>
+      <th>18</th>
+      <th>19</th>
+      <th>20</th>
+      <th>21</th>
+      <th>22</th>
+      <th>23</th>
+      <th>24</th>
+      <th>25</th>
+      <th>26</th>
+      <th>27</th>
+      <th>28</th>
+      <th>29</th>
+      <th>30</th>
+      <th>31</th>
+      <th>32</th>
+      <th>33</th>
+      <th>34</th>
+      <th>35</th>
+      <th>36</th>
+      <th>37</th>
+      <th>38</th>
+      <th>39</th>
+      <th>40</th>
+      <th>...</th>
+      <th>6001</th>
+      <th>6002</th>
+      <th>6003</th>
+      <th>6004</th>
+      <th>6005</th>
+      <th>6006</th>
+      <th>6007</th>
+      <th>6008</th>
+      <th>6009</th>
+      <th>6010</th>
+      <th>6011</th>
+      <th>6012</th>
+      <th>6013</th>
+      <th>6014</th>
+      <th>6015</th>
+      <th>6016</th>
+      <th>6017</th>
+      <th>6018</th>
+      <th>6019</th>
+      <th>6020</th>
+      <th>6021</th>
+      <th>6022</th>
+      <th>6023</th>
+      <th>6024</th>
+      <th>6025</th>
+      <th>6026</th>
+      <th>6027</th>
+      <th>6028</th>
+      <th>6029</th>
+      <th>6030</th>
+      <th>6031</th>
+      <th>6032</th>
+      <th>6033</th>
+      <th>6034</th>
+      <th>6035</th>
+      <th>6036</th>
+      <th>6037</th>
+      <th>6038</th>
+      <th>6039</th>
+      <th>6040</th>
+    </tr>
+    <tr>
+      <th>title</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>$1,000,000 Duck (1971)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>'Night Mother (1986)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>'Til There Was You (1997)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>'burbs, The (1989)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>...And Justice for All (1979)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>Zed &amp; Two Noughts, A (1985)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Zero Effect (1998)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Zero Kelvin (Kj�rlighetens kj�tere) (1995)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>Zeus and Roxanne (1997)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>eXistenZ (1999)</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.0</td>
+      <td>NaN</td>
+      <td>1.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>...</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>4.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.0</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+  </tbody>
+</table>
+<p>3706 rows × 6040 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> movies x </span><span class="si">{}</span><span class="s1"> users&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">m_u</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">m_u</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>3706 movies x 6040 users
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">min_watch</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">rtd</span> <span class="o">=</span> <span class="n">u_m</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">u_m</span><span class="o">.</span><span class="n">count</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">min_watch</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> movies had been watched less than </span><span class="si">{}</span><span class="s1"> times, some of them are: </span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rtd</span><span class="p">),</span> <span class="n">min_watch</span><span class="p">,</span> <span class="n">rtd</span><span class="p">[:</span><span class="mi">5</span><span class="p">]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>663 movies had been watched less than 20 times, some of them are: 
+[&#39;1-900 (1994)&#39; &#39;24 7: Twenty Four Seven (1997)&#39; &#39;24-hour Woman (1998)&#39;
+ &#39;3 Strikes (2000)&#39; &#39;301, 302 (1995)&#39;]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">u_m</span> <span class="o">=</span> <span class="n">u_m</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">rtd</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">m_u</span> <span class="o">=</span> <span class="n">m_u</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">rtd</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> users x </span><span class="si">{}</span><span class="s1"> movies&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">u_m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">u_m</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>6040 users x 3043 movies
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Item-based-Collaborative-Filtering---Cosine-Similarity-Method">Item-based Collaborative Filtering - Cosine Similarity Method<a class="anchor-link" href="#Item-based-Collaborative-Filtering---Cosine-Similarity-Method"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">cosine_similarity</span>
+
+<span class="n">sim_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">cosine_similarity</span><span class="p">(</span><span class="n">m_u</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="n">m_u</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">m_u</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="n">sim_df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>title</th>
+      <th>$1,000,000 Duck (1971)</th>
+      <th>'Night Mother (1986)</th>
+      <th>'Til There Was You (1997)</th>
+      <th>'burbs, The (1989)</th>
+      <th>...And Justice for All (1979)</th>
+      <th>10 Things I Hate About You (1999)</th>
+      <th>101 Dalmatians (1961)</th>
+      <th>101 Dalmatians (1996)</th>
+      <th>12 Angry Men (1957)</th>
+      <th>13th Warrior, The (1999)</th>
+      <th>187 (1997)</th>
+      <th>2 Days in the Valley (1996)</th>
+      <th>20 Dates (1998)</th>
+      <th>20,000 Leagues Under the Sea (1954)</th>
+      <th>200 Cigarettes (1999)</th>
+      <th>2001: A Space Odyssey (1968)</th>
+      <th>2010 (1984)</th>
+      <th>28 Days (2000)</th>
+      <th>3 Ninjas: High Noon On Mega Mountain (1998)</th>
+      <th>39 Steps, The (1935)</th>
+      <th>400 Blows, The (Les Quatre cents coups) (1959)</th>
+      <th>42 Up (1998)</th>
+      <th>52 Pick-Up (1986)</th>
+      <th>54 (1998)</th>
+      <th>7th Voyage of Sinbad, The (1958)</th>
+      <th>8 1/2 (1963)</th>
+      <th>8 1/2 Women (1999)</th>
+      <th>8 Heads in a Duffel Bag (1997)</th>
+      <th>8 Seconds (1994)</th>
+      <th>8MM (1999)</th>
+      <th>A Chef in Love (1996)</th>
+      <th>Abbott and Costello Meet Frankenstein (1948)</th>
+      <th>About Adam (2000)</th>
+      <th>About Last Night... (1986)</th>
+      <th>Above the Rim (1994)</th>
+      <th>Absent Minded Professor, The (1961)</th>
+      <th>Absolute Power (1997)</th>
+      <th>Abyss, The (1989)</th>
+      <th>Ace Ventura: Pet Detective (1994)</th>
+      <th>Ace Ventura: When Nature Calls (1995)</th>
+      <th>...</th>
+      <th>Wizard of Oz, The (1939)</th>
+      <th>Wolf (1994)</th>
+      <th>Wolf Man, The (1941)</th>
+      <th>Woman in the Dunes (Suna no onna) (1964)</th>
+      <th>Woman on Top (2000)</th>
+      <th>Women on the Verge of a Nervous Breakdown (1988)</th>
+      <th>Women, The (1939)</th>
+      <th>Wonder Boys (2000)</th>
+      <th>Wonderful, Horrible Life of Leni Riefenstahl, The (Die Macht der Bilder) (1993)</th>
+      <th>Wonderland (1997)</th>
+      <th>Wonderland (1999)</th>
+      <th>Wood, The (1999)</th>
+      <th>Working Girl (1988)</th>
+      <th>World Is Not Enough, The (1999)</th>
+      <th>World of Apu, The (Apur Sansar) (1959)</th>
+      <th>Wrong Man, The (1956)</th>
+      <th>Wrong Trousers, The (1993)</th>
+      <th>Wrongfully Accused (1998)</th>
+      <th>Wyatt Earp (1994)</th>
+      <th>X-Files: Fight the Future, The (1998)</th>
+      <th>X-Men (2000)</th>
+      <th>Xiu Xiu: The Sent-Down Girl (Tian yu) (1998)</th>
+      <th>Yards, The (1999)</th>
+      <th>Year My Voice Broke, The (1987)</th>
+      <th>Year of Living Dangerously (1982)</th>
+      <th>Yellow Submarine (1968)</th>
+      <th>Yojimbo (1961)</th>
+      <th>You Can't Take It With You (1938)</th>
+      <th>You've Got Mail (1998)</th>
+      <th>Young Doctors in Love (1982)</th>
+      <th>Young Frankenstein (1974)</th>
+      <th>Young Guns (1988)</th>
+      <th>Young Guns II (1990)</th>
+      <th>Young Poisoner's Handbook, The (1995)</th>
+      <th>Young Sherlock Holmes (1985)</th>
+      <th>Your Friends and Neighbors (1998)</th>
+      <th>Zed &amp; Two Noughts, A (1985)</th>
+      <th>Zero Effect (1998)</th>
+      <th>Zeus and Roxanne (1997)</th>
+      <th>eXistenZ (1999)</th>
+    </tr>
+    <tr>
+      <th>title</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>$1,000,000 Duck (1971)</th>
+      <td>1.000000</td>
+      <td>0.072357</td>
+      <td>0.037011</td>
+      <td>0.079291</td>
+      <td>0.060838</td>
+      <td>0.058619</td>
+      <td>0.189965</td>
+      <td>0.172254</td>
+      <td>0.094785</td>
+      <td>0.058418</td>
+      <td>0.028171</td>
+      <td>0.021295</td>
+      <td>0.016918</td>
+      <td>0.141379</td>
+      <td>0.089850</td>
+      <td>0.068224</td>
+      <td>0.037277</td>
+      <td>0.062607</td>
+      <td>0.133014</td>
+      <td>0.063357</td>
+      <td>0.012735</td>
+      <td>0.000000</td>
+      <td>0.093493</td>
+      <td>0.066787</td>
+      <td>0.071660</td>
+      <td>0.017696</td>
+      <td>0.000000</td>
+      <td>0.093552</td>
+      <td>0.000000</td>
+      <td>0.034335</td>
+      <td>0.000000</td>
+      <td>0.085044</td>
+      <td>0.000000</td>
+      <td>0.085170</td>
+      <td>0.027793</td>
+      <td>0.227422</td>
+      <td>0.040799</td>
+      <td>0.068206</td>
+      <td>0.100472</td>
+      <td>0.117148</td>
+      <td>...</td>
+      <td>0.081888</td>
+      <td>0.051605</td>
+      <td>0.075171</td>
+      <td>0.000000</td>
+      <td>0.012938</td>
+      <td>0.047766</td>
+      <td>0.092524</td>
+      <td>0.034633</td>
+      <td>0.034492</td>
+      <td>0.028341</td>
+      <td>0.000000</td>
+      <td>0.014511</td>
+      <td>0.084494</td>
+      <td>0.048566</td>
+      <td>0.004532</td>
+      <td>0.005597</td>
+      <td>0.060784</td>
+      <td>0.034114</td>
+      <td>0.041286</td>
+      <td>0.049451</td>
+      <td>0.065333</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.054429</td>
+      <td>0.091156</td>
+      <td>0.014001</td>
+      <td>0.084914</td>
+      <td>0.096464</td>
+      <td>0.117695</td>
+      <td>0.123579</td>
+      <td>0.062942</td>
+      <td>0.062749</td>
+      <td>0.038725</td>
+      <td>0.076474</td>
+      <td>0.044074</td>
+      <td>0.045280</td>
+      <td>0.039395</td>
+      <td>0.120242</td>
+      <td>0.027003</td>
+    </tr>
+    <tr>
+      <th>'Night Mother (1986)</th>
+      <td>0.072357</td>
+      <td>1.000000</td>
+      <td>0.115290</td>
+      <td>0.115545</td>
+      <td>0.159526</td>
+      <td>0.076798</td>
+      <td>0.147437</td>
+      <td>0.095922</td>
+      <td>0.111413</td>
+      <td>0.046135</td>
+      <td>0.060254</td>
+      <td>0.108613</td>
+      <td>0.038041</td>
+      <td>0.072367</td>
+      <td>0.139323</td>
+      <td>0.102570</td>
+      <td>0.077101</td>
+      <td>0.060867</td>
+      <td>0.012505</td>
+      <td>0.087460</td>
+      <td>0.100011</td>
+      <td>0.099654</td>
+      <td>0.119731</td>
+      <td>0.106338</td>
+      <td>0.066249</td>
+      <td>0.067758</td>
+      <td>0.003423</td>
+      <td>0.070363</td>
+      <td>0.088385</td>
+      <td>0.101017</td>
+      <td>0.053917</td>
+      <td>0.063778</td>
+      <td>0.000000</td>
+      <td>0.152300</td>
+      <td>0.000000</td>
+      <td>0.098492</td>
+      <td>0.066130</td>
+      <td>0.090201</td>
+      <td>0.059582</td>
+      <td>0.077718</td>
+      <td>...</td>
+      <td>0.100298</td>
+      <td>0.058127</td>
+      <td>0.062963</td>
+      <td>0.060800</td>
+      <td>0.005676</td>
+      <td>0.156728</td>
+      <td>0.109245</td>
+      <td>0.093412</td>
+      <td>0.036517</td>
+      <td>0.107762</td>
+      <td>0.029892</td>
+      <td>0.022283</td>
+      <td>0.176508</td>
+      <td>0.032940</td>
+      <td>0.031815</td>
+      <td>0.088404</td>
+      <td>0.064351</td>
+      <td>0.019243</td>
+      <td>0.084531</td>
+      <td>0.060651</td>
+      <td>0.056887</td>
+      <td>0.084457</td>
+      <td>0.032806</td>
+      <td>0.194800</td>
+      <td>0.156500</td>
+      <td>0.112975</td>
+      <td>0.047605</td>
+      <td>0.100589</td>
+      <td>0.085522</td>
+      <td>0.218780</td>
+      <td>0.129181</td>
+      <td>0.077667</td>
+      <td>0.037901</td>
+      <td>0.053010</td>
+      <td>0.087828</td>
+      <td>0.135962</td>
+      <td>0.091150</td>
+      <td>0.074787</td>
+      <td>0.000000</td>
+      <td>0.077807</td>
+    </tr>
+    <tr>
+      <th>'Til There Was You (1997)</th>
+      <td>0.037011</td>
+      <td>0.115290</td>
+      <td>1.000000</td>
+      <td>0.098756</td>
+      <td>0.066301</td>
+      <td>0.127895</td>
+      <td>0.112654</td>
+      <td>0.125670</td>
+      <td>0.079115</td>
+      <td>0.066598</td>
+      <td>0.019914</td>
+      <td>0.067742</td>
+      <td>0.091690</td>
+      <td>0.034371</td>
+      <td>0.197216</td>
+      <td>0.056820</td>
+      <td>0.035762</td>
+      <td>0.122712</td>
+      <td>0.022388</td>
+      <td>0.037141</td>
+      <td>0.006402</td>
+      <td>0.011894</td>
+      <td>0.050014</td>
+      <td>0.110668</td>
+      <td>0.051461</td>
+      <td>0.022744</td>
+      <td>0.009806</td>
+      <td>0.075580</td>
+      <td>0.081144</td>
+      <td>0.118025</td>
+      <td>0.021302</td>
+      <td>0.030758</td>
+      <td>0.052020</td>
+      <td>0.137847</td>
+      <td>0.032745</td>
+      <td>0.056700</td>
+      <td>0.079045</td>
+      <td>0.072552</td>
+      <td>0.120714</td>
+      <td>0.130006</td>
+      <td>...</td>
+      <td>0.083079</td>
+      <td>0.087926</td>
+      <td>0.012882</td>
+      <td>0.029026</td>
+      <td>0.089426</td>
+      <td>0.044378</td>
+      <td>0.048733</td>
+      <td>0.069032</td>
+      <td>0.021202</td>
+      <td>0.026712</td>
+      <td>0.045983</td>
+      <td>0.041031</td>
+      <td>0.136351</td>
+      <td>0.079407</td>
+      <td>0.015663</td>
+      <td>0.030334</td>
+      <td>0.050530</td>
+      <td>0.035216</td>
+      <td>0.014701</td>
+      <td>0.033898</td>
+      <td>0.044842</td>
+      <td>0.042871</td>
+      <td>0.051844</td>
+      <td>0.038153</td>
+      <td>0.093441</td>
+      <td>0.048917</td>
+      <td>0.025659</td>
+      <td>0.053357</td>
+      <td>0.154047</td>
+      <td>0.073955</td>
+      <td>0.048908</td>
+      <td>0.059325</td>
+      <td>0.049421</td>
+      <td>0.029200</td>
+      <td>0.062893</td>
+      <td>0.079187</td>
+      <td>0.022594</td>
+      <td>0.079261</td>
+      <td>0.047526</td>
+      <td>0.063284</td>
+    </tr>
+    <tr>
+      <th>'burbs, The (1989)</th>
+      <td>0.079291</td>
+      <td>0.115545</td>
+      <td>0.098756</td>
+      <td>1.000000</td>
+      <td>0.143620</td>
+      <td>0.192191</td>
+      <td>0.246927</td>
+      <td>0.175885</td>
+      <td>0.170719</td>
+      <td>0.197808</td>
+      <td>0.103273</td>
+      <td>0.183970</td>
+      <td>0.049312</td>
+      <td>0.186721</td>
+      <td>0.243211</td>
+      <td>0.201256</td>
+      <td>0.192739</td>
+      <td>0.124675</td>
+      <td>0.109629</td>
+      <td>0.107820</td>
+      <td>0.069797</td>
+      <td>0.035036</td>
+      <td>0.134392</td>
+      <td>0.114585</td>
+      <td>0.140886</td>
+      <td>0.073091</td>
+      <td>0.058145</td>
+      <td>0.175896</td>
+      <td>0.143419</td>
+      <td>0.199181</td>
+      <td>0.051953</td>
+      <td>0.125158</td>
+      <td>0.033584</td>
+      <td>0.173097</td>
+      <td>0.105229</td>
+      <td>0.192314</td>
+      <td>0.178170</td>
+      <td>0.240435</td>
+      <td>0.325856</td>
+      <td>0.312042</td>
+      <td>...</td>
+      <td>0.211512</td>
+      <td>0.190016</td>
+      <td>0.079263</td>
+      <td>0.049970</td>
+      <td>0.045097</td>
+      <td>0.073816</td>
+      <td>0.063291</td>
+      <td>0.123653</td>
+      <td>0.012437</td>
+      <td>0.027251</td>
+      <td>0.018805</td>
+      <td>0.071510</td>
+      <td>0.224349</td>
+      <td>0.172085</td>
+      <td>0.036498</td>
+      <td>0.063574</td>
+      <td>0.152879</td>
+      <td>0.117152</td>
+      <td>0.157802</td>
+      <td>0.191767</td>
+      <td>0.179523</td>
+      <td>0.049204</td>
+      <td>0.026652</td>
+      <td>0.021894</td>
+      <td>0.100467</td>
+      <td>0.141794</td>
+      <td>0.047399</td>
+      <td>0.069913</td>
+      <td>0.217351</td>
+      <td>0.144441</td>
+      <td>0.227110</td>
+      <td>0.293518</td>
+      <td>0.228432</td>
+      <td>0.113386</td>
+      <td>0.207897</td>
+      <td>0.138064</td>
+      <td>0.055704</td>
+      <td>0.161174</td>
+      <td>0.033567</td>
+      <td>0.110525</td>
+    </tr>
+    <tr>
+      <th>...And Justice for All (1979)</th>
+      <td>0.060838</td>
+      <td>0.159526</td>
+      <td>0.066301</td>
+      <td>0.143620</td>
+      <td>1.000000</td>
+      <td>0.075093</td>
+      <td>0.194154</td>
+      <td>0.116379</td>
+      <td>0.205486</td>
+      <td>0.122431</td>
+      <td>0.114231</td>
+      <td>0.195255</td>
+      <td>0.039933</td>
+      <td>0.171536</td>
+      <td>0.114865</td>
+      <td>0.219975</td>
+      <td>0.153973</td>
+      <td>0.094812</td>
+      <td>0.086252</td>
+      <td>0.164694</td>
+      <td>0.060424</td>
+      <td>0.082938</td>
+      <td>0.379410</td>
+      <td>0.102093</td>
+      <td>0.141570</td>
+      <td>0.130271</td>
+      <td>0.035888</td>
+      <td>0.123146</td>
+      <td>0.088784</td>
+      <td>0.244957</td>
+      <td>0.049241</td>
+      <td>0.105213</td>
+      <td>0.000000</td>
+      <td>0.235548</td>
+      <td>0.071488</td>
+      <td>0.192871</td>
+      <td>0.249112</td>
+      <td>0.178561</td>
+      <td>0.151749</td>
+      <td>0.120757</td>
+      <td>...</td>
+      <td>0.158385</td>
+      <td>0.120003</td>
+      <td>0.103396</td>
+      <td>0.037614</td>
+      <td>0.026623</td>
+      <td>0.108531</td>
+      <td>0.062255</td>
+      <td>0.105970</td>
+      <td>0.075150</td>
+      <td>0.017152</td>
+      <td>0.023824</td>
+      <td>0.043325</td>
+      <td>0.207801</td>
+      <td>0.112293</td>
+      <td>0.045533</td>
+      <td>0.122963</td>
+      <td>0.076498</td>
+      <td>0.042472</td>
+      <td>0.126599</td>
+      <td>0.113129</td>
+      <td>0.116065</td>
+      <td>0.063708</td>
+      <td>0.051807</td>
+      <td>0.076250</td>
+      <td>0.168469</td>
+      <td>0.151250</td>
+      <td>0.058466</td>
+      <td>0.077601</td>
+      <td>0.105449</td>
+      <td>0.132713</td>
+      <td>0.183961</td>
+      <td>0.121312</td>
+      <td>0.089582</td>
+      <td>0.089998</td>
+      <td>0.153006</td>
+      <td>0.109029</td>
+      <td>0.086080</td>
+      <td>0.110867</td>
+      <td>0.000000</td>
+      <td>0.111040</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 3043 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">get_item_based_cf</span><span class="p">(</span><span class="n">movieId</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">sim_df</span><span class="p">[</span><span class="n">movieId</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">top_n</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">n_random_movies</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">m_u</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span>
+<span class="n">item_based_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">i</span><span class="p">:</span><span class="n">get_item_based_cf</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">n_random_movies</span><span class="p">})</span>
+<span class="n">item_based_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Last Action Hero (1993)</th>
+      <th>Wild Reeds (1994)</th>
+      <th>Coyote Ugly (2000)</th>
+      <th>Frankenstein (1931)</th>
+      <th>Destination Moon (1950)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Waterworld (1995)</td>
+      <td>Beautiful Thing (1996)</td>
+      <td>Bring It On (2000)</td>
+      <td>Bride of Frankenstein (1935)</td>
+      <td>Earth Vs. the Flying Saucers (1956)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Batman Forever (1995)</td>
+      <td>Total Eclipse (1995)</td>
+      <td>Replacements, The (2000)</td>
+      <td>Dracula (1931)</td>
+      <td>It Came from Outer Space (1953)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Broken Arrow (1996)</td>
+      <td>Poison (1991)</td>
+      <td>Scary Movie (2000)</td>
+      <td>King Kong (1933)</td>
+      <td>Rocketship X-M (1950)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Batman Returns (1992)</td>
+      <td>Naked (1993)</td>
+      <td>What Lies Beneath (2000)</td>
+      <td>Wolf Man, The (1941)</td>
+      <td>Thing From Another World, The (1951)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Lethal Weapon 4 (1998)</td>
+      <td>Live Flesh (1997)</td>
+      <td>Gone in 60 Seconds (2000)</td>
+      <td>Psycho (1960)</td>
+      <td>It Came from Beneath the Sea (1955)</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>True Lies (1994)</td>
+      <td>Butcher Boy, The (1998)</td>
+      <td>Skulls, The (2000)</td>
+      <td>Birds, The (1963)</td>
+      <td>Mole People, The (1956)</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Lethal Weapon 3 (1992)</td>
+      <td>Celluloid Closet, The (1995)</td>
+      <td>Center Stage (2000)</td>
+      <td>Invasion of the Body Snatchers (1956)</td>
+      <td>Crimson Pirate, The (1952)</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Die Hard: With a Vengeance (1995)</td>
+      <td>Thieves (Voleurs, Les) (1996)</td>
+      <td>Road Trip (2000)</td>
+      <td>Young Frankenstein (1974)</td>
+      <td>Village of the Damned (1960)</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Under Siege (1992)</td>
+      <td>Priest (1994)</td>
+      <td>Hollow Man (2000)</td>
+      <td>Mummy, The (1932)</td>
+      <td>Forbidden Planet (1956)</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Saint, The (1997)</td>
+      <td>C�r�monie, La (1995)</td>
+      <td>Here on Earth (2000)</td>
+      <td>Exorcist, The (1973)</td>
+      <td>Them! (1954)</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>Batman &amp; Robin (1997)</td>
+      <td>Billy's Hollywood Screen Kiss (1997)</td>
+      <td>Me, Myself and Irene (2000)</td>
+      <td>Nosferatu (Nosferatu, eine Symphonie des Graue...</td>
+      <td>Quatermass and the Pit (1967)</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Hot Shots! Part Deux (1993)</td>
+      <td>Love! Valour! Compassion! (1997)</td>
+      <td>Remember the Titans (2000)</td>
+      <td>Halloween (1978)</td>
+      <td>War of the Worlds, The (1953)</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>Die Hard 2 (1990)</td>
+      <td>My Favorite Season (1993)</td>
+      <td>X-Men (2000)</td>
+      <td>Carrie (1976)</td>
+      <td>Quatermass II (1957)</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Demolition Man (1993)</td>
+      <td>Maurice (1987)</td>
+      <td>Cell, The (2000)</td>
+      <td>Frankenstein Meets the Wolf Man (1943)</td>
+      <td>Tarantula (1955)</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>Cliffhanger (1993)</td>
+      <td>My Life in Pink (Ma vie en rose) (1997)</td>
+      <td>Perfect Storm, The (2000)</td>
+      <td>American Werewolf in London, An (1981)</td>
+      <td>Day the Earth Stood Still, The (1951)</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>Outbreak (1995)</td>
+      <td>Wilde (1997)</td>
+      <td>Mission: Impossible 2 (2000)</td>
+      <td>Son of Frankenstein (1939)</td>
+      <td>Blob, The (1958)</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>Maverick (1994)</td>
+      <td>Edge of Seventeen (1998)</td>
+      <td>Patriot, The (2000)</td>
+      <td>Omen, The (1976)</td>
+      <td>Hideous Sun Demon, The (1959)</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>Mars Attacks! (1996)</td>
+      <td>Safe (1995)</td>
+      <td>Meet the Parents (2000)</td>
+      <td>Re-Animator (1985)</td>
+      <td>20,000 Leagues Under the Sea (1954)</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>Con Air (1997)</td>
+      <td>Amateur (1994)</td>
+      <td>10 Things I Hate About You (1999)</td>
+      <td>Shining, The (1980)</td>
+      <td>Plan 9 from Outer Space (1958)</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>Judge Dredd (1995)</td>
+      <td>Sum of Us, The (1994)</td>
+      <td>Beach, The (2000)</td>
+      <td>Dracula (1958)</td>
+      <td>Lifeforce (1985)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Item-based-Collaborative-Filtering---SVD-Latent-factor-Method">Item-based Collaborative Filtering - SVD Latent-factor Method<a class="anchor-link" href="#Item-based-Collaborative-Filtering---SVD-Latent-factor-Method"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">TruncatedSVD</span>
+
+<span class="n">SVD</span> <span class="o">=</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">mat</span> <span class="o">=</span> <span class="n">SVD</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">m_u</span><span class="p">)</span>
+<span class="n">mat</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([[  2.64002061,   0.20886467,   0.38100558, ...,  -0.35050349,
+         -0.09703184,  -0.5983955 ],
+       [  5.74095028,   3.93048761,  -1.88006716, ...,   2.71928544,
+          1.89458597,   0.2229722 ],
+       [  2.96885101,  -0.10945759,  -2.58274233, ...,   1.11202541,
+          0.59461975,   1.41855637],
+       ...,
+       [ 26.25908443,  -0.60489232, -11.65275496, ...,  -4.27358638,
+          0.0717694 ,   0.98466061],
+       [  1.34894495,  -0.3087715 ,  -0.37852469, ...,   0.05222009,
+          0.06860439,  -0.2829412 ],
+       [ 24.44912158,  -3.27742764,  -3.12246971, ...,   7.49493703,
+          4.12535436,  -0.46238114]])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">corr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">mat</span><span class="p">)</span>
+<span class="n">corr</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([[1.        , 0.54835153, 0.60277459, ..., 0.33158203, 0.84608371,
+        0.26115343],
+       [0.54835153, 1.        , 0.77572023, ..., 0.56920875, 0.61209898,
+        0.5100832 ],
+       [0.60277459, 0.77572023, 1.        , ..., 0.53828702, 0.74873341,
+        0.42607101],
+       ...,
+       [0.33158203, 0.56920875, 0.53828702, ..., 1.        , 0.27587829,
+        0.80863464],
+       [0.84608371, 0.61209898, 0.74873341, ..., 0.27587829, 1.        ,
+        0.34411625],
+       [0.26115343, 0.5100832 , 0.42607101, ..., 0.80863464, 0.34411625,
+        1.        ]])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">get_lf_cf</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">top_n</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span>
+    <span class="n">titles</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m_u</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">m_u</span><span class="o">.</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+    <span class="n">cor</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">titles</span><span class="p">)[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">cor</span><span class="p">)[</span><span class="mi">1</span><span class="p">:</span><span class="n">top_n</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">item_based_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="n">i</span><span class="p">:</span><span class="n">get_lf_cf</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">n_random_movies</span><span class="p">})</span>
+<span class="n">item_based_df</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Last Action Hero (1993)</th>
+      <th>Wild Reeds (1994)</th>
+      <th>Coyote Ugly (2000)</th>
+      <th>Frankenstein (1931)</th>
+      <th>Destination Moon (1950)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Maverick (1994)</td>
+      <td>Guinevere (1999)</td>
+      <td>Skulls, The (2000)</td>
+      <td>Bride of Frankenstein (1935)</td>
+      <td>Rocketship X-M (1950)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Batman &amp; Robin (1997)</td>
+      <td>Whole Wide World, The (1996)</td>
+      <td>Nutty Professor II: The Klumps (2000)</td>
+      <td>Dracula (1931)</td>
+      <td>It Came from Outer Space (1953)</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Lethal Weapon 4 (1998)</td>
+      <td>When Night Is Falling (1995)</td>
+      <td>Replacements, The (2000)</td>
+      <td>Birds, The (1963)</td>
+      <td>Earth Vs. the Flying Saucers (1956)</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Batman Returns (1992)</td>
+      <td>Double Happiness (1994)</td>
+      <td>What Lies Beneath (2000)</td>
+      <td>Nosferatu (Nosferatu, eine Symphonie des Graue...</td>
+      <td>Them! (1954)</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Batman Forever (1995)</td>
+      <td>Lovers on the Bridge, The (Les Amants du Pont-...</td>
+      <td>Whatever It Takes (2000)</td>
+      <td>Rosemary's Baby (1968)</td>
+      <td>It Came from Beneath the Sea (1955)</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Avengers, The (1998)</td>
+      <td>Live Flesh (1997)</td>
+      <td>Duets (2000)</td>
+      <td>Creature From the Black Lagoon, The (1954)</td>
+      <td>Thing From Another World, The (1951)</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Waterworld (1995)</td>
+      <td>Winslow Boy, The (1998)</td>
+      <td>Big Momma's House (2000)</td>
+      <td>Haunting, The (1963)</td>
+      <td>Forbidden Planet (1956)</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Hot Shots! Part Deux (1993)</td>
+      <td>Pillow Book, The (1995)</td>
+      <td>Whipped (2000)</td>
+      <td>Wolf Man, The (1941)</td>
+      <td>Day the Earth Stood Still, The (1951)</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Beverly Hills Cop III (1994)</td>
+      <td>Walking and Talking (1996)</td>
+      <td>Kid, The (2000)</td>
+      <td>Mummy, The (1932)</td>
+      <td>Voyage to the Bottom of the Sea (1961)</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Lethal Weapon 3 (1992)</td>
+      <td>Paris Is Burning (1990)</td>
+      <td>Frequency (2000)</td>
+      <td>Psycho (1960)</td>
+      <td>Mole People, The (1956)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Full-User-Item-Matrix-Rating-Prediction-using-SVD-MF">Full User-Item Matrix Rating Prediction using SVD MF<a class="anchor-link" href="#Full-User-Item-Matrix-Rating-Prediction-using-SVD-MF"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">non_zero_mean</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">v</span> <span class="o">=</span> <span class="n">u_m</span><span class="o">.</span><span class="n">values</span>
+<span class="n">diff_v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">v</span><span class="o">==</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="o">-</span><span class="n">non_zero_mean</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">u_m_</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">diff_v</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">u_m</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">u_m</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">scipy.sparse.linalg</span> <span class="kn">import</span> <span class="n">svds</span>
+
+<span class="n">u</span><span class="p">,</span><span class="n">sigma</span><span class="p">,</span> <span class="n">vt</span> <span class="o">=</span> <span class="n">svds</span><span class="p">(</span><span class="n">u_m_</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span>
+<span class="n">u</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">sigma</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">vt</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>((6040, 12), (12, 12), (12, 3043))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">pred_ratings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">sigma</span><span class="p">),</span> <span class="n">vt</span><span class="p">)</span> <span class="o">+</span> <span class="n">non_zero_mean</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">pred_ratings</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pred_ratings</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">u_m</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">u_m</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="n">pred_ratings</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>title</th>
+      <th>$1,000,000 Duck (1971)</th>
+      <th>'Night Mother (1986)</th>
+      <th>'Til There Was You (1997)</th>
+      <th>'burbs, The (1989)</th>
+      <th>...And Justice for All (1979)</th>
+      <th>10 Things I Hate About You (1999)</th>
+      <th>101 Dalmatians (1961)</th>
+      <th>101 Dalmatians (1996)</th>
+      <th>12 Angry Men (1957)</th>
+      <th>13th Warrior, The (1999)</th>
+      <th>187 (1997)</th>
+      <th>2 Days in the Valley (1996)</th>
+      <th>20 Dates (1998)</th>
+      <th>20,000 Leagues Under the Sea (1954)</th>
+      <th>200 Cigarettes (1999)</th>
+      <th>2001: A Space Odyssey (1968)</th>
+      <th>2010 (1984)</th>
+      <th>28 Days (2000)</th>
+      <th>3 Ninjas: High Noon On Mega Mountain (1998)</th>
+      <th>39 Steps, The (1935)</th>
+      <th>400 Blows, The (Les Quatre cents coups) (1959)</th>
+      <th>42 Up (1998)</th>
+      <th>52 Pick-Up (1986)</th>
+      <th>54 (1998)</th>
+      <th>7th Voyage of Sinbad, The (1958)</th>
+      <th>8 1/2 (1963)</th>
+      <th>8 1/2 Women (1999)</th>
+      <th>8 Heads in a Duffel Bag (1997)</th>
+      <th>8 Seconds (1994)</th>
+      <th>8MM (1999)</th>
+      <th>A Chef in Love (1996)</th>
+      <th>Abbott and Costello Meet Frankenstein (1948)</th>
+      <th>About Adam (2000)</th>
+      <th>About Last Night... (1986)</th>
+      <th>Above the Rim (1994)</th>
+      <th>Absent Minded Professor, The (1961)</th>
+      <th>Absolute Power (1997)</th>
+      <th>Abyss, The (1989)</th>
+      <th>Ace Ventura: Pet Detective (1994)</th>
+      <th>Ace Ventura: When Nature Calls (1995)</th>
+      <th>...</th>
+      <th>Wizard of Oz, The (1939)</th>
+      <th>Wolf (1994)</th>
+      <th>Wolf Man, The (1941)</th>
+      <th>Woman in the Dunes (Suna no onna) (1964)</th>
+      <th>Woman on Top (2000)</th>
+      <th>Women on the Verge of a Nervous Breakdown (1988)</th>
+      <th>Women, The (1939)</th>
+      <th>Wonder Boys (2000)</th>
+      <th>Wonderful, Horrible Life of Leni Riefenstahl, The (Die Macht der Bilder) (1993)</th>
+      <th>Wonderland (1997)</th>
+      <th>Wonderland (1999)</th>
+      <th>Wood, The (1999)</th>
+      <th>Working Girl (1988)</th>
+      <th>World Is Not Enough, The (1999)</th>
+      <th>World of Apu, The (Apur Sansar) (1959)</th>
+      <th>Wrong Man, The (1956)</th>
+      <th>Wrong Trousers, The (1993)</th>
+      <th>Wrongfully Accused (1998)</th>
+      <th>Wyatt Earp (1994)</th>
+      <th>X-Files: Fight the Future, The (1998)</th>
+      <th>X-Men (2000)</th>
+      <th>Xiu Xiu: The Sent-Down Girl (Tian yu) (1998)</th>
+      <th>Yards, The (1999)</th>
+      <th>Year My Voice Broke, The (1987)</th>
+      <th>Year of Living Dangerously (1982)</th>
+      <th>Yellow Submarine (1968)</th>
+      <th>Yojimbo (1961)</th>
+      <th>You Can't Take It With You (1938)</th>
+      <th>You've Got Mail (1998)</th>
+      <th>Young Doctors in Love (1982)</th>
+      <th>Young Frankenstein (1974)</th>
+      <th>Young Guns (1988)</th>
+      <th>Young Guns II (1990)</th>
+      <th>Young Poisoner's Handbook, The (1995)</th>
+      <th>Young Sherlock Holmes (1985)</th>
+      <th>Your Friends and Neighbors (1998)</th>
+      <th>Zed &amp; Two Noughts, A (1985)</th>
+      <th>Zero Effect (1998)</th>
+      <th>Zeus and Roxanne (1997)</th>
+      <th>eXistenZ (1999)</th>
+    </tr>
+    <tr>
+      <th>userId</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>4.190650</td>
+      <td>4.192905</td>
+      <td>4.184182</td>
+      <td>4.174485</td>
+      <td>4.194911</td>
+      <td>4.183129</td>
+      <td>4.209184</td>
+      <td>4.205529</td>
+      <td>4.208539</td>
+      <td>4.149592</td>
+      <td>4.187304</td>
+      <td>4.179720</td>
+      <td>4.188113</td>
+      <td>4.198468</td>
+      <td>4.184574</td>
+      <td>4.154781</td>
+      <td>4.188935</td>
+      <td>4.185011</td>
+      <td>4.192235</td>
+      <td>4.191233</td>
+      <td>4.182142</td>
+      <td>4.187320</td>
+      <td>4.186628</td>
+      <td>4.186822</td>
+      <td>4.189896</td>
+      <td>4.180015</td>
+      <td>4.186827</td>
+      <td>4.198256</td>
+      <td>4.190615</td>
+      <td>4.172111</td>
+      <td>4.188263</td>
+      <td>4.190822</td>
+      <td>4.186919</td>
+      <td>4.199336</td>
+      <td>4.186270</td>
+      <td>4.198591</td>
+      <td>4.188343</td>
+      <td>4.179191</td>
+      <td>4.189260</td>
+      <td>4.186511</td>
+      <td>...</td>
+      <td>4.226289</td>
+      <td>4.176312</td>
+      <td>4.195170</td>
+      <td>4.188474</td>
+      <td>4.186805</td>
+      <td>4.179076</td>
+      <td>4.189995</td>
+      <td>4.185560</td>
+      <td>4.187465</td>
+      <td>4.187375</td>
+      <td>4.190209</td>
+      <td>4.184331</td>
+      <td>4.199049</td>
+      <td>4.164835</td>
+      <td>4.186305</td>
+      <td>4.188374</td>
+      <td>4.121179</td>
+      <td>4.184823</td>
+      <td>4.191972</td>
+      <td>4.187396</td>
+      <td>4.140158</td>
+      <td>4.185293</td>
+      <td>4.189980</td>
+      <td>4.190397</td>
+      <td>4.185707</td>
+      <td>4.180100</td>
+      <td>4.176469</td>
+      <td>4.188773</td>
+      <td>4.214921</td>
+      <td>4.187248</td>
+      <td>4.162332</td>
+      <td>4.207258</td>
+      <td>4.184385</td>
+      <td>4.186921</td>
+      <td>4.183127</td>
+      <td>4.187876</td>
+      <td>4.187639</td>
+      <td>4.177979</td>
+      <td>4.191269</td>
+      <td>4.173246</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3.716990</td>
+      <td>3.718968</td>
+      <td>3.709183</td>
+      <td>3.694758</td>
+      <td>3.716562</td>
+      <td>3.705527</td>
+      <td>3.737749</td>
+      <td>3.723131</td>
+      <td>3.769175</td>
+      <td>3.586268</td>
+      <td>3.709746</td>
+      <td>3.680189</td>
+      <td>3.701864</td>
+      <td>3.728850</td>
+      <td>3.711097</td>
+      <td>3.678156</td>
+      <td>3.707386</td>
+      <td>3.681946</td>
+      <td>3.716922</td>
+      <td>3.706735</td>
+      <td>3.683278</td>
+      <td>3.706838</td>
+      <td>3.706922</td>
+      <td>3.693368</td>
+      <td>3.695419</td>
+      <td>3.675016</td>
+      <td>3.695556</td>
+      <td>3.730074</td>
+      <td>3.718460</td>
+      <td>3.670194</td>
+      <td>3.713569</td>
+      <td>3.700819</td>
+      <td>3.709549</td>
+      <td>3.750724</td>
+      <td>3.708009</td>
+      <td>3.721228</td>
+      <td>3.707457</td>
+      <td>3.720852</td>
+      <td>3.681854</td>
+      <td>3.694331</td>
+      <td>...</td>
+      <td>3.909353</td>
+      <td>3.686918</td>
+      <td>3.713112</td>
+      <td>3.711364</td>
+      <td>3.704999</td>
+      <td>3.690755</td>
+      <td>3.705831</td>
+      <td>3.716419</td>
+      <td>3.703131</td>
+      <td>3.711084</td>
+      <td>3.712281</td>
+      <td>3.706343</td>
+      <td>3.718189</td>
+      <td>3.603730</td>
+      <td>3.711378</td>
+      <td>3.708676</td>
+      <td>3.742572</td>
+      <td>3.723606</td>
+      <td>3.712157</td>
+      <td>3.674992</td>
+      <td>3.689927</td>
+      <td>3.698981</td>
+      <td>3.706273</td>
+      <td>3.713213</td>
+      <td>3.706762</td>
+      <td>3.693685</td>
+      <td>3.705705</td>
+      <td>3.708428</td>
+      <td>3.748449</td>
+      <td>3.730237</td>
+      <td>3.710006</td>
+      <td>3.755646</td>
+      <td>3.707338</td>
+      <td>3.714461</td>
+      <td>3.685371</td>
+      <td>3.707222</td>
+      <td>3.709970</td>
+      <td>3.685403</td>
+      <td>3.716114</td>
+      <td>3.644119</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>3.904772</td>
+      <td>3.899433</td>
+      <td>3.915509</td>
+      <td>3.905039</td>
+      <td>3.904433</td>
+      <td>3.887194</td>
+      <td>3.901021</td>
+      <td>3.879714</td>
+      <td>3.936538</td>
+      <td>3.921431</td>
+      <td>3.901830</td>
+      <td>3.891922</td>
+      <td>3.901198</td>
+      <td>3.933795</td>
+      <td>3.917965</td>
+      <td>3.967046</td>
+      <td>3.912357</td>
+      <td>3.925403</td>
+      <td>3.884639</td>
+      <td>3.906678</td>
+      <td>3.898801</td>
+      <td>3.894331</td>
+      <td>3.905160</td>
+      <td>3.912480</td>
+      <td>3.900279</td>
+      <td>3.882815</td>
+      <td>3.893989</td>
+      <td>3.908694</td>
+      <td>3.908333</td>
+      <td>3.920568</td>
+      <td>3.903055</td>
+      <td>3.900146</td>
+      <td>3.902582</td>
+      <td>3.910278</td>
+      <td>3.893992</td>
+      <td>3.908977</td>
+      <td>3.895768</td>
+      <td>3.854979</td>
+      <td>3.934589</td>
+      <td>3.897401</td>
+      <td>...</td>
+      <td>4.012638</td>
+      <td>3.894074</td>
+      <td>3.906672</td>
+      <td>3.898954</td>
+      <td>3.911998</td>
+      <td>3.882618</td>
+      <td>3.894485</td>
+      <td>3.853892</td>
+      <td>3.895391</td>
+      <td>3.899757</td>
+      <td>3.896017</td>
+      <td>3.903041</td>
+      <td>3.864866</td>
+      <td>3.908473</td>
+      <td>3.892007</td>
+      <td>3.903931</td>
+      <td>3.921745</td>
+      <td>3.902796</td>
+      <td>3.913614</td>
+      <td>3.889315</td>
+      <td>3.909936</td>
+      <td>3.900524</td>
+      <td>3.892906</td>
+      <td>3.897770</td>
+      <td>3.894367</td>
+      <td>3.902881</td>
+      <td>3.913046</td>
+      <td>3.895888</td>
+      <td>3.880693</td>
+      <td>3.909842</td>
+      <td>3.979827</td>
+      <td>3.916306</td>
+      <td>3.883005</td>
+      <td>3.910412</td>
+      <td>3.903159</td>
+      <td>3.907108</td>
+      <td>3.904466</td>
+      <td>3.893839</td>
+      <td>3.903877</td>
+      <td>3.895834</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4.187775</td>
+      <td>4.191150</td>
+      <td>4.187788</td>
+      <td>4.184249</td>
+      <td>4.192904</td>
+      <td>4.208493</td>
+      <td>4.193186</td>
+      <td>4.205807</td>
+      <td>4.211378</td>
+      <td>4.188034</td>
+      <td>4.190083</td>
+      <td>4.184630</td>
+      <td>4.191953</td>
+      <td>4.199153</td>
+      <td>4.193799</td>
+      <td>4.212033</td>
+      <td>4.179896</td>
+      <td>4.194831</td>
+      <td>4.191876</td>
+      <td>4.202195</td>
+      <td>4.196517</td>
+      <td>4.191611</td>
+      <td>4.190048</td>
+      <td>4.193525</td>
+      <td>4.190968</td>
+      <td>4.197512</td>
+      <td>4.188758</td>
+      <td>4.184544</td>
+      <td>4.193955</td>
+      <td>4.180988</td>
+      <td>4.188672</td>
+      <td>4.180118</td>
+      <td>4.190266</td>
+      <td>4.196790</td>
+      <td>4.192173</td>
+      <td>4.192580</td>
+      <td>4.186787</td>
+      <td>4.138488</td>
+      <td>4.183277</td>
+      <td>4.179158</td>
+      <td>...</td>
+      <td>4.203937</td>
+      <td>4.185552</td>
+      <td>4.190103</td>
+      <td>4.195595</td>
+      <td>4.188149</td>
+      <td>4.190588</td>
+      <td>4.190143</td>
+      <td>4.184417</td>
+      <td>4.194060</td>
+      <td>4.188689</td>
+      <td>4.190035</td>
+      <td>4.192125</td>
+      <td>4.190385</td>
+      <td>4.166125</td>
+      <td>4.189802</td>
+      <td>4.185241</td>
+      <td>4.180315</td>
+      <td>4.189908</td>
+      <td>4.176444</td>
+      <td>4.159926</td>
+      <td>4.124742</td>
+      <td>4.188030</td>
+      <td>4.189048</td>
+      <td>4.191310</td>
+      <td>4.204494</td>
+      <td>4.187362</td>
+      <td>4.201830</td>
+      <td>4.189879</td>
+      <td>4.201954</td>
+      <td>4.185728</td>
+      <td>4.231748</td>
+      <td>4.176834</td>
+      <td>4.172516</td>
+      <td>4.183998</td>
+      <td>4.166313</td>
+      <td>4.191460</td>
+      <td>4.191357</td>
+      <td>4.178443</td>
+      <td>4.193602</td>
+      <td>4.175361</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>3.139990</td>
+      <td>3.121451</td>
+      <td>3.142037</td>
+      <td>3.150783</td>
+      <td>3.121168</td>
+      <td>3.058442</td>
+      <td>3.060397</td>
+      <td>3.084534</td>
+      <td>3.149682</td>
+      <td>3.083272</td>
+      <td>3.138150</td>
+      <td>3.140578</td>
+      <td>3.104719</td>
+      <td>3.073675</td>
+      <td>3.097610</td>
+      <td>3.374286</td>
+      <td>3.093653</td>
+      <td>3.050768</td>
+      <td>3.162354</td>
+      <td>3.158308</td>
+      <td>3.222252</td>
+      <td>3.181149</td>
+      <td>3.155740</td>
+      <td>3.057905</td>
+      <td>3.154654</td>
+      <td>3.233022</td>
+      <td>3.153250</td>
+      <td>3.104203</td>
+      <td>3.125816</td>
+      <td>3.142611</td>
+      <td>3.154265</td>
+      <td>3.139222</td>
+      <td>3.149644</td>
+      <td>3.060361</td>
+      <td>3.147000</td>
+      <td>3.079577</td>
+      <td>3.075416</td>
+      <td>3.044433</td>
+      <td>3.089013</td>
+      <td>3.173581</td>
+      <td>...</td>
+      <td>3.201438</td>
+      <td>3.106489</td>
+      <td>3.139567</td>
+      <td>3.156305</td>
+      <td>3.128414</td>
+      <td>3.226582</td>
+      <td>3.160306</td>
+      <td>3.289110</td>
+      <td>3.170301</td>
+      <td>3.154483</td>
+      <td>3.149373</td>
+      <td>3.143400</td>
+      <td>3.083465</td>
+      <td>3.057182</td>
+      <td>3.171041</td>
+      <td>3.147505</td>
+      <td>3.483249</td>
+      <td>3.162965</td>
+      <td>3.112027</td>
+      <td>3.105425</td>
+      <td>3.230062</td>
+      <td>3.175177</td>
+      <td>3.144841</td>
+      <td>3.150290</td>
+      <td>3.165952</td>
+      <td>3.223867</td>
+      <td>3.206969</td>
+      <td>3.165123</td>
+      <td>2.928441</td>
+      <td>3.136827</td>
+      <td>3.310893</td>
+      <td>3.032818</td>
+      <td>3.143920</td>
+      <td>3.167774</td>
+      <td>3.123044</td>
+      <td>3.161796</td>
+      <td>3.147442</td>
+      <td>3.215111</td>
+      <td>3.135526</td>
+      <td>3.191985</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>6036</th>
+      <td>3.280955</td>
+      <td>3.300518</td>
+      <td>3.291566</td>
+      <td>3.415965</td>
+      <td>3.292868</td>
+      <td>2.997842</td>
+      <td>3.461265</td>
+      <td>3.303973</td>
+      <td>3.628286</td>
+      <td>2.627627</td>
+      <td>3.251433</td>
+      <td>3.201384</td>
+      <td>3.225101</td>
+      <td>3.551331</td>
+      <td>3.215182</td>
+      <td>5.022215</td>
+      <td>3.244409</td>
+      <td>2.935694</td>
+      <td>3.301895</td>
+      <td>3.577647</td>
+      <td>3.540457</td>
+      <td>3.418556</td>
+      <td>3.312983</td>
+      <td>3.075638</td>
+      <td>3.420975</td>
+      <td>3.516443</td>
+      <td>3.232333</td>
+      <td>3.224147</td>
+      <td>3.274543</td>
+      <td>3.056135</td>
+      <td>3.306157</td>
+      <td>3.379828</td>
+      <td>3.309391</td>
+      <td>3.210690</td>
+      <td>3.309635</td>
+      <td>3.393208</td>
+      <td>3.139482</td>
+      <td>3.684786</td>
+      <td>2.758592</td>
+      <td>3.092996</td>
+      <td>...</td>
+      <td>4.111815</td>
+      <td>3.087325</td>
+      <td>3.499021</td>
+      <td>3.384750</td>
+      <td>3.220320</td>
+      <td>3.474520</td>
+      <td>3.424927</td>
+      <td>3.650960</td>
+      <td>3.401976</td>
+      <td>3.301974</td>
+      <td>3.341424</td>
+      <td>3.278924</td>
+      <td>3.302207</td>
+      <td>2.635663</td>
+      <td>3.370831</td>
+      <td>3.374382</td>
+      <td>4.174609</td>
+      <td>3.199787</td>
+      <td>3.162038</td>
+      <td>2.893798</td>
+      <td>3.357379</td>
+      <td>3.333778</td>
+      <td>3.303683</td>
+      <td>3.337222</td>
+      <td>3.524842</td>
+      <td>3.526757</td>
+      <td>3.691920</td>
+      <td>3.425359</td>
+      <td>3.131332</td>
+      <td>3.351280</td>
+      <td>3.951218</td>
+      <td>3.048547</td>
+      <td>3.082092</td>
+      <td>3.310403</td>
+      <td>3.140300</td>
+      <td>3.386573</td>
+      <td>3.284571</td>
+      <td>3.395883</td>
+      <td>3.303455</td>
+      <td>3.210910</td>
+    </tr>
+    <tr>
+      <th>6037</th>
+      <td>3.720459</td>
+      <td>3.705736</td>
+      <td>3.725025</td>
+      <td>3.721271</td>
+      <td>3.710223</td>
+      <td>3.612798</td>
+      <td>3.715282</td>
+      <td>3.721135</td>
+      <td>3.847524</td>
+      <td>3.589138</td>
+      <td>3.712421</td>
+      <td>3.679742</td>
+      <td>3.685906</td>
+      <td>3.746179</td>
+      <td>3.699405</td>
+      <td>4.002882</td>
+      <td>3.684950</td>
+      <td>3.655776</td>
+      <td>3.732128</td>
+      <td>3.776778</td>
+      <td>3.781249</td>
+      <td>3.735416</td>
+      <td>3.714405</td>
+      <td>3.668924</td>
+      <td>3.716688</td>
+      <td>3.755235</td>
+      <td>3.698215</td>
+      <td>3.733964</td>
+      <td>3.727115</td>
+      <td>3.708436</td>
+      <td>3.722377</td>
+      <td>3.714360</td>
+      <td>3.715056</td>
+      <td>3.689052</td>
+      <td>3.703654</td>
+      <td>3.714845</td>
+      <td>3.684085</td>
+      <td>3.539470</td>
+      <td>3.695433</td>
+      <td>3.740703</td>
+      <td>...</td>
+      <td>4.062693</td>
+      <td>3.685985</td>
+      <td>3.750985</td>
+      <td>3.724502</td>
+      <td>3.706162</td>
+      <td>3.718908</td>
+      <td>3.734229</td>
+      <td>3.724075</td>
+      <td>3.723346</td>
+      <td>3.714097</td>
+      <td>3.713905</td>
+      <td>3.700724</td>
+      <td>3.644381</td>
+      <td>3.653032</td>
+      <td>3.726069</td>
+      <td>3.722477</td>
+      <td>3.767685</td>
+      <td>3.733656</td>
+      <td>3.722856</td>
+      <td>3.643988</td>
+      <td>3.629721</td>
+      <td>3.718603</td>
+      <td>3.704794</td>
+      <td>3.721224</td>
+      <td>3.732841</td>
+      <td>3.731324</td>
+      <td>3.764036</td>
+      <td>3.731200</td>
+      <td>3.658245</td>
+      <td>3.723738</td>
+      <td>3.862703</td>
+      <td>3.714810</td>
+      <td>3.715830</td>
+      <td>3.728431</td>
+      <td>3.665278</td>
+      <td>3.728257</td>
+      <td>3.720383</td>
+      <td>3.685686</td>
+      <td>3.719895</td>
+      <td>3.668115</td>
+    </tr>
+    <tr>
+      <th>6038</th>
+      <td>3.798167</td>
+      <td>3.802349</td>
+      <td>3.799940</td>
+      <td>3.795439</td>
+      <td>3.797838</td>
+      <td>3.810941</td>
+      <td>3.797730</td>
+      <td>3.787371</td>
+      <td>3.806985</td>
+      <td>3.821351</td>
+      <td>3.803932</td>
+      <td>3.803896</td>
+      <td>3.801579</td>
+      <td>3.793111</td>
+      <td>3.808811</td>
+      <td>3.793932</td>
+      <td>3.796394</td>
+      <td>3.805422</td>
+      <td>3.798556</td>
+      <td>3.807542</td>
+      <td>3.800674</td>
+      <td>3.799535</td>
+      <td>3.794022</td>
+      <td>3.814819</td>
+      <td>3.785155</td>
+      <td>3.798986</td>
+      <td>3.797295</td>
+      <td>3.800794</td>
+      <td>3.796319</td>
+      <td>3.809164</td>
+      <td>3.800891</td>
+      <td>3.794956</td>
+      <td>3.802705</td>
+      <td>3.794563</td>
+      <td>3.801207</td>
+      <td>3.796663</td>
+      <td>3.809437</td>
+      <td>3.803088</td>
+      <td>3.735661</td>
+      <td>3.766461</td>
+      <td>...</td>
+      <td>3.805344</td>
+      <td>3.817016</td>
+      <td>3.788464</td>
+      <td>3.800660</td>
+      <td>3.800447</td>
+      <td>3.804610</td>
+      <td>3.801097</td>
+      <td>3.813834</td>
+      <td>3.799042</td>
+      <td>3.801472</td>
+      <td>3.799501</td>
+      <td>3.803887</td>
+      <td>3.795886</td>
+      <td>3.807382</td>
+      <td>3.805264</td>
+      <td>3.801544</td>
+      <td>3.842808</td>
+      <td>3.806721</td>
+      <td>3.801635</td>
+      <td>3.801592</td>
+      <td>3.801279</td>
+      <td>3.797535</td>
+      <td>3.802820</td>
+      <td>3.800726</td>
+      <td>3.812616</td>
+      <td>3.800776</td>
+      <td>3.804451</td>
+      <td>3.805628</td>
+      <td>3.807570</td>
+      <td>3.798624</td>
+      <td>3.781433</td>
+      <td>3.781444</td>
+      <td>3.800155</td>
+      <td>3.802359</td>
+      <td>3.797722</td>
+      <td>3.797664</td>
+      <td>3.797340</td>
+      <td>3.803873</td>
+      <td>3.799904</td>
+      <td>3.804471</td>
+    </tr>
+    <tr>
+      <th>6039</th>
+      <td>3.876013</td>
+      <td>3.873167</td>
+      <td>3.880279</td>
+      <td>3.891049</td>
+      <td>3.867352</td>
+      <td>3.828917</td>
+      <td>3.882112</td>
+      <td>3.859802</td>
+      <td>3.939103</td>
+      <td>3.855925</td>
+      <td>3.878366</td>
+      <td>3.870816</td>
+      <td>3.865758</td>
+      <td>3.890804</td>
+      <td>3.869117</td>
+      <td>4.000422</td>
+      <td>3.860340</td>
+      <td>3.841941</td>
+      <td>3.881903</td>
+      <td>3.917563</td>
+      <td>3.918914</td>
+      <td>3.887969</td>
+      <td>3.868838</td>
+      <td>3.861829</td>
+      <td>3.867777</td>
+      <td>3.901553</td>
+      <td>3.867078</td>
+      <td>3.884932</td>
+      <td>3.878970</td>
+      <td>3.883443</td>
+      <td>3.879933</td>
+      <td>3.883600</td>
+      <td>3.878542</td>
+      <td>3.847305</td>
+      <td>3.874138</td>
+      <td>3.884303</td>
+      <td>3.875591</td>
+      <td>3.871237</td>
+      <td>3.832205</td>
+      <td>3.863731</td>
+      <td>...</td>
+      <td>4.058316</td>
+      <td>3.892065</td>
+      <td>3.885967</td>
+      <td>3.878475</td>
+      <td>3.868880</td>
+      <td>3.888334</td>
+      <td>3.895426</td>
+      <td>3.885565</td>
+      <td>3.881126</td>
+      <td>3.878750</td>
+      <td>3.875555</td>
+      <td>3.871836</td>
+      <td>3.854773</td>
+      <td>3.913594</td>
+      <td>3.890634</td>
+      <td>3.889531</td>
+      <td>3.959366</td>
+      <td>3.883941</td>
+      <td>3.891692</td>
+      <td>3.857170</td>
+      <td>3.906324</td>
+      <td>3.874951</td>
+      <td>3.874059</td>
+      <td>3.879935</td>
+      <td>3.892769</td>
+      <td>3.891220</td>
+      <td>3.908254</td>
+      <td>3.898532</td>
+      <td>3.864781</td>
+      <td>3.879673</td>
+      <td>3.936699</td>
+      <td>3.865374</td>
+      <td>3.892639</td>
+      <td>3.882878</td>
+      <td>3.874797</td>
+      <td>3.877175</td>
+      <td>3.878554</td>
+      <td>3.872241</td>
+      <td>3.875771</td>
+      <td>3.865636</td>
+    </tr>
+    <tr>
+      <th>6040</th>
+      <td>3.546692</td>
+      <td>3.537765</td>
+      <td>3.568663</td>
+      <td>3.504318</td>
+      <td>3.555153</td>
+      <td>3.509731</td>
+      <td>3.500091</td>
+      <td>3.614434</td>
+      <td>3.815462</td>
+      <td>3.561481</td>
+      <td>3.583383</td>
+      <td>3.555373</td>
+      <td>3.537009</td>
+      <td>3.552676</td>
+      <td>3.558928</td>
+      <td>4.552460</td>
+      <td>3.498042</td>
+      <td>3.513556</td>
+      <td>3.616064</td>
+      <td>3.761993</td>
+      <td>3.736330</td>
+      <td>3.630825</td>
+      <td>3.513948</td>
+      <td>3.599052</td>
+      <td>3.544122</td>
+      <td>3.756085</td>
+      <td>3.544690</td>
+      <td>3.520841</td>
+      <td>3.558976</td>
+      <td>3.603648</td>
+      <td>3.579214</td>
+      <td>3.523471</td>
+      <td>3.575874</td>
+      <td>3.372453</td>
+      <td>3.565137</td>
+      <td>3.473590</td>
+      <td>3.598627</td>
+      <td>3.198999</td>
+      <td>3.129884</td>
+      <td>3.425896</td>
+      <td>...</td>
+      <td>3.897788</td>
+      <td>3.604709</td>
+      <td>3.611872</td>
+      <td>3.620128</td>
+      <td>3.554689</td>
+      <td>3.637149</td>
+      <td>3.607947</td>
+      <td>3.719529</td>
+      <td>3.598927</td>
+      <td>3.564226</td>
+      <td>3.565324</td>
+      <td>3.564389</td>
+      <td>3.382224</td>
+      <td>3.557652</td>
+      <td>3.628739</td>
+      <td>3.545476</td>
+      <td>3.769440</td>
+      <td>3.605260</td>
+      <td>3.500647</td>
+      <td>3.508791</td>
+      <td>3.374150</td>
+      <td>3.576088</td>
+      <td>3.582701</td>
+      <td>3.583433</td>
+      <td>3.731801</td>
+      <td>3.561792</td>
+      <td>3.721983</td>
+      <td>3.596489</td>
+      <td>3.497313</td>
+      <td>3.479051</td>
+      <td>3.866225</td>
+      <td>3.377005</td>
+      <td>3.503775</td>
+      <td>3.560169</td>
+      <td>3.377536</td>
+      <td>3.558065</td>
+      <td>3.556142</td>
+      <td>3.519695</td>
+      <td>3.570028</td>
+      <td>3.513920</td>
+    </tr>
+  </tbody>
+</table>
+<p>6040 rows × 3043 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">pred_ratings</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">6</span><span class="p">]);</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+" />
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/18/itemcf-movie.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

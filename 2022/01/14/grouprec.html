@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Group Playlist Recommendations on Million Songs Dataset using Surprise SVD and NMF Model | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Group Playlist Recommendations on Million Songs Dataset using Surprise SVD and NMF Model" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/14/grouprec.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/14/grouprec.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-14T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Group Playlist Recommendations on Million Songs Dataset using Surprise SVD and NMF Model" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-14T00:00:00-06:00","datePublished":"2022-01-14T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Group Playlist Recommendations on Million Songs Dataset using Surprise SVD and NMF Model","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/14/grouprec.html"},"url":"https://nb.recohut.com/2022/01/14/grouprec.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Group Playlist Recommendations on Million Songs Dataset using Surprise SVD and NMF Model</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-14T00:00:00-06:00" itemprop="datePublished">
+        Jan 14, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      12 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-14-grouprec.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-14-grouprec.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-14-grouprec.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-14-grouprec.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-14-grouprec.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In many social situations, like parties and road trips, groups of people with different music tastes will listen to music together. It's hard to please everyone, and it's even harder if you don't know what each person likes. There are multiple ways to synthesize the preferences of a group. Should you average their preferences? Should you try to make sure that no one hates the choices at the cost of excluding someone's favorites? We explore these questions by first generating a music profile for each person, and then applying different strategies to combine their preferences into a single playlist.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Process-flow">Process flow<a class="anchor-link" href="#Process-flow"> </a></h2><p><img src="https://github.com/RecoHut-Stanzas/S165806/raw/main/images/process_flow.svg" alt="" /></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">surprise</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>     |████████████████████████████████| 11.8 MB 4.4 MB/s 
+  Building wheel for scikit-surprise (setup.py) ... done
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rcParams</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+
+<span class="kn">from</span> <span class="nn">surprise</span> <span class="kn">import</span> <span class="n">SVD</span><span class="p">,</span> <span class="n">SlopeOne</span><span class="p">,</span> <span class="n">NMF</span><span class="p">,</span> <span class="n">KNNBaseline</span>
+<span class="kn">from</span> <span class="nn">surprise.prediction_algorithms.co_clustering</span> <span class="kn">import</span> <span class="n">CoClustering</span>
+<span class="kn">from</span> <span class="nn">surprise.prediction_algorithms.baseline_only</span> <span class="kn">import</span> <span class="n">BaselineOnly</span>
+<span class="kn">from</span> <span class="nn">surprise.prediction_algorithms.random_pred</span> <span class="kn">import</span> <span class="n">NormalPredictor</span>
+<span class="kn">from</span> <span class="nn">surprise</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">surprise</span> <span class="kn">import</span> <span class="n">Reader</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.metrics.pairwise</span> <span class="kn">import</span> <span class="n">cosine_similarity</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+<span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;font.size&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">})</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data-loading">Data loading<a class="anchor-link" href="#Data-loading"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">millionsongdataset</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sites</span><span class="o">/</span><span class="n">default</span><span class="o">/</span><span class="n">files</span><span class="o">/</span><span class="n">challenge</span><span class="o">/</span><span class="n">train_triplets</span><span class="o">.</span><span class="n">txt</span><span class="o">.</span><span class="n">zip</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>--2021-12-09 04:38:13--  http://millionsongdataset.com/sites/default/files/challenge/train_triplets.txt.zip
+Resolving millionsongdataset.com (millionsongdataset.com)... 172.104.14.177
+Connecting to millionsongdataset.com (millionsongdataset.com)|172.104.14.177|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 512137572 (488M) [application/zip]
+Saving to: ‘train_triplets.txt.zip’
+
+train_triplets.txt. 100%[===================&gt;] 488.41M   116MB/s    in 4.2s    
+
+2021-12-09 04:38:17 (115 MB/s) - ‘train_triplets.txt.zip’ saved [512137572/512137572]
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">unzip</span> <span class="n">train_triplets</span><span class="o">.</span><span class="n">txt</span><span class="o">.</span><span class="n">zip</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Archive:  train_triplets.txt.zip
+  inflating: train_triplets.txt      
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">head</span> <span class="n">train_triplets</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOAKIMP12A8C130995	1
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOAPDEY12A81C210A9	1
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOBBMDR12A8C13253B	2
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOBFNSP12AF72A0E22	1
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOBFOVM12A58A7D494	1
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOBNZDC12A6D4FC103	1
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOBSUJE12A6D4F8CF5	2
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOBVFZR12A6D4F8AE3	1
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOBXALG12A8C13C108	1
+b80344d063b5ccb3212f76538f3d9e43d87dca9e	SOBXHDL12A81C204C0	1
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">du</span> <span class="n">train_triplets</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>2931312	train_triplets.txt
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span><span class="s1">&#39;song_id&#39;</span><span class="p">,</span><span class="s1">&#39;play_counts&#39;</span><span class="p">]</span>
+<span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_id</th>
+      <th>song_id</th>
+      <th>play_counts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>b80344d063b5ccb3212f76538f3d9e43d87dca9e</td>
+      <td>SOAKIMP12A8C130995</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>b80344d063b5ccb3212f76538f3d9e43d87dca9e</td>
+      <td>SOAPDEY12A81C210A9</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>b80344d063b5ccb3212f76538f3d9e43d87dca9e</td>
+      <td>SOBBMDR12A8C13253B</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>b80344d063b5ccb3212f76538f3d9e43d87dca9e</td>
+      <td>SOBFNSP12AF72A0E22</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>b80344d063b5ccb3212f76538f3d9e43d87dca9e</td>
+      <td>SOBFOVM12A58A7D494</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="n">include</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_id</th>
+      <th>song_id</th>
+      <th>play_counts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>48373586</td>
+      <td>48373586</td>
+      <td>4.837359e+07</td>
+    </tr>
+    <tr>
+      <th>unique</th>
+      <td>1019318</td>
+      <td>384546</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>top</th>
+      <td>ec6dfcf19485cb011e0b22637075037aae34cf26</td>
+      <td>SOFRQTD12A81C233C0</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>freq</th>
+      <td>4400</td>
+      <td>110479</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <th>mean</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>2.866859e+00</td>
+    </tr>
+    <tr>
+      <th>std</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>6.437725e+00</td>
+    </tr>
+    <tr>
+      <th>min</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.000000e+00</td>
+    </tr>
+    <tr>
+      <th>25%</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.000000e+00</td>
+    </tr>
+    <tr>
+      <th>50%</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>1.000000e+00</td>
+    </tr>
+    <tr>
+      <th>75%</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>3.000000e+00</td>
+    </tr>
+    <tr>
+      <th>max</th>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>9.667000e+03</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">LabelEncoder</span>
+
+<span class="n">le_user</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;user_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">le_user</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+<span class="n">le_item</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
+<span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;song_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">le_item</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;song_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_id</th>
+      <th>song_id</th>
+      <th>play_counts</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>732659</td>
+      <td>6347</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>732659</td>
+      <td>9365</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>732659</td>
+      <td>16962</td>
+      <td>2</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>732659</td>
+      <td>19513</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>732659</td>
+      <td>19536</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">dtypes</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>user_id        int64
+song_id        int64
+play_counts    int64
+dtype: object</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;track_id&#39;</span><span class="p">,</span><span class="s1">&#39;plays&#39;</span><span class="p">]</span>
+<span class="n">data</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;class &#39;pandas.core.frame.DataFrame&#39;&gt;
+RangeIndex: 1000 entries, 0 to 999
+Data columns (total 3 columns):
+ #   Column    Non-Null Count  Dtype
+---  ------    --------------  -----
+ 0   user_id   1000 non-null   int64
+ 1   track_id  1000 non-null   int64
+ 2   plays     1000 non-null   int64
+dtypes: int64(3)
+memory usage: 23.6 KB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Preprocessing">Preprocessing<a class="anchor-link" href="#Preprocessing"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">tt_preprocess</span><span class="p">(</span><span class="n">tt</span><span class="p">):</span>
+    <span class="c1"># Saturate top 1% of plays, where 24 is 99th percentile of plays</span>
+    <span class="n">tt</span><span class="o">.</span><span class="n">plays</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">plays</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">24</span> <span class="k">if</span> <span class="n">x</span> <span class="o">&gt;</span> <span class="mi">24</span> <span class="k">else</span> <span class="n">x</span><span class="p">)</span>
+    <span class="c1"># Create &#39;rating&#39; column based on log(plays/max_plays) transformed to 1-5 scale</span>
+    <span class="n">tt</span><span class="p">[</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tt</span><span class="o">.</span><span class="n">plays</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tt</span><span class="p">[</span><span class="s1">&#39;plays&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span><span class="o">*</span><span class="mi">5</span><span class="o">+</span><span class="mi">1</span>
+    <span class="c1"># Include only top 250 tracks (11% of total data, ~4.8 millions entries)</span>
+    <span class="n">top_tracks</span> <span class="o">=</span> <span class="n">tt</span><span class="p">[</span><span class="s1">&#39;track_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()[:</span><span class="mi">250</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">tt</span> <span class="o">=</span> <span class="n">tt</span><span class="p">[</span><span class="n">tt</span><span class="p">[</span><span class="s1">&#39;track_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">top_tracks</span><span class="p">)]</span>
+    <span class="c1"># Drop plays</span>
+    <span class="n">tt</span> <span class="o">=</span> <span class="n">tt</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;plays&#39;</span><span class="p">)</span>
+    <span class="c1"># Create dummy column, timestamp, to fit Surprise format</span>
+    <span class="n">tt</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">tt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">tt_preprocess</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+<span class="c1"># Split into train/validation data </span>
+<span class="n">frac</span> <span class="o">=</span> <span class="mf">0.8</span>
+<span class="n">train</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="n">frac</span><span class="p">,</span><span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">test</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+<span class="c1"># test = test.set_index(&#39;user_id&#39;)</span>
+
+<span class="c1"># saving train and test dataframes</span>
+<span class="n">train</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="s1">&#39;train.parquet.snappy&#39;</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s1">&#39;snappy&#39;</span><span class="p">)</span>
+<span class="n">test</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="s1">&#39;test.parquet.snappy&#39;</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s1">&#39;snappy&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="User-Profile-Recommender">User Profile Recommender<a class="anchor-link" href="#User-Profile-Recommender"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">SongRecommender</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Basic song recommender system.&quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;svd&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructs a SongRecommender&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;reco-cs&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="n">model_name</span>
+
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ratings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Trains the recommender on a given set of ratings.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ratings : pandas dataframe, shape = (n_ratings, 4)</span>
+<span class="sd">                  with columns &#39;user_id&#39;, &#39;track_id&#39;, &#39;likes&#39;, &#39;timestamp&#39;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self : object</span>
+<span class="sd">            Returns self.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;starting fit&quot;</span><span class="p">)</span>
+        <span class="c1"># processing for Surprise</span>
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">Dataset</span><span class="o">.</span><span class="n">load_from_df</span><span class="p">(</span><span class="n">ratings</span><span class="p">[[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;track_id&#39;</span><span class="p">,</span> <span class="s1">&#39;rating&#39;</span><span class="p">]],</span>
+                                       <span class="n">reader</span><span class="o">=</span><span class="n">Reader</span><span class="p">(</span><span class="n">rating_scale</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">5</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trainset</span> <span class="o">=</span> <span class="n">ratings</span><span class="o">.</span><span class="n">build_full_trainset</span><span class="p">()</span>
+        <span class="c1"># Choose model class based on model_name</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;svd&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">algo</span> <span class="o">=</span> <span class="n">SVD</span><span class="p">(</span><span class="n">lr_all</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span><span class="n">n_epochs</span><span class="o">=</span><span class="mi">125</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;slopeone&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">algo</span> <span class="o">=</span> <span class="n">SlopeOne</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;nmf&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">algo</span> <span class="o">=</span> <span class="n">NMF</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;knnbaseline&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">algo</span> <span class="o">=</span> <span class="n">KNNBaseline</span><span class="p">()</span> 
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;cocluster&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">algo</span> <span class="o">=</span> <span class="n">CoClustering</span><span class="p">()</span> 
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;baseline&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">algo</span> <span class="o">=</span> <span class="n">BaselineOnly</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_name</span> <span class="o">==</span> <span class="s1">&#39;normal&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">algo</span> <span class="o">=</span> <span class="n">NormalPredictor</span><span class="p">()</span>            
+        <span class="bp">self</span><span class="o">.</span><span class="n">algo</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trainset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;finishing fit&quot;</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">requests</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Predicts the ratings for a given set of requests.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        requests : pandas dataframe, shape = (n_ratings, 4)</span>
+<span class="sd">                  with columns &#39;user_id&#39;, &#39;track_id&#39;, &#39;rating&#39;, &#39;timestamp&#39;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dataframe : a pandas dataframe with columns &#39;user_id&#39;, &#39;track_id&#39;, &#39;rating&#39;</span>
+<span class="sd">                    column &#39;rating&#39; contains the predicted rating</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;starting predict&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;request count: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">requests</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">testset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">reader</span><span class="o">=</span><span class="n">Reader</span><span class="p">())</span><span class="o">.</span><span class="n">construct_testset</span><span class="p">(</span><span class="n">raw_testset</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">algo</span><span class="o">.</span><span class="n">test</span><span class="p">(</span><span class="n">testset</span><span class="p">)</span>
+        <span class="n">pred_base</span> <span class="o">=</span> <span class="p">[(</span><span class="n">pred</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span><span class="n">pred</span><span class="o">.</span><span class="n">iid</span><span class="p">,</span><span class="n">pred</span><span class="o">.</span><span class="n">est</span><span class="p">)</span> <span class="k">for</span> <span class="n">pred</span> <span class="ow">in</span> <span class="n">predictions</span><span class="p">]</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">pred_base</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;track_id&#39;</span><span class="p">,</span> <span class="s1">&#39;rating&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;finishing predict&quot;</span><span class="p">)</span>
+        <span class="k">return</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model-Training">Model Training<a class="anchor-link" href="#Model-Training"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model_name_</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;svd&quot;</span><span class="p">,</span> <span class="s2">&quot;cocluster&quot;</span><span class="p">,</span> <span class="s2">&quot;nmf&quot;</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">model_name</span> <span class="ow">in</span> <span class="n">model_name_</span><span class="p">:</span>
+    <span class="c1"># Creating an instance of your recommender with the right parameters</span>
+    <span class="n">reco</span> <span class="o">=</span> <span class="n">SongRecommender</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
+    <span class="c1"># fits on training data, returns a SongRecommender object</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">reco</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train</span><span class="p">)</span>
+    <span class="c1"># save model to pickle file</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;model_</span><span class="si">{</span><span class="n">model_name</span><span class="si">}</span><span class="s2">.p&quot;</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model-Inference">Model Inference<a class="anchor-link" href="#Model-Inference"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">result_path_</span> <span class="o">=</span> <span class="s2">&quot;model_result_ensemble.csv&quot;</span>
+
+<span class="n">model_paths_</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;model_cocluster.p&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;model_svd.p&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;model_nmf.p&#39;</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">request_data</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">model_paths_</span> <span class="o">==</span> <span class="s1">&#39;default&#39;</span><span class="p">:</span>
+    <span class="n">global_mean</span> <span class="o">=</span> <span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="n">result_data</span> <span class="o">=</span> <span class="n">request_data</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">])</span>
+    <span class="n">result_data</span><span class="p">[</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">global_mean</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># Creating an instance of your recommender with the right parameters</span>
+    <span class="c1"># reco_instance = SongRecommender(model_paths_)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">model_paths_</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">result_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">model_paths_</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+            <span class="n">result_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">request_data</span><span class="p">))</span>
+        <span class="c1"># Designate weights based on val set RMSE relative to</span>
+        <span class="c1"># global mean RMSE, and normalize</span>
+        <span class="n">global_mean_rmse</span> <span class="o">=</span> <span class="mf">1.3706</span>
+        <span class="n">cocluster_weight</span> <span class="o">=</span> <span class="mf">1.3706</span> <span class="o">-</span> <span class="mf">1.255</span>
+        <span class="n">nmf_weight</span> <span class="o">=</span> <span class="mf">1.3706</span> <span class="o">-</span> <span class="mf">1.2716</span>
+        <span class="n">svd_weight</span> <span class="o">=</span> <span class="mf">1.3706</span> <span class="o">-</span> <span class="mf">1.1934</span>
+        <span class="n">result_dfs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span> <span class="o">=</span> \
+            <span class="p">(</span><span class="n">result_dfs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">cocluster_weight</span> <span class="o">+</span> \
+                <span class="n">result_dfs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">nmf_weight</span> <span class="o">+</span> \
+                    <span class="n">result_dfs</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">svd_weight</span><span class="p">)</span><span class="o">/</span> \
+                        <span class="p">(</span><span class="n">cocluster_weight</span> <span class="o">+</span> <span class="n">nmf_weight</span> <span class="o">+</span> <span class="n">svd_weight</span><span class="p">)</span>
+        <span class="n">result_data</span> <span class="o">=</span> <span class="n">result_dfs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># load the model</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">model_paths_</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+        <span class="c1"># apply predict on request_data, returns a dataframe</span>
+        <span class="n">result_data</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">request_data</span><span class="p">)</span>
+
+<span class="n">result_data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">result_path_</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">result_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user_id</th>
+      <th>track_id</th>
+      <th>rating</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>732659.0</td>
+      <td>29262.0</td>
+      <td>1.881562</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>732659.0</td>
+      <td>168500.0</td>
+      <td>1.881562</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>732659.0</td>
+      <td>268948.0</td>
+      <td>1.881562</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>532471.0</td>
+      <td>227930.0</td>
+      <td>2.021035</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>753546.0</td>
+      <td>18343.0</td>
+      <td>1.987814</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluation">Evaluation<a class="anchor-link" href="#Evaluation"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">compute_score</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">actual</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Look at 5% of most highly predicted songs for each user.</span>
+<span class="sd">    Return the average actual rating of those songs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">actual</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">],</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">actual</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;rating&#39;</span><span class="p">:</span><span class="s1">&#39;actualrating&#39;</span><span class="p">}),</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span><span class="s1">&#39;track_id&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="c1"># for each user</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;user_id&#39;</span><span class="p">)</span>
+    <span class="c1"># detect the top 5% songs as predicted by your algorithm</span>
+    <span class="n">top_5</span> <span class="o">=</span> <span class="n">g</span><span class="o">.</span><span class="n">rating</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">&gt;=</span> <span class="n">x</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="o">.</span><span class="mi">95</span><span class="p">))</span>
+    <span class="c1"># return the mean of the actual score on those</span>
+    <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">actualrating</span><span class="p">[</span><span class="n">top_5</span><span class="o">==</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">compute_rmse</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">actual</span><span class="p">):</span>
+    <span class="c1"># RMSE between predictions and actual ratings</span>
+    <span class="n">rmse</span> <span class="o">=</span> <span class="p">((</span><span class="n">predictions</span><span class="o">.</span><span class="n">rating</span> <span class="o">-</span> <span class="n">actual</span><span class="o">.</span><span class="n">rating</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">**</span> <span class="o">.</span><span class="mi">5</span>
+    <span class="k">return</span> <span class="n">rmse</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">result_path_</span> <span class="o">=</span> <span class="s2">&quot;model_result_ensemble.csv&quot;</span> <span class="c1"># predictions</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">prediction_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">result_path_</span><span class="p">)</span>
+
+<span class="c1"># Load actual validation data</span>
+<span class="n">actual_data</span> <span class="o">=</span> <span class="n">test</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="c1"># Compute score based on mean of top 5% of each users song rankings</span>
+<span class="n">score</span> <span class="o">=</span> <span class="n">compute_score</span><span class="p">(</span><span class="n">prediction_data</span><span class="p">,</span> <span class="n">actual_data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+
+<span class="c1"># Compute RMSE between prediction and actual data</span>
+<span class="n">rmse</span> <span class="o">=</span> <span class="n">compute_rmse</span><span class="p">(</span><span class="n">prediction_data</span><span class="p">,</span> <span class="n">actual_data</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">rmse</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>1.749794250070545
+2.515609839014444
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="n">result_path_</span><span class="p">,</span><span class="nb">round</span><span class="p">(</span><span class="n">score</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span><span class="nb">round</span><span class="p">(</span><span class="n">rmse</span><span class="p">,</span><span class="mi">4</span><span class="p">)]</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;eval_results.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Results-Figure">Results Figure<a class="anchor-link" href="#Results-Figure"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># results = pd.read_csv(&#39;results.csv&#39;)</span>
+
+<span class="c1"># # If hyperparameters = True, generate SVD hyperparameters bar plot</span>
+<span class="c1"># # If hyperparameters = False, generate model comparison bar plot</span>
+<span class="c1"># hyperparameters = False</span>
+
+<span class="c1"># if hyperparameters == False:</span>
+<span class="c1">#     model_labels = [&#39;SVD&#39;, &#39;NMF&#39;,&#39;KNN&#39;,</span>
+<span class="c1">#                         &#39;Co-cluster&#39;,&#39;ALS Base&#39;,&#39;Normal&#39;,&#39;Global Mean&#39;]</span>
+
+<span class="c1">#     models_names = results.name[results.name.str.contains(</span>
+<span class="c1">#         &#39;svd_default|nmf|knn|cocluster|baseline|normal|global_mean&#39;)]</span>
+
+<span class="c1">#     xlabel = &#39;Model Name&#39;</span>
+    
+<span class="c1">#     comparison = results[results.name.isin(models_names)]</span>
+
+<span class="c1">#     comparison[&#39;label&#39;] = model_labels</span>
+<span class="c1">#     comparison.sort_values(by=&#39;rmse&#39;,ascending=False,inplace=True)</span>
+
+<span class="c1">#     fig,ax = plt.subplots(figsize=(13,6))</span>
+<span class="c1">#     plt.bar(comparison[&#39;label&#39;],comparison[&#39;rmse&#39;],color = sns.color_palette(&quot;husl&quot;, 7))</span>
+<span class="c1">#     plt.xlabel(&#39;Model Type&#39;)</span>
+<span class="c1">#     plt.ylabel(&#39;RMSE&#39;)</span>
+
+<span class="c1">#     plt.show(block=False)</span>
+<span class="c1">#     plt.savefig(&#39;rmse_comparison_no_ensemble.jpg&#39;)</span>
+<span class="c1">#     plt.close(&#39;all&#39;)</span>
+
+<span class="c1">#     # comparison = comparison.iloc[:,[3,2]]</span>
+<span class="c1">#     # comparison.to_csv(&#39;data/results/comparison_results.csv&#39;,index=False)</span>
+<span class="c1"># else:</span>
+<span class="c1">#     hyp_names = results.name[results.name.str.contains(</span>
+<span class="c1">#         &#39;svd|pred.csv&#39;)]</span>
+    
+<span class="c1">#     hyp_df = results[results.name.isin(hyp_names)]</span>
+    
+<span class="c1">#     hyp_df.drop(index=[9,10],inplace=True)</span>
+    
+<span class="c1">#     hyp_df[&#39;lr&#39;] = [.01, .005, .001, .001, .001, .001, .005, .005, .005, .005]</span>
+<span class="c1">#     hyp_df[&#39;epochs&#39;] = [20, 20, 20, 50, 75, 125, 10, 50, 125, 75]</span>
+    
+<span class="c1">#     print(hyp_df)</span>
+
+<span class="c1">#     fig,ax = plt.subplots(figsize=(8,5))</span>
+<span class="c1">#     plt.scatter(x=hyp_df[&#39;lr&#39;], y=hyp_df[&#39;epochs&#39;], s=400, </span>
+<span class="c1">#                 c=hyp_df[&#39;rmse&#39;], cmap=sns.color_palette(&#39;plasma&#39;, as_cmap=True))</span>
+<span class="c1">#     plt.xlabel(&#39;Learning Rate&#39;)</span>
+<span class="c1">#     plt.ylabel(&#39;Number of Epochs&#39;)</span>
+
+<span class="c1">#     cb = plt.colorbar()</span>
+<span class="c1">#     cb.ax.set_title(&#39;RMSE&#39;)</span>
+    
+<span class="c1">#     fig.tight_layout()</span>
+<span class="c1">#     plt.show(block=False)</span>
+<span class="c1">#     plt.savefig(&#39;rmse_svd_hyp.jpg&#39;)</span>
+<span class="c1">#     plt.close(&#39;all&#39;)</span>
+
+<span class="c1">#     hyp_df = hyp_df.iloc[:,[3,4,2]]</span>
+<span class="c1">#     hyp_df.to_csv(&#39;hyp_results.csv&#39;,index=False)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Group-Recommender">Group Recommender<a class="anchor-link" href="#Group-Recommender"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">GroupRecommender</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Playlist recommender system for groups.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_ids</span><span class="p">,</span><span class="n">num_songs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span><span class="n">ensemble</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructs a GroupRecommender&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_ids</span> <span class="o">=</span> <span class="n">user_ids</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_songs</span> <span class="o">=</span> <span class="n">num_songs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ensemble</span> <span class="o">=</span> <span class="n">ensemble</span>
+
+    <span class="k">def</span> <span class="nf">score_for_users</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">train_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Loads a trained model and predicts ratings for all tracks for given users</span>
+<span class="sd">        Args:</span>
+<span class="sd">            train_path (str): path to training data csv file</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            self: GroupRecommender class instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">train_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">le_user</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">user_id</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        
+        <span class="n">track_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">[</span><span class="s1">&#39;track_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+        
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_ids</span><span class="p">,</span> <span class="n">index</span> <span class="o">=</span> <span class="n">track_list</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        
+        <span class="n">request_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">melt</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">id_vars</span> <span class="o">=</span> <span class="s1">&#39;index&#39;</span><span class="p">,</span> <span class="n">value_vars</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user_ids</span><span class="p">)</span>
+        <span class="n">request_data</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="s1">&#39;track_id&#39;</span><span class="p">,</span> <span class="s1">&#39;variable&#39;</span><span class="p">:</span> <span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="s1">&#39;rating&#39;</span><span class="p">},</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">request_data</span> <span class="o">=</span> <span class="n">request_data</span><span class="p">[[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;track_id&#39;</span><span class="p">,</span> <span class="s1">&#39;rating&#39;</span><span class="p">]]</span>
+        <span class="n">request_data</span><span class="p">[</span><span class="s1">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ensemble</span><span class="p">:</span>
+            <span class="c1"># Load ensemble of models for predictions</span>
+            <span class="n">model_paths</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;model_cocluster.p&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;model_svd.p&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;model_nmf.p&#39;</span><span class="p">]</span>
+            <span class="n">result_dfs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">model_paths</span><span class="p">:</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span> <span class="nb">open</span><span class="p">(</span> <span class="n">path</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span> <span class="p">)</span> <span class="p">)</span>
+                <span class="n">result_dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">request_data</span><span class="p">))</span>
+                
+            <span class="n">global_mean_rmse</span> <span class="o">=</span> <span class="mf">1.3706</span>
+            <span class="n">cocluster_weight</span> <span class="o">=</span> <span class="n">global_mean_rmse</span> <span class="o">-</span> <span class="mf">1.255</span>
+            <span class="n">nmf_weight</span> <span class="o">=</span> <span class="n">global_mean_rmse</span> <span class="o">-</span> <span class="mf">1.2716</span>
+            <span class="n">svd_weight</span> <span class="o">=</span> <span class="n">global_mean_rmse</span> <span class="o">-</span> <span class="mf">1.1934</span>
+            <span class="n">result_dfs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="p">(</span><span class="n">result_dfs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">cocluster_weight</span> <span class="o">+</span> \
+                    <span class="n">result_dfs</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">nmf_weight</span> <span class="o">+</span> \
+                        <span class="n">result_dfs</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">svd_weight</span><span class="p">)</span><span class="o">/</span> \
+                            <span class="p">(</span><span class="n">cocluster_weight</span> <span class="o">+</span> <span class="n">nmf_weight</span> <span class="o">+</span> <span class="n">svd_weight</span><span class="p">)</span>
+                            
+            <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">result_dfs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Use best SVD model</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="s2">&quot;model_svd.p&quot;</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+
+            <span class="c1"># Predict for request_data, returns a dataframe</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">request_data</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="bp">self</span>
+        
+    <span class="k">def</span> <span class="nf">impute_knowns</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Imputes actual ratings into prediction ratings for known entries</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            self: GroupRecommender class instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="n">updated</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;track_id&#39;</span><span class="p">],</span>
+                            <span class="n">suffixes</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;_new&#39;</span><span class="p">))</span>
+        <span class="c1"># updated.drop(columns = [&#39;Unnamed: 0&#39;,&#39;timestamp&#39;],inplace=True)</span>
+
+        <span class="n">updated</span><span class="p">[</span><span class="s1">&#39;rating&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">notnull</span><span class="p">(</span><span class="n">updated</span><span class="p">[</span><span class="s1">&#39;rating_new&#39;</span><span class="p">]),</span> <span class="n">updated</span><span class="p">[</span><span class="s1">&#39;rating_new&#39;</span><span class="p">],</span> <span class="n">updated</span><span class="p">[</span><span class="s1">&#39;rating&#39;</span><span class="p">])</span>
+        <span class="c1"># # # Modify here</span>
+        <span class="c1"># updated[&#39;known&#39;] = np.where(pd.notnull(updated[&#39;rating_new&#39;]), updated[&#39;rating_new&#39;], updated[&#39;rating&#39;])</span>
+        <span class="n">updated</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;rating_new&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span> <span class="o">=</span> <span class="n">updated</span>
+        
+        <span class="k">return</span> <span class="bp">self</span>
+        
+    <span class="k">def</span> <span class="nf">create_rankings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For each user, sorts the ratings column, and replaces it with indices</span>
+<span class="sd">            indicating the ranking of the entries</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            self: GroupRecommender class instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="n">dfs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_ids</span><span class="p">):</span>
+            <span class="n">sorted_by_rating</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">predictions</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">user_id</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span>
+                <span class="n">by</span><span class="o">=</span><span class="s1">&#39;rating&#39;</span><span class="p">,</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span><span class="s1">&#39;index&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;track_id&#39;</span><span class="p">)</span>
+            <span class="n">dfs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sorted_by_rating</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;index&#39;</span><span class="p">:</span><span class="s1">&#39;rank&#39;</span><span class="p">},</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">rankings</span> <span class="o">=</span> <span class="n">sorted_by_rating</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rankings</span> <span class="o">=</span> <span class="n">rankings</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sorted_by_rating</span><span class="p">,</span><span class="n">rsuffix</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rankings</span> <span class="o">=</span> <span class="n">rankings</span>
+        
+        <span class="k">return</span> <span class="bp">self</span>
+    
+    <span class="c1"># def track_artist_names(self,df):</span>
+    <span class="c1">#     &quot;&quot;&quot;Extract song_title and artist_name for tracks in given DataFrame</span>
+    <span class="c1">#     Args:</span>
+    <span class="c1">#         df (pandas DataFrame): DataFrame of top recommended songs</span>
+    <span class="c1">#     Returns:</span>
+    <span class="c1">#         pandas DataFrame: Initial DataFrame with additional song_title, artist_name columns</span>
+    <span class="c1">#     &quot;&quot;&quot;    </span>
+        
+    <span class="c1">#     # read in map of track_id to artist_name and song_title</span>
+    <span class="c1">#     names = pd.read_csv(&#39;data/track_artist_names.txt&#39;,sep = &#39;&lt;SEP&gt;&#39;,header=None)</span>
+        
+    <span class="c1">#     # drop unnecessary column and rename columns</span>
+    <span class="c1">#     names.drop(columns = [0], inplace = True)</span>
+    <span class="c1">#     names.rename(columns={1: &quot;track_id&quot;, 2: &quot;artist_name&quot;, 3: &quot;song_title&quot;},inplace=True)</span>
+        
+    <span class="c1">#     # Merge on track id to add new columns</span>
+    <span class="c1">#     df = pd.merge(df, names, on = &#39;track_id&#39;,how=&#39;left&#39;)</span>
+        
+    <span class="c1">#     return df</span>
+
+    <span class="k">def</span> <span class="nf">rec_group_playlist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;lm&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Applies a strategy to generate group rankings using the individual rankings</span>
+<span class="sd">        Args:</span>
+<span class="sd">            strategy (str, optional): Name of group ranking strategy. Defaults to &#39;lm&#39;.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            pandas DataFrame: DataFrame of recommended songs with rankings</span>
+<span class="sd">        &quot;&quot;&quot;</span>        
+        <span class="n">rankings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rankings</span>
+        
+        <span class="n">rank_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">col</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">rankings</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s1">&#39;rank&#39;</span> <span class="ow">in</span> <span class="n">col</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;mp&#39;</span><span class="p">:</span>
+             <span class="c1"># Most pleasure strategy</span>
+            <span class="n">rankings</span><span class="p">[</span><span class="s1">&#39;best_rnk&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rankings</span><span class="p">[</span><span class="n">rank_cols</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">strat_col</span> <span class="o">=</span> <span class="s1">&#39;best_rnk&#39;</span>
+        <span class="k">elif</span> <span class="n">strategy</span> <span class="o">==</span> <span class="s1">&#39;avg&#39;</span><span class="p">:</span>
+            <span class="c1"># Average rank strategy</span>
+            <span class="n">rankings</span><span class="p">[</span><span class="s1">&#39;avg_rnk&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rankings</span><span class="p">[</span><span class="n">rank_cols</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">strat_col</span> <span class="o">=</span> <span class="s1">&#39;avg_rnk&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Least misery strategy</span>
+            <span class="n">rankings</span><span class="p">[</span><span class="s1">&#39;worst_rnk&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rankings</span><span class="p">[</span><span class="n">rank_cols</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">strat_col</span> <span class="o">=</span> <span class="s1">&#39;worst_rnk&#39;</span> <span class="c1"># default is least misery strategy</span>
+        
+        <span class="n">top_songs</span> <span class="o">=</span> <span class="n">rankings</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">strat_col</span><span class="p">)[:</span><span class="bp">self</span><span class="o">.</span><span class="n">num_songs</span><span class="p">]</span>
+        <span class="c1"># top_songs = self.track_artist_names(top_songs)</span>
+        
+        <span class="c1"># Rearrange dataframe to be presentable</span>
+        <span class="c1"># top_songs.insert(0, &#39;artist_name&#39;, top_songs.pop(&#39;artist_name&#39;))</span>
+        <span class="c1"># top_songs.insert(1, &#39;song_title&#39;, top_songs.pop(&#39;song_title&#39;))</span>
+        <span class="c1"># top_songs.drop(columns=[&#39;track_id&#39;],inplace=True)</span>
+        <span class="c1"># rating_cols = [col for col in rankings.columns if &#39;rating&#39; in col]</span>
+        <span class="c1"># top_songs.drop(columns=rating_cols,inplace=True)</span>
+        <span class="c1"># char_lim = 30</span>
+        <span class="c1"># top_songs[&#39;artist_name&#39;] = top_songs[&#39;artist_name&#39;].transform(lambda x: </span>
+        <span class="c1">#             x[:char_lim] + &#39;...&#39; </span>
+        <span class="c1">#             if len(x) &gt; char_lim+1 else x)</span>
+        <span class="c1"># top_songs[&#39;song_title&#39;] = top_songs[&#39;song_title&#39;].transform(lambda x: </span>
+        <span class="c1">#             x[:char_lim] + &#39;...&#39; </span>
+        <span class="c1">#             if len(x) &gt; char_lim+1 else x)</span>
+        <span class="c1"># print(top_songs)</span>
+        
+        <span class="k">return</span> <span class="n">top_songs</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">user_ids</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;d1ca8b3e78811238cf94ee7caa1868d7ae9e908a&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;621659a10f52dc4f8b50f205ab85b6d6b7d1b0dc&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;257fc9ff00cd0ac79f53c7d65510b2ebba0c6b8e&#39;</span><span class="p">]</span>
+
+<span class="n">num_songs</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">train_path</span> <span class="o">=</span> <span class="s1">&#39;train.parquet.snappy&#39;</span>
+<span class="n">strategy</span> <span class="o">=</span> <span class="s1">&#39;avg&#39;</span>
+<span class="n">save_path</span> <span class="o">=</span> <span class="s1">&#39;rankings_avg.csv&#39;</span>
+<span class="n">ensemble</span> <span class="o">=</span> <span class="kc">False</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">reco</span> <span class="o">=</span> <span class="n">GroupRecommender</span><span class="p">(</span><span class="n">user_ids</span><span class="p">,</span><span class="n">num_songs</span><span class="p">,</span><span class="n">ensemble</span><span class="p">)</span>
+<span class="n">reco</span><span class="o">.</span><span class="n">score_for_users</span><span class="p">(</span><span class="n">train_path</span><span class="p">)</span>
+<span class="n">reco</span><span class="o">.</span><span class="n">impute_knowns</span><span class="p">()</span>
+<span class="n">reco</span><span class="o">.</span><span class="n">create_rankings</span><span class="p">()</span>
+<span class="n">top_songs</span> <span class="o">=</span> <span class="n">reco</span><span class="o">.</span><span class="n">rec_group_playlist</span><span class="p">(</span><span class="n">strategy</span><span class="p">)</span>
+<span class="n">top_songs</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span><span class="n">index</span><span class="o">=</span><span class="s1">&#39;False&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">top_songs</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>rank</th>
+      <th>rating</th>
+      <th>timestamp</th>
+      <th>rank2</th>
+      <th>rating2</th>
+      <th>timestamp2</th>
+      <th>rank3</th>
+      <th>rating3</th>
+      <th>timestamp3</th>
+      <th>avg_rnk</th>
+    </tr>
+    <tr>
+      <th>track_id</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>256744</th>
+      <td>0</td>
+      <td>2.372764</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>2.372764</td>
+      <td>NaN</td>
+      <td>0</td>
+      <td>2.372764</td>
+      <td>NaN</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>172300</th>
+      <td>1</td>
+      <td>2.367906</td>
+      <td>NaN</td>
+      <td>1</td>
+      <td>2.367906</td>
+      <td>NaN</td>
+      <td>1</td>
+      <td>2.367906</td>
+      <td>NaN</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>338615</th>
+      <td>2</td>
+      <td>2.366546</td>
+      <td>NaN</td>
+      <td>2</td>
+      <td>2.366546</td>
+      <td>NaN</td>
+      <td>2</td>
+      <td>2.366546</td>
+      <td>NaN</td>
+      <td>2.0</td>
+    </tr>
+    <tr>
+      <th>25043</th>
+      <td>3</td>
+      <td>2.357708</td>
+      <td>NaN</td>
+      <td>3</td>
+      <td>2.357708</td>
+      <td>NaN</td>
+      <td>3</td>
+      <td>2.357708</td>
+      <td>NaN</td>
+      <td>3.0</td>
+    </tr>
+    <tr>
+      <th>320787</th>
+      <td>4</td>
+      <td>2.352594</td>
+      <td>NaN</td>
+      <td>4</td>
+      <td>2.352594</td>
+      <td>NaN</td>
+      <td>4</td>
+      <td>2.352594</td>
+      <td>NaN</td>
+      <td>4.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="App">App<a class="anchor-link" href="#App"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># from wtforms import Form, TextField, TextAreaField, validators, StringField, SubmitField</span>
+<span class="c1"># from group_rec import GroupRecommender</span>
+
+<span class="c1"># DEBUG = True</span>
+<span class="c1"># app = Flask(__name__)</span>
+<span class="c1"># app.config.from_object(__name__)</span>
+<span class="c1"># app.config[&#39;SECRET_KEY&#39;] = &#39;SjdnUends821Jsdlkvxh391ksdODnejdDw&#39;</span>
+
+<span class="c1"># class ReusableForm(Form):</span>
+<span class="c1">#     user1 = TextField(&#39;user1:&#39;, validators=[validators.required()])</span>
+<span class="c1">#     user2 = TextField(&#39;user2:&#39;, validators=[validators.required()])</span>
+<span class="c1">#     user3 = TextField(&#39;user3:&#39;, validators=[validators.required()])</span>
+
+<span class="c1"># @app.route(&quot;/&quot;, methods=[&#39;GET&#39;, &#39;POST&#39;])</span>
+<span class="c1"># def hello():</span>
+<span class="c1">#     # Generate playlist recommendations based on user ids</span>
+<span class="c1">#     form = ReusableForm(request.form)</span>
+
+<span class="c1">#     if request.method == &#39;POST&#39;:</span>
+<span class="c1">#         user1=request.form[&#39;user1&#39;]</span>
+<span class="c1">#         user2=request.form[&#39;user2&#39;]</span>
+<span class="c1">#         user3=request.form[&#39;user3&#39;]</span>
+
+<span class="c1">#         if form.validate():</span>
+<span class="c1">#             flash(&#39;Generating playlist...&#39;)</span>
+<span class="c1">#             user_ids = [user1,user2,user3]</span>
+        
+<span class="c1">#             num_songs = 5</span>
+<span class="c1">#             train_path = &#39;data/train.csv&#39;</span>
+<span class="c1">#             strategy = &#39;lm&#39;</span>
+
+<span class="c1">#             ensemble = False</span>
+            
+<span class="c1">#             reco = GroupRecommender(user_ids,num_songs,ensemble)</span>
+            
+<span class="c1">#             reco.score_for_users(train_path)</span>
+            
+<span class="c1">#             reco.impute_knowns()</span>
+
+<span class="c1">#             reco.create_rankings()</span>
+            
+<span class="c1">#             top_songs = reco.rec_group_playlist(strategy)</span>
+            
+<span class="c1">#             top_songs = top_songs.loc[:,[&#39;artist_name&#39;,&#39;song_title&#39;]]</span>
+            
+<span class="c1">#             top_songs.rename(columns = {&#39;artist_name&#39;: &#39;Artist&#39;, </span>
+<span class="c1">#                                         &#39;song_title&#39;:&#39;Song Title&#39;},inplace=True)</span>
+            
+<span class="c1">#             top_songs[&#39;Track Number&#39;] = range(1,6)</span>
+<span class="c1">#             top_songs.set_index(&#39;Track Number&#39;, drop=True, inplace=True)</span>
+<span class="c1">#             top_songs.index.name = None</span>
+            
+<span class="c1">#             return render_template(&#39;view.html&#39;,tables=[top_songs.to_html(classes=&#39;songs&#39;)],titles=[&#39;&#39;])</span>
+<span class="c1">#         else:</span>
+<span class="c1">#             flash(&#39;Error: All Fields are Required&#39;)</span>
+
+<span class="c1">#     return render_template(&#39;index.html&#39;, form=form)</span>
+
+<span class="c1"># if __name__ == &quot;__main__&quot;:</span>
+<span class="c1">#     app.run()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="References">References<a class="anchor-link" href="#References"> </a></h2><ol>
+<li><a href="https://github.com/chrisshaffer/group-playlist-recommender">https://github.com/chrisshaffer/group-playlist-recommender</a> <code>code</code></li>
+<li><a href="http://millionsongdataset.com/tasteprofile/">Taste Profile Subset</a> <code>data</code></li>
+</ol>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="o">-</span><span class="n">qq</span> <span class="n">install</span> <span class="n">tree</span>
+<span class="err">!</span><span class="n">rm</span> <span class="o">-</span><span class="n">r</span> <span class="n">sample_data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">tree</span> <span class="o">-</span><span class="n">h</span> <span class="o">--</span><span class="n">du</span> <span class="o">-</span><span class="n">C</span> <span class="o">.</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-blue-intense-fg ansi-bold">.</span>
+├── [  41]  eval_results.csv
+├── [ 16K]  model_cocluster.p
+├── [ 39K]  model_nmf.p
+├── [2.1K]  model_result_ensemble.csv
+├── [184K]  model_svd.p
+├── [ 467]  rankings_avg.csv
+├── [5.0K]  test.parquet.snappy
+├── [7.0K]  train.parquet.snappy
+├── [2.8G]  train_triplets.txt
+└── [488M]  <span class="ansi-red-intense-fg ansi-bold">train_triplets.txt.zip</span>
+
+ 3.3G used in 0 directories, 10 files
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">reload_ext</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">watermark</span> <span class="o">-</span><span class="n">a</span> <span class="s2">&quot;Sparsh A.&quot;</span> <span class="o">-</span><span class="n">m</span> <span class="o">-</span><span class="n">iv</span> <span class="o">-</span><span class="n">u</span> <span class="o">-</span><span class="n">t</span> <span class="o">-</span><span class="n">d</span> <span class="o">-</span><span class="n">p</span> <span class="n">surprise</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Author: Sparsh A.
+
+Last updated: 2021-12-09 04:57:27
+
+surprise: 0.1
+
+Compiler    : GCC 7.5.0
+OS          : Linux
+Release     : 5.4.104+
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 2
+Architecture: 64bit
+
+sys       : 3.7.12 (default, Sep 10 2021, 00:21:48) 
+[GCC 7.5.0]
+seaborn   : 0.11.2
+matplotlib: 3.2.2
+IPython   : 5.5.0
+argparse  : 1.1
+requests  : 2.23.0
+csv       : 1.0
+logging   : 0.5.1.2
+pandas    : 1.1.5
+numpy     : 1.19.5
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>END</strong></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/14/grouprec.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
