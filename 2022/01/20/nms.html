@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Neural Memory Streaming Recommender Networks with Adversarial Training | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Neural Memory Streaming Recommender Networks with Adversarial Training" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/20/nms.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/20/nms.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-20T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Neural Memory Streaming Recommender Networks with Adversarial Training" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-20T00:00:00-06:00","datePublished":"2022-01-20T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Neural Memory Streaming Recommender Networks with Adversarial Training","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/20/nms.html"},"url":"https://nb.recohut.com/2022/01/20/nms.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Neural Memory Streaming Recommender Networks with Adversarial Training</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-20T00:00:00-06:00" itemprop="datePublished">
+        Jan 20, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      7 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-20-nms.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-20-nms.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-20-nms.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-20-nms.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-20-nms.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>NMRN is a streaming recommender model based on neural memory networks with external memories to capture and store both long-term stable interests and short-term dynamic interests in a unified way. An adaptive negative sampling framework based on Generative Adversarial Nets (GAN) is developed to optimize our proposed streaming recommender model, which effectively overcomes the limitations of classical negative sampling approaches and improves the effectiveness of the model parameter inference.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="https://github.com/recohut/incremental-learning/raw/a6fdcde2e8af7ebfd9f5efd278c487e0e9560cb3/docs/_images/T063788_1.png" alt="" /></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Specifically, the external memories of NMRN compose the key memory and the value memory. Given a new user-item interaction pair(u , v) arriving at the system in real time, NMRN first generates a soft address from the key memory, activated by u. The addressing process is inspired by recent advances in attention mechanism. The attention mechanism applied in recommender systems is useful to improve the retrieval accuracy and model interpretability. The fundamental idea of this attention design is to learn a weighted representation across the key memory, which is converted into a probability distribution by the Softmax function as the soft address.Then, NMRN reads from the value memory based on the soft address, resulting in a vector that represents both long-term stable and short-term emerging interests of user u. Inspired by the success of pairwise personalized ranking models (e.g., BPR) in top-k recommendations, we adopt the Hinge-loss in our model optimization. As the number of unobserved examples is very huge, we use the negative sampling method to improve the training efficiency.</p>
+<p>Most existing negative sampling approaches use either random sampling or popularity-biased sampling strategies. However, the majority of negative examples generated in these sampling strategies can be easily discriminated from observed examples, and will contribute little towards the training, because sampled items could be completely unrelated to the target user. Besides, these sampling approaches are not adaptive enough to generate adversarial negative examples, because (1) they are static and thus do not consider that the estimated similarity or proximity between a user and an item changes during the learning process. For example, the similarity between user u and a sampled noise item v is high at the beginning, but after several gradient descent steps it becomes low; and (2) these samplers are global and do not reflect how informative a noise item is w.r.t. a specific user.</p>
+<p>In light of this, we use an adaptive noise sampler based on a Generative Adversarial Network (GAN) to optimize the model, which considers both the specific user and the current values of the model parameters to adaptively generate “difficult” and informative negative examples. Moreover, in order to simultaneously capture the first-order similarity between users and items as well as the second-order similarities between users and between items to learn robust representations of users and items, we use the Euclidean distance to measure the similarity between a user and an item instead of the widely adopted dot product.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="https://github.com/recohut/incremental-learning/raw/a6fdcde2e8af7ebfd9f5efd278c487e0e9560cb3/docs/_images/T063788_2.png" alt="" /></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The Architecture of the model. The total numbers of users and items are denoted as $N$ and $M$. We denote a user-item interaction pair at time $t$ as $(u_t , v_t)$ while $v_t^-$ is a sampled negative item for a specific user at time $t$.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span> 
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span> 
+
+<span class="kn">import</span> <span class="nn">torch</span> 
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span> <span class="nn">torch.nn.parameter</span> <span class="kn">import</span> <span class="n">Parameter</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data.dataloader</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">N</span><span class="p">,</span> <span class="n">D_in</span><span class="p">,</span> <span class="n">H</span> <span class="o">=</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">10</span>
+<span class="n">safety_margin_size</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">Max_sampleNum</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">total_item_num</span> <span class="o">=</span> <span class="mi">500</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">euclidean_distance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">)</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sqrt</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">value_memory</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">D_in</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">key_memory</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">D_in</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">D_in</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">D_in</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">CandidateDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">len</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">y</span><span class="p">,</span><span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_data</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">len</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">my_dataset</span> <span class="o">=</span> <span class="n">CandidateDataset</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">my_dataset</span><span class="p">,</span> <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">generator</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D_in</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc1</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">D_in</span><span class="p">,</span> <span class="mi">32</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc2</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc3</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Prob of Left</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">cat_xy</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">],</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">hidden1</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc1</span><span class="p">(</span><span class="n">cat_xy</span><span class="p">))</span>
+        <span class="n">hidden2</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc2</span><span class="p">(</span><span class="n">hidden1</span><span class="p">))</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fc3</span><span class="p">(</span><span class="n">hidden2</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">output</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">Discriminator</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D_in</span><span class="p">,</span> <span class="n">H</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">key_memory</span><span class="p">,</span> <span class="n">value_memory</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Discriminator</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_memory</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">D_in</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_memory</span> <span class="o">=</span> <span class="n">Parameter</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">D_in</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_memory</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">key_memory</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_memory</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">value_memory</span>
+        <span class="c1">#self.value_memory.requires_grad=True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_erase</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">D_in</span><span class="p">,</span> <span class="n">D_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_update</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">D_in</span><span class="p">,</span> <span class="n">D_in</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">D_in</span> <span class="o">=</span> <span class="n">D_in</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">N</span> <span class="o">=</span> <span class="n">N</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">H</span> <span class="o">=</span> <span class="n">H</span>
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="n">output_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">e_I</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">D_in</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">N</span><span class="p">):</span>
+            <span class="c1">#Memory Adderssing</span>
+            <span class="n">Attention_weight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">H</span><span class="p">):</span>
+                <span class="n">Attention_weight</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="n">euclidean_distance</span><span class="p">(</span><span class="n">user</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_memory</span><span class="p">[</span><span class="n">j</span><span class="p">,:])</span>
+
+
+            <span class="c1">#select value memory by attention</span>
+
+            <span class="n">Attention_weight</span> <span class="o">=</span> <span class="n">Attention_weight</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">Attention_weight</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value_memory</span><span class="p">)</span>
+
+            <span class="n">output</span> <span class="o">=</span> <span class="n">euclidean_distance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">item</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">output_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+            
+            <span class="c1">#update value memory by item vector</span>
+            <span class="n">e_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_erase</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value_memory</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_memory</span> <span class="o">*</span> <span class="p">(</span><span class="n">e_I</span> <span class="o">-</span> <span class="n">Attention_weight</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">t</span><span class="p">()</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">e_t</span><span class="p">))</span>
+
+            <span class="n">a_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_update</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">tanh</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value_memory</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_memory</span> <span class="o">+</span> <span class="n">Attention_weight</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">t</span><span class="p">()</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">a_t</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">output_list</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">ngtv_spl_by_unifm_dist</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="n">ngtv_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">D_in</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ngtv_item</span>
+
+<span class="k">def</span> <span class="nf">ngtv_spl_by_generator</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="n">ngtv_item_id</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">multinomial</span><span class="p">(</span><span class="n">prob_ngtv_item</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="kc">True</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">ngtv_item</span> <span class="o">=</span> <span class="n">dict_item_id2vec</span><span class="p">[</span><span class="n">candidate_ngtv_item</span><span class="p">[</span><span class="n">ngtv_item_id</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()]</span>
+    <span class="k">return</span> <span class="n">ngtv_item_id</span><span class="p">,</span> <span class="n">ngtv_item</span>
+
+<span class="k">def</span> <span class="nf">G_pretrain_per_datapoint</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">generator</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+    <span class="n">ngtv_item_id</span><span class="p">,</span> <span class="n">ngtv_item</span> <span class="o">=</span> <span class="n">generator</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">neg_rslt</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">ngtv_item</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">neg_rslt</span><span class="p">,</span> <span class="n">ngtv_item_id</span>
+
+<span class="k">def</span> <span class="nf">D_pretrain_per_datapoint</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">generator</span><span class="p">):</span>
+    <span class="n">ps_rslt</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="n">item</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Max_sampleNum</span><span class="p">):</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">log</span><span class="p">((</span><span class="n">total_item_num</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">neg_rslt</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">generator</span><span class="p">(</span><span class="n">user</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">weighted_hinge_loss</span><span class="p">(</span><span class="n">ps_rslt</span><span class="p">,</span> <span class="n">neg_rslt</span><span class="p">,</span> <span class="n">safety_margin_size</span><span class="p">,</span> <span class="n">weight</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">loss</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">break</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">loss</span>
+    
+<span class="k">def</span> <span class="nf">weighted_hinge_loss</span><span class="p">(</span><span class="n">ps_rslt</span><span class="p">,</span> <span class="n">neg_rslt</span><span class="p">,</span> <span class="n">safety_margin_size</span><span class="p">,</span> <span class="n">weight</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">weight</span> <span class="o">*</span> <span class="n">F</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">safety_margin_size</span> <span class="o">+</span> <span class="n">ps_rslt</span> <span class="o">-</span> <span class="n">neg_rslt</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">Discriminator</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">key_memory</span><span class="p">,</span> <span class="n">value_memory</span><span class="p">)</span>
+<span class="n">total_loss</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span> <span class="mf">0.01</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+    <span class="n">epoch_loss</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="k">for</span> <span class="n">batch_id</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
+        <span class="n">losses</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">losses</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">D_pretrain_per_datapoint</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ngtv_spl_by_unifm_dist</span><span class="p">)</span>
+
+        <span class="n">mini_batch_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">losses</span><span class="p">)</span>
+        <span class="n">epoch_loss</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">mini_batch_loss</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        
+        <span class="n">model</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">mini_batch_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;epoch_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;:  loss=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">))</span>
+    <span class="n">total_loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>epoch_0:  loss=9162.51040649414
+epoch_1:  loss=9512.62255859375
+epoch_2:  loss=9214.800323486328
+epoch_3:  loss=9504.176055908203
+epoch_4:  loss=9284.231536865234
+epoch_5:  loss=9422.251586914062
+epoch_6:  loss=9421.282775878906
+epoch_7:  loss=9396.276489257812
+epoch_8:  loss=9390.662292480469
+epoch_9:  loss=9425.124694824219
+epoch_10:  loss=9205.153289794922
+epoch_11:  loss=9452.185852050781
+epoch_12:  loss=9485.987365722656
+epoch_13:  loss=9410.585327148438
+epoch_14:  loss=9127.744140625
+epoch_15:  loss=9379.030639648438
+epoch_16:  loss=9347.898803710938
+epoch_17:  loss=9386.432373046875
+epoch_18:  loss=9456.192657470703
+epoch_19:  loss=9354.690643310547
+epoch_20:  loss=9413.049743652344
+epoch_21:  loss=9403.752807617188
+epoch_22:  loss=9283.259490966797
+epoch_23:  loss=9420.226654052734
+epoch_24:  loss=9239.539581298828
+epoch_25:  loss=9273.154418945312
+epoch_26:  loss=9407.462158203125
+epoch_27:  loss=9153.6669921875
+epoch_28:  loss=9260.94091796875
+epoch_29:  loss=9324.113006591797
+epoch_30:  loss=9295.09634399414
+epoch_31:  loss=9115.524719238281
+epoch_32:  loss=9340.50634765625
+epoch_33:  loss=9337.981170654297
+epoch_34:  loss=9454.823944091797
+epoch_35:  loss=9180.193145751953
+epoch_36:  loss=9336.213897705078
+epoch_37:  loss=9159.22543334961
+epoch_38:  loss=9305.651489257812
+epoch_39:  loss=9302.890197753906
+epoch_40:  loss=9213.26058959961
+epoch_41:  loss=9284.324493408203
+epoch_42:  loss=9388.560913085938
+epoch_43:  loss=9230.17855834961
+epoch_44:  loss=9386.049102783203
+epoch_45:  loss=9325.175659179688
+epoch_46:  loss=9343.497131347656
+epoch_47:  loss=9220.862823486328
+epoch_48:  loss=9395.390197753906
+epoch_49:  loss=9170.428771972656
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">dict_user_id2vec</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">dict_item_id2vec</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">candidate_ngtv_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">prob_ngtv_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">candidate_ngtv_item</span><span class="p">:</span>
+    <span class="n">dict_item_id2vec</span><span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">item</span><span class="p">()]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">20</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Training-procedure">Training procedure<a class="anchor-link" href="#Training-procedure"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><img src="https://github.com/recohut/incremental-learning/raw/a6fdcde2e8af7ebfd9f5efd278c487e0e9560cb3/docs/_images/T063788_2.png" alt="" /></p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">gener</span> <span class="o">=</span> <span class="n">generator</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span>
+<span class="n">total_reward</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">total_loss</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">optimizer_G</span> <span class="o">=</span> <span class="n">Adam</span><span class="p">(</span><span class="n">gener</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span> <span class="mf">0.01</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">50</span><span class="p">):</span>
+    <span class="n">epoch_reward</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="n">epoch_loss</span> <span class="o">=</span> <span class="mf">0.</span>
+    <span class="k">for</span> <span class="n">batch_id</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_loader</span><span class="p">):</span>
+        <span class="n">reward</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">mini_batch_loss</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        
+        <span class="k">for</span> <span class="n">data_point</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="c1">#state = x[i]</span>
+            <span class="c1">#action_pool = []</span>
+            <span class="c1">#reward_pool = []</span>
+            <span class="n">candidate_ngtv_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+            <span class="n">prob_ngtv_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">candidate_ngtv_item</span><span class="p">:</span>
+                <span class="n">dict_item_id2vec</span><span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">item</span><span class="p">()]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">20</span><span class="p">)</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">candidate_ngtv_item</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">prob_ngtv_item</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">gener</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">data_point</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">dict_item_id2vec</span><span class="p">[</span><span class="n">candidate_ngtv_item</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()])</span>
+            <span class="n">prob_ngtv_item</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">prob_ngtv_item</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">reward</span><span class="p">[</span><span class="n">data_point</span><span class="p">],</span> <span class="n">ngtv_item_id</span> <span class="o">=</span> <span class="n">G_pretrain_per_datapoint</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">data_point</span><span class="p">],</span> <span class="n">ngtv_spl_by_generator</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+            <span class="n">mini_batch_loss</span><span class="p">[</span><span class="n">data_point</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">reward</span><span class="p">[</span><span class="n">data_point</span><span class="p">])</span> <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">prob_ngtv_item</span><span class="p">[</span><span class="n">ngtv_item_id</span><span class="p">])</span>
+        <span class="n">rewards</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">reward</span><span class="p">)</span>
+        <span class="n">mini_batch_losses</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mini_batch_loss</span><span class="p">)</span>
+        <span class="n">epoch_loss</span> <span class="o">=</span> <span class="n">epoch</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">mini_batch_losses</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">epoch_reward</span> <span class="o">=</span> <span class="n">epoch</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">rewards</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        
+        <span class="n">gener</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">mini_batch_losses</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer_G</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;epoch_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;:  loss=&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;  reward=  &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">epoch_reward</span><span class="p">))</span>
+    <span class="n">total_loss</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>epoch_0:  loss=-434.15869140625  reward=  -94.21874237060547
+epoch_1:  loss=-424.1404113769531  reward=  -91.69937896728516
+epoch_2:  loss=-436.8798522949219  reward=  -93.18343353271484
+epoch_3:  loss=-454.4273681640625  reward=  -96.57652282714844
+epoch_4:  loss=-436.4529113769531  reward=  -91.76925659179688
+epoch_5:  loss=-421.24530029296875  reward=  -87.33723449707031
+epoch_6:  loss=-413.3312683105469  reward=  -84.89115142822266
+epoch_7:  loss=-394.2191162109375  reward=  -79.93122863769531
+epoch_8:  loss=-415.0520324707031  reward=  -83.29130554199219
+epoch_9:  loss=-380.2655029296875  reward=  -75.64791870117188
+epoch_10:  loss=-404.0414733886719  reward=  -78.71047973632812
+epoch_11:  loss=-370.0225830078125  reward=  -74.467041015625
+epoch_12:  loss=-403.89019775390625  reward=  -78.97952270507812
+epoch_13:  loss=-400.32525634765625  reward=  -77.73628234863281
+epoch_14:  loss=-380.1445617675781  reward=  -73.97552490234375
+epoch_15:  loss=-391.7283020019531  reward=  -74.8330078125
+epoch_16:  loss=-409.9129333496094  reward=  -76.5369644165039
+epoch_17:  loss=-398.1524658203125  reward=  -73.23690032958984
+epoch_18:  loss=-412.8946533203125  reward=  -75.6321029663086
+epoch_19:  loss=-392.4568176269531  reward=  -70.35201263427734
+epoch_20:  loss=-402.51251220703125  reward=  -71.76426696777344
+epoch_21:  loss=-393.3529968261719  reward=  -68.99085235595703
+epoch_22:  loss=-424.10772705078125  reward=  -74.88196563720703
+epoch_23:  loss=-371.7626647949219  reward=  -62.756309509277344
+epoch_24:  loss=-406.7032470703125  reward=  -69.5239028930664
+epoch_25:  loss=-413.46826171875  reward=  -70.21016693115234
+epoch_26:  loss=-381.4178771972656  reward=  -62.48395538330078
+epoch_27:  loss=-393.3104553222656  reward=  -64.2697982788086
+epoch_28:  loss=-411.4168395996094  reward=  -67.4195556640625
+epoch_29:  loss=-402.0660705566406  reward=  -64.6007080078125
+epoch_30:  loss=-411.00799560546875  reward=  -65.77066802978516
+epoch_31:  loss=-404.57196044921875  reward=  -63.586524963378906
+epoch_32:  loss=-396.587890625  reward=  -61.06828308105469
+epoch_33:  loss=-375.3912658691406  reward=  -55.68218231201172
+epoch_34:  loss=-379.1978759765625  reward=  -55.68901824951172
+epoch_35:  loss=-385.91357421875  reward=  -56.388343811035156
+epoch_36:  loss=-393.93780517578125  reward=  -57.38147735595703
+epoch_37:  loss=-416.4791259765625  reward=  -61.48567199707031
+epoch_38:  loss=-370.73846435546875  reward=  -50.73662567138672
+epoch_39:  loss=-400.337890625  reward=  -56.4139404296875
+epoch_40:  loss=-388.9174499511719  reward=  -53.15800476074219
+epoch_41:  loss=-359.5585632324219  reward=  -45.974037170410156
+epoch_42:  loss=-363.9505615234375  reward=  -46.14964294433594
+epoch_43:  loss=-378.8984375  reward=  -48.61058807373047
+epoch_44:  loss=-359.16448974609375  reward=  -43.544586181640625
+epoch_45:  loss=-372.9488830566406  reward=  -45.768882751464844
+epoch_46:  loss=-374.2965087890625  reward=  -45.270103454589844
+epoch_47:  loss=-384.1467590332031  reward=  -46.62992858886719
+epoch_48:  loss=-373.5057067871094  reward=  -43.53697204589844
+epoch_49:  loss=-368.18255615234375  reward=  -41.583251953125
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Links">Links<a class="anchor-link" href="#Links"> </a></h2><p><a href="https://github.com/lzzscl/KBGAN-KV_MemNN/tree/master/">https://github.com/lzzscl/KBGAN-KV_MemNN/tree/master</a></p>
+<p><a href="https://dl.acm.org/doi/epdf/10.1145/3219819.3220004">Neural Memory Streaming Recommender Networks with Adversarial Training</a></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/20/nms.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

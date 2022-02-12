@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>FrozenLake using Cross-Entropy | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="FrozenLake using Cross-Entropy" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/22/frozenlake-crossentropy.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/22/frozenlake-crossentropy.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-22T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="FrozenLake using Cross-Entropy" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-22T00:00:00-06:00","datePublished":"2022-01-22T00:00:00-06:00","description":"Jupyter notebook database.","headline":"FrozenLake using Cross-Entropy","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/22/frozenlake-crossentropy.html"},"url":"https://nb.recohut.com/2022/01/22/frozenlake-crossentropy.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">FrozenLake using Cross-Entropy</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-22T00:00:00-06:00" itemprop="datePublished">
+        Jan 22, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      6 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-22-frozenlake-crossentropy.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-22-frozenlake-crossentropy.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-22-frozenlake-crossentropy.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-22-frozenlake-crossentropy.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-22-frozenlake-crossentropy.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The next environment that we will try to solve using the cross-entropy method is FrozenLake. Its world is from the so-called grid world category, when your agent lives in a grid of size 4×4 and can move in four directions: up, down, left, and right. The agent always starts at a top-left position, and its goal is to reach the bottom-right cell of the grid. There are holes in the fixed cells of the grid and if you get into those holes, the episode ends and your reward is zero. If the agent reaches the destination cell, then it obtains a reward of 1.0 and the episode ends.</p>
+<p>To make life more complicated, the world is slippery (it's a frozen lake after all), so the agent's actions do not always turn out as expected—there is a 33% chance that it will slip to the right or to the left. If you want the agent to move left, for example, there is a 33% probability that it will, indeed, move left, a 33% chance that it will end up in the cell above, and a 33% chance that it will end up in the cell below. As you will see at the end of the section, this makes progress difficult.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Imports">Imports<a class="anchor-link" href="#Imports"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">gym</span>
+<span class="kn">import</span> <span class="nn">gym.spaces</span>
+<span class="kn">import</span> <span class="nn">gym.wrappers</span>
+<span class="kn">import</span> <span class="nn">gym.envs.toy_text.frozen_lake</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">torch.utils.tensorboard</span> <span class="kn">import</span> <span class="n">SummaryWriter</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">torch.optim</span> <span class="k">as</span> <span class="nn">optim</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Naive-method">Naive method<a class="anchor-link" href="#Naive-method"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Params">Params<a class="anchor-link" href="#Params"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">HIDDEN_SIZE</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="n">PERCENTILE</span> <span class="o">=</span> <span class="mi">70</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Model">Model<a class="anchor-link" href="#Model"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">DiscreteOneHotWrapper</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">ObservationWrapper</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DiscreteOneHotWrapper</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="p">,</span>
+                          <span class="n">gym</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">Discrete</span><span class="p">)</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span>
+            <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">observation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">low</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">observation</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">obs_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="n">Episode</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;Episode&#39;</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;reward&#39;</span><span class="p">,</span> <span class="s1">&#39;steps&#39;</span><span class="p">])</span>
+<span class="n">EpisodeStep</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;EpisodeStep&#39;</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;observation&#39;</span><span class="p">,</span> <span class="s1">&#39;action&#39;</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">iterate_batches</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">episode_reward</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">episode_steps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">sm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Softmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">obs_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">([</span><span class="n">obs</span><span class="p">])</span>
+        <span class="n">act_probs_v</span> <span class="o">=</span> <span class="n">sm</span><span class="p">(</span><span class="n">net</span><span class="p">(</span><span class="n">obs_v</span><span class="p">))</span>
+        <span class="n">act_probs</span> <span class="o">=</span> <span class="n">act_probs_v</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">act_probs</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="n">act_probs</span><span class="p">)</span>
+        <span class="n">next_obs</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">is_done</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="n">episode_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+        <span class="n">episode_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EpisodeStep</span><span class="p">(</span><span class="n">observation</span><span class="o">=</span><span class="n">obs</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">action</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">is_done</span><span class="p">:</span>
+            <span class="n">batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Episode</span><span class="p">(</span><span class="n">reward</span><span class="o">=</span><span class="n">episode_reward</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="n">episode_steps</span><span class="p">))</span>
+            <span class="n">episode_reward</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">episode_steps</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">next_obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">==</span> <span class="n">batch_size</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">batch</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">obs</span> <span class="o">=</span> <span class="n">next_obs</span>
+
+
+<span class="k">def</span> <span class="nf">filter_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">percentile</span><span class="p">):</span>
+    <span class="n">rewards</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reward</span><span class="p">,</span> <span class="n">batch</span><span class="p">))</span>
+    <span class="n">reward_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">rewards</span><span class="p">,</span> <span class="n">percentile</span><span class="p">)</span>
+    <span class="n">reward_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">rewards</span><span class="p">))</span>
+
+    <span class="n">train_obs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">train_act</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">example</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">example</span><span class="o">.</span><span class="n">reward</span> <span class="o">&lt;</span> <span class="n">reward_bound</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">train_obs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">step</span><span class="p">:</span> <span class="n">step</span><span class="o">.</span><span class="n">observation</span><span class="p">,</span> <span class="n">example</span><span class="o">.</span><span class="n">steps</span><span class="p">))</span>
+        <span class="n">train_act</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">step</span><span class="p">:</span> <span class="n">step</span><span class="o">.</span><span class="n">action</span><span class="p">,</span> <span class="n">example</span><span class="o">.</span><span class="n">steps</span><span class="p">))</span>
+
+    <span class="n">train_obs_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">train_obs</span><span class="p">)</span>
+    <span class="n">train_act_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">train_act</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">train_obs_v</span><span class="p">,</span> <span class="n">train_act_v</span><span class="p">,</span> <span class="n">reward_bound</span><span class="p">,</span> <span class="n">reward_mean</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Run">Run<a class="anchor-link" href="#Run"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">DiscreteOneHotWrapper</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="s2">&quot;FrozenLake-v0&quot;</span><span class="p">))</span>
+    <span class="c1"># env = gym.wrappers.Monitor(env, directory=&quot;mon&quot;, force=True)</span>
+    <span class="n">obs_size</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n_actions</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">n</span>
+
+    <span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">(</span><span class="n">obs_size</span><span class="p">,</span> <span class="n">HIDDEN_SIZE</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">)</span>
+    <span class="n">objective</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">SummaryWriter</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;-frozenlake-naive&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">iter_no</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">iterate_batches</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">BATCH_SIZE</span><span class="p">)):</span>
+        <span class="n">obs_v</span><span class="p">,</span> <span class="n">acts_v</span><span class="p">,</span> <span class="n">reward_b</span><span class="p">,</span> <span class="n">reward_m</span> <span class="o">=</span> <span class="n">filter_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">PERCENTILE</span><span class="p">)</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">action_scores_v</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">obs_v</span><span class="p">)</span>
+        <span class="n">loss_v</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">action_scores_v</span><span class="p">,</span> <span class="n">acts_v</span><span class="p">)</span>
+        <span class="n">loss_v</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">: loss=</span><span class="si">%.3f</span><span class="s2">, reward_mean=</span><span class="si">%.1f</span><span class="s2">, reward_bound=</span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">iter_no</span><span class="p">,</span> <span class="n">loss_v</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">reward_m</span><span class="p">,</span> <span class="n">reward_b</span><span class="p">))</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="n">loss_v</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;reward_bound&quot;</span><span class="p">,</span> <span class="n">reward_b</span><span class="p">,</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;reward_mean&quot;</span><span class="p">,</span> <span class="n">reward_m</span><span class="p">,</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reward_m</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solved!&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Tweaked-method">Tweaked method<a class="anchor-link" href="#Tweaked-method"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Params">Params<a class="anchor-link" href="#Params"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">HIDDEN_SIZE</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">PERCENTILE</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="n">GAMMA</span> <span class="o">=</span> <span class="mf">0.9</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Model">Model<a class="anchor-link" href="#Model"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">DiscreteOneHotWrapper</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">ObservationWrapper</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DiscreteOneHotWrapper</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="p">,</span> <span class="n">gym</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">Discrete</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">observation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">low</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">observation</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">obs_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="n">Episode</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;Episode&#39;</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;reward&#39;</span><span class="p">,</span> <span class="s1">&#39;steps&#39;</span><span class="p">])</span>
+<span class="n">EpisodeStep</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;EpisodeStep&#39;</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;observation&#39;</span><span class="p">,</span> <span class="s1">&#39;action&#39;</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">iterate_batches</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">episode_reward</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">episode_steps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">sm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Softmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">obs_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">([</span><span class="n">obs</span><span class="p">])</span>
+        <span class="n">act_probs_v</span> <span class="o">=</span> <span class="n">sm</span><span class="p">(</span><span class="n">net</span><span class="p">(</span><span class="n">obs_v</span><span class="p">))</span>
+        <span class="n">act_probs</span> <span class="o">=</span> <span class="n">act_probs_v</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">act_probs</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="n">act_probs</span><span class="p">)</span>
+        <span class="n">next_obs</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">is_done</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="n">episode_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+        <span class="n">episode_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EpisodeStep</span><span class="p">(</span><span class="n">observation</span><span class="o">=</span><span class="n">obs</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">action</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">is_done</span><span class="p">:</span>
+            <span class="n">batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Episode</span><span class="p">(</span><span class="n">reward</span><span class="o">=</span><span class="n">episode_reward</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="n">episode_steps</span><span class="p">))</span>
+            <span class="n">episode_reward</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">episode_steps</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">next_obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">==</span> <span class="n">batch_size</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">batch</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">obs</span> <span class="o">=</span> <span class="n">next_obs</span>
+
+
+<span class="k">def</span> <span class="nf">filter_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">percentile</span><span class="p">):</span>
+    <span class="n">filter_fun</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reward</span> <span class="o">*</span> <span class="p">(</span><span class="n">GAMMA</span> <span class="o">**</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">steps</span><span class="p">))</span>
+    <span class="n">disc_rewards</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">filter_fun</span><span class="p">,</span> <span class="n">batch</span><span class="p">))</span>
+    <span class="n">reward_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">disc_rewards</span><span class="p">,</span> <span class="n">percentile</span><span class="p">)</span>
+
+    <span class="n">train_obs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">train_act</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">elite_batch</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">example</span><span class="p">,</span> <span class="n">discounted_reward</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">disc_rewards</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">discounted_reward</span> <span class="o">&gt;</span> <span class="n">reward_bound</span><span class="p">:</span>
+            <span class="n">train_obs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">step</span><span class="p">:</span> <span class="n">step</span><span class="o">.</span><span class="n">observation</span><span class="p">,</span>
+                                 <span class="n">example</span><span class="o">.</span><span class="n">steps</span><span class="p">))</span>
+            <span class="n">train_act</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">step</span><span class="p">:</span> <span class="n">step</span><span class="o">.</span><span class="n">action</span><span class="p">,</span>
+                                 <span class="n">example</span><span class="o">.</span><span class="n">steps</span><span class="p">))</span>
+            <span class="n">elite_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">elite_batch</span><span class="p">,</span> <span class="n">train_obs</span><span class="p">,</span> <span class="n">train_act</span><span class="p">,</span> <span class="n">reward_bound</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Run">Run<a class="anchor-link" href="#Run"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">12345</span><span class="p">)</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">DiscreteOneHotWrapper</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="s2">&quot;FrozenLake-v0&quot;</span><span class="p">))</span>
+    <span class="c1"># env = gym.wrappers.Monitor(env, directory=&quot;mon&quot;, force=True)</span>
+    <span class="n">obs_size</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n_actions</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">n</span>
+
+    <span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">(</span><span class="n">obs_size</span><span class="p">,</span> <span class="n">HIDDEN_SIZE</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">)</span>
+    <span class="n">objective</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">SummaryWriter</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;-frozenlake-tweaked&quot;</span><span class="p">)</span>
+
+    <span class="n">full_batch</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">iter_no</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">iterate_batches</span><span class="p">(</span>
+            <span class="n">env</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">BATCH_SIZE</span><span class="p">)):</span>
+        <span class="n">reward_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reward</span><span class="p">,</span> <span class="n">batch</span><span class="p">))))</span>
+        <span class="n">full_batch</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">acts</span><span class="p">,</span> <span class="n">reward_bound</span> <span class="o">=</span> \
+            <span class="n">filter_batch</span><span class="p">(</span><span class="n">full_batch</span> <span class="o">+</span> <span class="n">batch</span><span class="p">,</span> <span class="n">PERCENTILE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">full_batch</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">obs_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+        <span class="n">acts_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">acts</span><span class="p">)</span>
+        <span class="n">full_batch</span> <span class="o">=</span> <span class="n">full_batch</span><span class="p">[</span><span class="o">-</span><span class="mi">500</span><span class="p">:]</span>
+
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">action_scores_v</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">obs_v</span><span class="p">)</span>
+        <span class="n">loss_v</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">action_scores_v</span><span class="p">,</span> <span class="n">acts_v</span><span class="p">)</span>
+        <span class="n">loss_v</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">: loss=</span><span class="si">%.3f</span><span class="s2">, rw_mean=</span><span class="si">%.3f</span><span class="s2">, &quot;</span>
+              <span class="s2">&quot;rw_bound=</span><span class="si">%.3f</span><span class="s2">, batch=</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">iter_no</span><span class="p">,</span> <span class="n">loss_v</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">reward_mean</span><span class="p">,</span>
+            <span class="n">reward_bound</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">full_batch</span><span class="p">)))</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="n">loss_v</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;reward_mean&quot;</span><span class="p">,</span> <span class="n">reward_mean</span><span class="p">,</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;reward_bound&quot;</span><span class="p">,</span> <span class="n">reward_bound</span><span class="p">,</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reward_mean</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solved!&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Non-slippery-method">Non-slippery method<a class="anchor-link" href="#Non-slippery-method"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Params">Params<a class="anchor-link" href="#Params"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">HIDDEN_SIZE</span> <span class="o">=</span> <span class="mi">128</span>
+<span class="n">BATCH_SIZE</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">PERCENTILE</span> <span class="o">=</span> <span class="mi">30</span>
+<span class="n">GAMMA</span> <span class="o">=</span> <span class="mf">0.9</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Model">Model<a class="anchor-link" href="#Model"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">DiscreteOneHotWrapper</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">ObservationWrapper</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DiscreteOneHotWrapper</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="p">,</span> <span class="n">gym</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">Discrete</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">spaces</span><span class="o">.</span><span class="n">Box</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">n</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">observation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observation</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">low</span><span class="p">)</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">observation</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+
+<span class="k">class</span> <span class="nc">Net</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Net</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">obs_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+
+<span class="n">Episode</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;Episode&#39;</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;reward&#39;</span><span class="p">,</span> <span class="s1">&#39;steps&#39;</span><span class="p">])</span>
+<span class="n">EpisodeStep</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s1">&#39;EpisodeStep&#39;</span><span class="p">,</span> <span class="n">field_names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;observation&#39;</span><span class="p">,</span> <span class="s1">&#39;action&#39;</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">iterate_batches</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">episode_reward</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">episode_steps</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">sm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Softmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">obs_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">([</span><span class="n">obs</span><span class="p">])</span>
+        <span class="n">act_probs_v</span> <span class="o">=</span> <span class="n">sm</span><span class="p">(</span><span class="n">net</span><span class="p">(</span><span class="n">obs_v</span><span class="p">))</span>
+        <span class="n">act_probs</span> <span class="o">=</span> <span class="n">act_probs_v</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numpy</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">act_probs</span><span class="p">),</span> <span class="n">p</span><span class="o">=</span><span class="n">act_probs</span><span class="p">)</span>
+        <span class="n">next_obs</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">is_done</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="n">episode_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+        <span class="n">episode_steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">EpisodeStep</span><span class="p">(</span><span class="n">observation</span><span class="o">=</span><span class="n">obs</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">action</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">is_done</span><span class="p">:</span>
+            <span class="n">batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Episode</span><span class="p">(</span><span class="n">reward</span><span class="o">=</span><span class="n">episode_reward</span><span class="p">,</span> <span class="n">steps</span><span class="o">=</span><span class="n">episode_steps</span><span class="p">))</span>
+            <span class="n">episode_reward</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">episode_steps</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">next_obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span> <span class="o">==</span> <span class="n">batch_size</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">batch</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">obs</span> <span class="o">=</span> <span class="n">next_obs</span>
+
+
+<span class="k">def</span> <span class="nf">filter_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">percentile</span><span class="p">):</span>
+    <span class="n">disc_rewards</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reward</span> <span class="o">*</span> <span class="p">(</span><span class="n">GAMMA</span> <span class="o">**</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">steps</span><span class="p">)),</span> <span class="n">batch</span><span class="p">))</span>
+    <span class="n">reward_bound</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">disc_rewards</span><span class="p">,</span> <span class="n">percentile</span><span class="p">)</span>
+
+    <span class="n">train_obs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">train_act</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">elite_batch</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">example</span><span class="p">,</span> <span class="n">discounted_reward</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">disc_rewards</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">discounted_reward</span> <span class="o">&gt;</span> <span class="n">reward_bound</span><span class="p">:</span>
+            <span class="n">train_obs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">step</span><span class="p">:</span> <span class="n">step</span><span class="o">.</span><span class="n">observation</span><span class="p">,</span> <span class="n">example</span><span class="o">.</span><span class="n">steps</span><span class="p">))</span>
+            <span class="n">train_act</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">step</span><span class="p">:</span> <span class="n">step</span><span class="o">.</span><span class="n">action</span><span class="p">,</span> <span class="n">example</span><span class="o">.</span><span class="n">steps</span><span class="p">))</span>
+            <span class="n">elite_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">example</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">elite_batch</span><span class="p">,</span> <span class="n">train_obs</span><span class="p">,</span> <span class="n">train_act</span><span class="p">,</span> <span class="n">reward_bound</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Run">Run<a class="anchor-link" href="#Run"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">12345</span><span class="p">)</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">envs</span><span class="o">.</span><span class="n">toy_text</span><span class="o">.</span><span class="n">frozen_lake</span><span class="o">.</span><span class="n">FrozenLakeEnv</span><span class="p">(</span>
+        <span class="n">is_slippery</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">spec</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">spec</span><span class="p">(</span><span class="s2">&quot;FrozenLake-v0&quot;</span><span class="p">)</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">wrappers</span><span class="o">.</span><span class="n">TimeLimit</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">max_episode_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">DiscreteOneHotWrapper</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+    <span class="c1"># env = gym.wrappers.Monitor(env, directory=&quot;mon&quot;, force=True)</span>
+    <span class="n">obs_size</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">n_actions</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">n</span>
+
+    <span class="n">net</span> <span class="o">=</span> <span class="n">Net</span><span class="p">(</span><span class="n">obs_size</span><span class="p">,</span> <span class="n">HIDDEN_SIZE</span><span class="p">,</span> <span class="n">n_actions</span><span class="p">)</span>
+    <span class="n">objective</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">net</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">SummaryWriter</span><span class="p">(</span><span class="n">comment</span><span class="o">=</span><span class="s2">&quot;-frozenlake-nonslippery&quot;</span><span class="p">)</span>
+
+    <span class="n">full_batch</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">iter_no</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">iterate_batches</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">net</span><span class="p">,</span> <span class="n">BATCH_SIZE</span><span class="p">)):</span>
+        <span class="n">reward_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">reward</span><span class="p">,</span> <span class="n">batch</span><span class="p">))))</span>
+        <span class="n">full_batch</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">acts</span><span class="p">,</span> <span class="n">reward_bound</span> <span class="o">=</span> <span class="n">filter_batch</span><span class="p">(</span><span class="n">full_batch</span> <span class="o">+</span> <span class="n">batch</span><span class="p">,</span> <span class="n">PERCENTILE</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">full_batch</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">obs_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">FloatTensor</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+        <span class="n">acts_v</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">acts</span><span class="p">)</span>
+        <span class="n">full_batch</span> <span class="o">=</span> <span class="n">full_batch</span><span class="p">[</span><span class="o">-</span><span class="mi">500</span><span class="p">:]</span>
+
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+        <span class="n">action_scores_v</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">obs_v</span><span class="p">)</span>
+        <span class="n">loss_v</span> <span class="o">=</span> <span class="n">objective</span><span class="p">(</span><span class="n">action_scores_v</span><span class="p">,</span> <span class="n">acts_v</span><span class="p">)</span>
+        <span class="n">loss_v</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%d</span><span class="s2">: loss=</span><span class="si">%.3f</span><span class="s2">, reward_mean=</span><span class="si">%.3f</span><span class="s2">, reward_bound=</span><span class="si">%.3f</span><span class="s2">, batch=</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">iter_no</span><span class="p">,</span> <span class="n">loss_v</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">reward_mean</span><span class="p">,</span> <span class="n">reward_bound</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">full_batch</span><span class="p">)))</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">,</span> <span class="n">loss_v</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;reward_mean&quot;</span><span class="p">,</span> <span class="n">reward_mean</span><span class="p">,</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">add_scalar</span><span class="p">(</span><span class="s2">&quot;reward_bound&quot;</span><span class="p">,</span> <span class="n">reward_bound</span><span class="p">,</span> <span class="n">iter_no</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reward_mean</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Solved!&quot;</span><span class="p">)</span>
+            <span class="k">break</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Visualization">Visualization<a class="anchor-link" href="#Visualization"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%</span><span class="n">load_ext</span> <span class="n">tensorboard</span>
+<span class="o">%</span><span class="n">tensorboard</span> <span class="o">--</span><span class="n">logdir</span> <span class="n">runs</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/22/frozenlake-crossentropy.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

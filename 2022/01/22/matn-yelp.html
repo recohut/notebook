@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MATN on Yelp in Tensorflow | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="MATN on Yelp in Tensorflow" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Multiplex Behavioral Relation Learning for Recommendation via Memory Augmented Transformer Network" />
+<meta property="og:description" content="Multiplex Behavioral Relation Learning for Recommendation via Memory Augmented Transformer Network" />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/22/matn-yelp.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/22/matn-yelp.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-22T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MATN on Yelp in Tensorflow" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-22T00:00:00-06:00","datePublished":"2022-01-22T00:00:00-06:00","description":"Multiplex Behavioral Relation Learning for Recommendation via Memory Augmented Transformer Network","headline":"MATN on Yelp in Tensorflow","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/22/matn-yelp.html"},"url":"https://nb.recohut.com/2022/01/22/matn-yelp.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">MATN on Yelp in Tensorflow</h1><p class="page-description">Multiplex Behavioral Relation Learning for Recommendation via Memory Augmented Transformer Network</p><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-22T00:00:00-06:00" itemprop="datePublished">
+        Jan 22, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      15 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-22-matn-yelp.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-22-matn-yelp.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-22-matn-yelp.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-22-matn-yelp.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-22-matn-yelp.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">akaxlh</span><span class="o">/</span><span class="n">MATN</span><span class="o">.</span><span class="n">git</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">tree</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">tree</span> <span class="o">--</span><span class="n">du</span> <span class="o">-</span><span class="n">h</span> <span class="o">./</span><span class="n">MATN</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>./MATN
+├── [2.6K]  DataHandler.py
+├── [102M]  Datasets
+│   ├── [ 79M]  MultiInt-ML10M
+│   │   ├── [ 40M]  buy
+│   │   │   ├── [   1]  1
+│   │   │   ├── [ 11M]  trn_neg
+│   │   │   ├── [ 12M]  trn_neutral.rar
+│   │   │   ├── [ 16M]  trn_pos.rar
+│   │   │   └── [ 84K]  tst_int
+│   │   └── [ 40M]  click
+│   │       ├── [   1]  1
+│   │       ├── [ 11M]  trn_neg
+│   │       ├── [ 12M]  trn_neutral.rar
+│   │       ├── [ 16M]  trn_pos.rar
+│   │       └── [ 84K]  tst_int
+│   └── [ 23M]  yelp
+│       ├── [ 11M]  buy
+│       │   ├── [   2]  tem
+│       │   ├── [1.6M]  trn_neg
+│       │   ├── [1.9M]  trn_neutral
+│       │   ├── [5.2M]  trn_pos
+│       │   ├── [2.3M]  trn_tip
+│       │   └── [273K]  tst_int
+│       ├── [ 11M]  click
+│       │   ├── [   1]  1
+│       │   ├── [1.6M]  trn_neg
+│       │   ├── [1.9M]  trn_neutral
+│       │   ├── [5.3M]  trn_pos
+│       │   ├── [2.2M]  trn_tip
+│       │   └── [273K]  tst_int
+│       └── [   2]  placeholder
+├── [9.8K]  labcode.py
+├── [1.6K]  Params.py
+└── [ 10K]  Utils
+    ├── [5.0K]  NNLayers.py
+    ├── [   5]  placeholder
+    └── [1.1K]  TimeLogger.py
+
+ 102M used in 8 directories, 29 files
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%</span><span class="n">tensorflow_version</span> <span class="mf">1.</span><span class="n">x</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>TensorFlow 1.x selected.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="n">History</span> <span class="n">Models</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">csr_matrix</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">tensorflow.core.protobuf</span> <span class="kn">import</span> <span class="n">config_pb2</span>
+<span class="kn">from</span> <span class="nn">tensorflow.contrib.layers</span> <span class="kn">import</span> <span class="n">xavier_initializer</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="NN-Layers">NN Layers<a class="anchor-link" href="#NN-Layers"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">paramId</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">biasDefault</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">regParams</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">ita</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">leaky</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+<span class="k">def</span> <span class="nf">getParamId</span><span class="p">():</span>
+	<span class="k">global</span> <span class="n">paramId</span>
+	<span class="n">paramId</span> <span class="o">+=</span> <span class="mi">1</span>
+	<span class="k">return</span> <span class="n">paramId</span>
+
+<span class="k">def</span> <span class="nf">setIta</span><span class="p">(</span><span class="n">ITA</span><span class="p">):</span>
+	<span class="n">ita</span> <span class="o">=</span> <span class="n">ITA</span>
+
+<span class="k">def</span> <span class="nf">setBiasDefault</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">biasDefault</span>
+	<span class="n">biasDefault</span> <span class="o">=</span> <span class="n">val</span>
+
+<span class="k">def</span> <span class="nf">getParam</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+	<span class="k">return</span> <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">addReg</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">regParams</span>
+	<span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">regParams</span><span class="p">:</span>
+		<span class="n">regParams</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span>
+	<span class="c1"># else:</span>
+	<span class="c1"># 	print(&#39;ERROR: Parameter already exists&#39;)</span>
+
+<span class="k">def</span> <span class="nf">addParam</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">param</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">params</span>
+	<span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+		<span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span>
+
+<span class="k">def</span> <span class="nf">defineParam</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	<span class="n">initializer</span><span class="o">=</span><span class="s1">&#39;xavier&#39;</span><span class="p">,</span> <span class="n">trainable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">params</span>
+	<span class="k">global</span> <span class="n">regParams</span>
+	<span class="k">if</span> <span class="n">initializer</span> <span class="o">==</span> <span class="s1">&#39;xavier&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span>
+			<span class="n">initializer</span><span class="o">=</span><span class="n">xavier_initializer</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+			<span class="n">trainable</span><span class="o">=</span><span class="n">trainable</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">initializer</span> <span class="o">==</span> <span class="s1">&#39;trunc_normal&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">0.03</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">))</span>
+	<span class="k">elif</span> <span class="n">initializer</span> <span class="o">==</span> <span class="s1">&#39;zeros&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+			<span class="n">initializer</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+			<span class="n">trainable</span><span class="o">=</span><span class="n">trainable</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">initializer</span> <span class="o">==</span> <span class="s1">&#39;ones&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">trainable</span><span class="o">=</span><span class="n">trainable</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">initializer</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">,</span>
+			<span class="n">initializer</span><span class="o">=</span><span class="n">initializer</span><span class="p">,</span> <span class="n">trainable</span><span class="o">=</span><span class="n">trainable</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ERROR: Unrecognized initializer&#39;</span><span class="p">)</span>
+		<span class="n">exit</span><span class="p">()</span>
+	<span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ret</span>
+	<span class="k">if</span> <span class="n">reg</span><span class="p">:</span>
+		<span class="n">regParams</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">ret</span>
+	<span class="k">return</span> <span class="n">ret</span>
+
+<span class="k">def</span> <span class="nf">getOrDefineParam</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+	<span class="n">initializer</span><span class="o">=</span><span class="s1">&#39;xavier&#39;</span><span class="p">,</span> <span class="n">trainable</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">params</span>
+	<span class="k">global</span> <span class="n">regParams</span>
+	<span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">reg</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">regParams</span><span class="p">:</span>
+			<span class="n">regParams</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+		<span class="k">return</span> <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+	<span class="k">return</span> <span class="n">defineParam</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">reg</span><span class="p">,</span> <span class="n">initializer</span><span class="p">,</span> <span class="n">trainable</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">BN</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">ita</span>
+	<span class="n">dim</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+	<span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;defaultParamName</span><span class="si">%d</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">getParamId</span><span class="p">()</span>
+	<span class="n">scale</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">dim</span><span class="p">]))</span>
+	<span class="n">shift</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">dim</span><span class="p">]))</span>
+	<span class="n">fcMean</span><span class="p">,</span> <span class="n">fcVar</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">moments</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+	<span class="n">ema</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">ExponentialMovingAverage</span><span class="p">(</span><span class="n">decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+	<span class="n">emaApplyOp</span> <span class="o">=</span> <span class="n">ema</span><span class="o">.</span><span class="n">apply</span><span class="p">([</span><span class="n">fcMean</span><span class="p">,</span> <span class="n">fcVar</span><span class="p">])</span>
+	<span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">control_dependencies</span><span class="p">([</span><span class="n">emaApplyOp</span><span class="p">]):</span>
+		<span class="n">mean</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">fcMean</span><span class="p">)</span>
+		<span class="n">var</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">fcVar</span><span class="p">)</span>
+	<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span>
+		<span class="n">scale</span><span class="p">,</span> <span class="mf">1e-8</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">ret</span>
+
+<span class="k">def</span> <span class="nf">FC</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">outDim</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">useBias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+	<span class="n">reg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">useBN</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="s1">&#39;xavier&#39;</span><span class="p">,</span> <span class="n">noDrop</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">params</span>
+	<span class="k">global</span> <span class="n">regParams</span>
+	<span class="k">global</span> <span class="n">leaky</span>
+	<span class="c1"># useBias = biasDefault</span>
+	<span class="c1"># if not noDrop:</span>
+	<span class="c1"># 	inp = tf.nn.dropout(inp, rate=0.001)</span>
+	<span class="n">inDim</span> <span class="o">=</span> <span class="n">inp</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()[</span><span class="mi">1</span><span class="p">]</span>
+	<span class="n">temName</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span><span class="o">!=</span><span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;defaultParamName</span><span class="si">%d</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">getParamId</span><span class="p">()</span>
+	<span class="n">W</span> <span class="o">=</span> <span class="n">getOrDefineParam</span><span class="p">(</span><span class="n">temName</span><span class="p">,</span> <span class="p">[</span><span class="n">inDim</span><span class="p">,</span> <span class="n">outDim</span><span class="p">],</span> <span class="n">reg</span><span class="o">=</span><span class="n">reg</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="n">initializer</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">dropout</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">inp</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="n">dropout</span><span class="p">)</span> <span class="o">@</span> <span class="n">W</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">inp</span> <span class="o">@</span> <span class="n">W</span>
+	<span class="k">if</span> <span class="n">useBias</span><span class="p">:</span>
+		<span class="n">temBiasName</span> <span class="o">=</span> <span class="n">temName</span> <span class="o">+</span> <span class="s1">&#39;Bias&#39;</span>
+		<span class="n">bias</span> <span class="o">=</span> <span class="n">getOrDefineParam</span><span class="p">(</span><span class="n">temBiasName</span><span class="p">,</span> <span class="n">outDim</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="s1">&#39;zeros&#39;</span><span class="p">)</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">ret</span> <span class="o">+</span> <span class="n">bias</span>
+	<span class="k">if</span> <span class="n">useBN</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">BN</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">activation</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">Activate</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">activation</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">ret</span>
+
+<span class="k">def</span> <span class="nf">Bias</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+	<span class="n">inDim</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+	<span class="n">temName</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span><span class="o">!=</span><span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;defaultParamName</span><span class="si">%d</span><span class="s1">&#39;</span><span class="o">%</span><span class="n">getParamId</span><span class="p">()</span>
+	<span class="n">temBiasName</span> <span class="o">=</span> <span class="n">temName</span> <span class="o">+</span> <span class="s1">&#39;Bias&#39;</span>
+	<span class="n">bias</span> <span class="o">=</span> <span class="n">getOrDefineParam</span><span class="p">(</span><span class="n">temBiasName</span><span class="p">,</span> <span class="n">inDim</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="s1">&#39;zeros&#39;</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">reg</span><span class="p">:</span>
+		<span class="n">regParams</span><span class="p">[</span><span class="n">temBiasName</span><span class="p">]</span> <span class="o">=</span> <span class="n">bias</span>
+	<span class="k">return</span> <span class="n">data</span> <span class="o">+</span> <span class="n">bias</span>
+
+<span class="k">def</span> <span class="nf">ActivateHelp</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+	<span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;relu&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;sigmoid&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;tanh&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;softmax&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;leakyRelu&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">leaky</span><span class="o">*</span><span class="n">data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;twoWayLeakyRelu&#39;</span><span class="p">:</span>
+		<span class="n">temMask</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">to_float</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">greater</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">temMask</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">leaky</span> <span class="o">*</span> <span class="p">(</span><span class="n">data</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">temMask</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">leaky</span> <span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;-1relu&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+	<span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;relu6&#39;</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="mf">6.0</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Error Activation Function&#39;</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">ret</span>
+
+<span class="k">def</span> <span class="nf">Activate</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">useBN</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">leaky</span>
+	<span class="k">if</span> <span class="n">useBN</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">BN</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">data</span>
+	<span class="n">ret</span> <span class="o">=</span> <span class="n">ActivateHelp</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">ret</span>
+
+<span class="k">def</span> <span class="nf">Regularize</span><span class="p">(</span><span class="n">names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;L2&#39;</span><span class="p">):</span>
+	<span class="n">ret</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;L1&#39;</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">names</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+				<span class="n">ret</span> <span class="o">+=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">getParam</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">regParams</span><span class="p">:</span>
+				<span class="n">ret</span> <span class="o">+=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">regParams</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span>
+	<span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;L2&#39;</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">names</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+				<span class="n">ret</span> <span class="o">+=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">getParam</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">regParams</span><span class="p">:</span>
+				<span class="n">ret</span> <span class="o">+=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">regParams</span><span class="p">[</span><span class="n">name</span><span class="p">]))</span>
+	<span class="k">return</span> <span class="n">ret</span>
+
+<span class="k">def</span> <span class="nf">Dropout</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">rate</span><span class="p">):</span>
+	<span class="k">if</span> <span class="n">rate</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">data</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="n">rate</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Logger">Logger<a class="anchor-link" href="#Logger"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">logmsg</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+<span class="n">timemark</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+<span class="n">saveDefault</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">oneline</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">logmsg</span>
+	<span class="k">global</span> <span class="n">saveDefault</span>
+	<span class="n">time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+	<span class="n">tem</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+	<span class="k">if</span> <span class="n">save</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+			<span class="n">logmsg</span> <span class="o">+=</span> <span class="n">tem</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+	<span class="k">elif</span> <span class="n">saveDefault</span><span class="p">:</span>
+		<span class="n">logmsg</span> <span class="o">+=</span> <span class="n">tem</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+	<span class="k">if</span> <span class="n">oneline</span><span class="p">:</span>
+		<span class="nb">print</span><span class="p">(</span><span class="n">tem</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&#39;</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="nb">print</span><span class="p">(</span><span class="n">tem</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">marktime</span><span class="p">(</span><span class="n">marker</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">timemark</span>
+	<span class="n">timemark</span><span class="p">[</span><span class="n">marker</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+<span class="k">def</span> <span class="nf">SpentTime</span><span class="p">(</span><span class="n">marker</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">timemark</span>
+	<span class="k">if</span> <span class="n">marker</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">timemark</span><span class="p">:</span>
+		<span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;LOGGER ERROR, marker&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="s1">&#39; not found&#39;</span>
+		<span class="n">tem</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+		<span class="nb">print</span><span class="p">(</span><span class="n">tem</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">False</span>
+	<span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timemark</span><span class="p">[</span><span class="n">marker</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">SpentTooLong</span><span class="p">(</span><span class="n">marker</span><span class="p">,</span> <span class="n">day</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">hour</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+	<span class="k">global</span> <span class="n">timemark</span>
+	<span class="k">if</span> <span class="n">marker</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">timemark</span><span class="p">:</span>
+		<span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;LOGGER ERROR, marker&#39;</span><span class="p">,</span> <span class="n">marker</span><span class="p">,</span> <span class="s1">&#39; not found&#39;</span>
+		<span class="n">tem</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+		<span class="nb">print</span><span class="p">(</span><span class="n">tem</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">False</span>
+	<span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timemark</span><span class="p">[</span><span class="n">marker</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="n">day</span><span class="p">,</span> <span class="n">hours</span><span class="o">=</span><span class="n">hour</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="n">minute</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="n">second</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data-Handler">Data Handler<a class="anchor-link" href="#Data-Handler"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># predir = &#39;Datasets/MultiInt-ML10M/buy/&#39;</span>
+<span class="n">predir</span> <span class="o">=</span> <span class="s1">&#39;MATN/Datasets/yelp/click/&#39;</span>
+<span class="n">trnfile</span> <span class="o">=</span> <span class="n">predir</span> <span class="o">+</span> <span class="s1">&#39;trn_&#39;</span>
+<span class="n">tstfile</span> <span class="o">=</span> <span class="n">predir</span> <span class="o">+</span> <span class="s1">&#39;tst_&#39;</span>
+<span class="c1"># behs = [&#39;pv&#39;, &#39;fav&#39;, &#39;cart&#39;, &#39;buy&#39;]</span>
+<span class="c1"># behs = [&#39;neg&#39;, &#39;neutral&#39;, &#39;pos&#39;]</span>
+<span class="n">behs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;tip&#39;</span><span class="p">,</span> <span class="s1">&#39;neg&#39;</span><span class="p">,</span> <span class="s1">&#39;neutral&#39;</span><span class="p">,</span> <span class="s1">&#39;pos&#39;</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">helpInit</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+	<span class="n">ret</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">b</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span><span class="p">)]</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">b</span><span class="p">):</span>
+			<span class="n">ret</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">c</span>
+	<span class="k">return</span> <span class="n">ret</span>
+
+<span class="k">def</span> <span class="nf">LoadData</span><span class="p">():</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">behs</span><span class="p">)):</span>
+		<span class="n">beh</span> <span class="o">=</span> <span class="n">behs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+		<span class="n">path</span> <span class="o">=</span> <span class="n">trnfile</span> <span class="o">+</span> <span class="n">beh</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fs</span><span class="p">:</span>
+			<span class="n">mat</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">i</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span><span class="o">!=</span><span class="mi">0</span><span class="p">)</span>
+		<span class="n">trnMat</span> <span class="o">=</span> <span class="p">(</span><span class="n">mat</span> <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span> <span class="k">else</span> <span class="n">trnMat</span> <span class="o">+</span> <span class="n">mat</span><span class="p">)</span>
+		<span class="c1"># if i == len(behs)-1:</span>
+		<span class="c1"># 	buyMat = 1 * (mat != 0)</span>
+	<span class="n">buyMat</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="n">trnMat</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+	<span class="c1"># test set</span>
+	<span class="n">path</span> <span class="o">=</span> <span class="n">tstfile</span> <span class="o">+</span> <span class="s1">&#39;int&#39;</span>
+	<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fs</span><span class="p">:</span>
+		<span class="n">tstInt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fs</span><span class="p">))</span>
+	<span class="n">tstStat</span> <span class="o">=</span> <span class="p">(</span><span class="n">tstInt</span><span class="o">!=</span><span class="kc">None</span><span class="p">)</span>
+	<span class="n">tstUsrs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">tstStat</span><span class="o">!=</span><span class="kc">False</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+	<span class="k">return</span> <span class="n">trnMat</span><span class="p">,</span> <span class="n">tstInt</span><span class="p">,</span> <span class="n">buyMat</span><span class="p">,</span> <span class="n">tstUsrs</span>
+
+<span class="k">def</span> <span class="nf">getmask</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">trnMat</span><span class="p">,</span> <span class="n">tstUsrs</span><span class="p">,</span> <span class="n">tstInt</span><span class="p">):</span>
+	<span class="n">cnts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">trnMat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+	<span class="n">lst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+	<span class="k">for</span> <span class="n">usr</span> <span class="ow">in</span> <span class="n">tstUsrs</span><span class="p">:</span>
+		<span class="n">lst</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">cnts</span><span class="p">[</span><span class="n">usr</span><span class="p">],</span> <span class="n">usr</span><span class="p">))</span>
+	<span class="n">lst</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+	<span class="n">length</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">)</span>
+	<span class="n">l</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">low</span> <span class="o">*</span> <span class="n">length</span><span class="p">)</span>
+	<span class="n">r</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">high</span> <span class="o">*</span> <span class="n">length</span><span class="p">)</span>
+	<span class="n">ret</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+		<span class="n">ret</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lst</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+	<span class="k">return</span> <span class="n">ret</span>
+
+<span class="k">def</span> <span class="nf">negSamp</span><span class="p">(</span><span class="n">tembuy</span><span class="p">,</span> <span class="n">curlist</span><span class="p">):</span>
+	<span class="n">temsize</span> <span class="o">=</span> <span class="mi">1000</span><span class="c1">#1000</span>
+	<span class="n">negset</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">temsize</span>
+	<span class="n">cur</span> <span class="o">=</span> <span class="mi">0</span>
+	<span class="k">for</span> <span class="n">temcur</span> <span class="ow">in</span> <span class="n">curlist</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">tembuy</span><span class="p">[</span><span class="n">temcur</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="n">negset</span><span class="p">[</span><span class="n">cur</span><span class="p">]</span> <span class="o">=</span> <span class="n">temcur</span>
+			<span class="n">cur</span> <span class="o">+=</span> <span class="mi">1</span>
+		<span class="k">if</span> <span class="n">cur</span> <span class="o">==</span> <span class="n">temsize</span><span class="p">:</span>
+			<span class="k">break</span>
+	<span class="n">negset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">negset</span><span class="p">[:</span><span class="n">cur</span><span class="p">])</span>
+	<span class="k">return</span> <span class="n">negset</span>
+
+<span class="k">def</span> <span class="nf">TransMat</span><span class="p">(</span><span class="n">mat</span><span class="p">):</span>
+	<span class="n">user</span><span class="p">,</span> <span class="n">item</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">shape</span>
+	<span class="n">data</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">data</span>
+	<span class="n">indices</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">indices</span>
+	<span class="n">indptr</span> <span class="o">=</span> <span class="n">mat</span><span class="o">.</span><span class="n">indptr</span>
+
+	<span class="n">newdata</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+	<span class="n">rowInd</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+	<span class="n">colInd</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+	<span class="n">length</span> <span class="o">=</span> <span class="mi">0</span>
+
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+		<span class="n">temlocs</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="n">indptr</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">indptr</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
+		<span class="n">temvals</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">indptr</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">indptr</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">temlocs</span><span class="p">)):</span>
+			<span class="n">rowInd</span><span class="p">[</span><span class="n">length</span><span class="p">]</span> <span class="o">=</span> <span class="n">temlocs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+			<span class="n">colInd</span><span class="p">[</span><span class="n">length</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+			<span class="n">newdata</span><span class="p">[</span><span class="n">length</span><span class="p">]</span> <span class="o">=</span> <span class="n">temvals</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+			<span class="n">length</span> <span class="o">+=</span> <span class="mi">1</span>
+	<span class="k">if</span> <span class="n">length</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ERROR IN Trans&#39;</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+		<span class="n">exit</span><span class="p">()</span>
+	<span class="n">tpMat</span> <span class="o">=</span> <span class="n">csr_matrix</span><span class="p">((</span><span class="n">newdata</span><span class="p">,</span> <span class="p">(</span><span class="n">rowInd</span><span class="p">,</span> <span class="n">colInd</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">item</span><span class="p">,</span> <span class="n">user</span><span class="p">])</span>
+	<span class="k">return</span> <span class="n">tpMat</span>
+
+<span class="k">def</span> <span class="nf">binFind</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">shoot</span><span class="p">):</span>
+	<span class="n">minn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+	<span class="n">maxx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">pred</span><span class="p">)</span>
+	<span class="n">l</span> <span class="o">=</span> <span class="n">minn</span>
+	<span class="n">r</span> <span class="o">=</span> <span class="n">maxx</span>
+	<span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+		<span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">l</span> <span class="o">+</span> <span class="n">r</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+		<span class="n">tem</span> <span class="o">=</span> <span class="p">(</span><span class="n">pred</span> <span class="o">-</span> <span class="n">mid</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+		<span class="n">num</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">tem</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">num</span> <span class="o">==</span> <span class="n">shoot</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">l</span> <span class="o">-</span> <span class="n">r</span><span class="p">)</span><span class="o">&lt;</span><span class="mf">1e-3</span><span class="p">:</span>
+			<span class="n">arr</span> <span class="o">=</span> <span class="n">tem</span>
+			<span class="k">break</span>
+		<span class="k">if</span> <span class="n">num</span> <span class="o">&gt;</span> <span class="n">shoot</span><span class="p">:</span>
+			<span class="n">l</span> <span class="o">=</span> <span class="n">mid</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">r</span> <span class="o">=</span> <span class="n">mid</span>
+	<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">tem</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])[:</span><span class="n">shoot</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Params">Params<a class="anchor-link" href="#Params"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">parse_args</span><span class="p">():</span>
+	<span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Model Params&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--lr&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">2e-4</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;learning rate&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--batch&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;batch size&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--reg&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;weight decay regularizer&#39;</span><span class="p">)</span>
+	<span class="c1"># parser.add_argument(&#39;--epoch&#39;, default=120, type=int, help=&#39;number of epochs&#39;)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--epoch&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of epochs&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--decay&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.96</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;weight decay rate&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--save_path&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;tem&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;file name to save model and training record&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--latdim&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;embedding size&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--memosize&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;memory size&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--posbat&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;batch size of positive sampling&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--negsamp&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;rate of negative sampling&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--att_head&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of attention heads&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--trn_num&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;number of training instances per epoch&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--load_model&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;model name to load&#39;</span><span class="p">)</span>
+	<span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--shoot&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;K of top k&#39;</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">{})</span>
+ 
+<span class="n">args</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">()</span>
+<span class="c1"># args.user = 805506#147894</span>
+<span class="c1"># args.item = 584050#99037</span>
+<span class="c1"># ML10M</span>
+<span class="c1"># args.user = 67788</span>
+<span class="c1"># args.item = 8704</span>
+<span class="c1"># yelp</span>
+<span class="n">args</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="mi">19800</span>
+<span class="n">args</span><span class="o">.</span><span class="n">item</span> <span class="o">=</span> <span class="mi">22734</span>
+
+<span class="c1"># swap user and item</span>
+<span class="c1"># tem = args.user</span>
+<span class="c1"># args.user = args.item</span>
+<span class="c1"># args.item = tem</span>
+
+<span class="c1"># args.decay_step = args.trn_num</span>
+<span class="n">args</span><span class="o">.</span><span class="n">decay_step</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">item</span><span class="o">//</span><span class="n">args</span><span class="o">.</span><span class="n">batch</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Run">Run<a class="anchor-link" href="#Run"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">Recommender</span><span class="p">:</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sess</span><span class="p">,</span> <span class="n">datas</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">inpDim</span> <span class="o">=</span> <span class="n">inpDim</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">sess</span> <span class="o">=</span> <span class="n">sess</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">trnMat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tstInt</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">buyMat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tstUsrs</span> <span class="o">=</span> <span class="n">datas</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+		<span class="n">mets</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Loss&#39;</span><span class="p">,</span> <span class="s1">&#39;preLoss&#39;</span> <span class="s1">&#39;HR&#39;</span><span class="p">,</span> <span class="s1">&#39;NDCG&#39;</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">met</span> <span class="ow">in</span> <span class="n">mets</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;Train&#39;</span><span class="o">+</span><span class="n">met</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;Test&#39;</span><span class="o">+</span><span class="n">met</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+	<span class="k">def</span> <span class="nf">makePrint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">reses</span><span class="p">,</span> <span class="n">save</span><span class="p">):</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="s1">&#39;Epoch </span><span class="si">%d</span><span class="s1">/</span><span class="si">%d</span><span class="s1">, </span><span class="si">%s</span><span class="s1">: &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">epoch</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">reses</span><span class="p">:</span>
+			<span class="n">val</span> <span class="o">=</span> <span class="n">reses</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span>
+			<span class="n">ret</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> = </span><span class="si">%.4f</span><span class="s1">, &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+			<span class="n">tem</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="n">metric</span>
+			<span class="k">if</span> <span class="n">save</span> <span class="ow">and</span> <span class="n">tem</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="n">tem</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="n">ret</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39;  &#39;</span>
+		<span class="k">return</span> <span class="n">ret</span>
+
+	<span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">prepareModel</span><span class="p">()</span>
+		<span class="n">log</span><span class="p">(</span><span class="s1">&#39;Model Prepared&#39;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">load_model</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">loadModel</span><span class="p">()</span>
+			<span class="n">stloc</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s1">&#39;TrainLoss&#39;</span><span class="p">])</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">stloc</span> <span class="o">=</span> <span class="mi">0</span>
+			<span class="n">init</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">global_variables_initializer</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
+			<span class="n">log</span><span class="p">(</span><span class="s1">&#39;Variables Inited&#39;</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">stloc</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">epoch</span><span class="p">):</span>
+			<span class="n">test</span> <span class="o">=</span> <span class="p">(</span><span class="n">ep</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+			<span class="n">reses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trainEpoch</span><span class="p">()</span>
+			<span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makePrint</span><span class="p">(</span><span class="s1">&#39;Train&#39;</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">reses</span><span class="p">,</span> <span class="n">test</span><span class="p">))</span>
+			<span class="k">if</span> <span class="n">test</span><span class="p">:</span>
+				<span class="n">reses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">testEpoch</span><span class="p">()</span>
+				<span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makePrint</span><span class="p">(</span><span class="s1">&#39;Test&#39;</span><span class="p">,</span> <span class="n">ep</span><span class="p">,</span> <span class="n">reses</span><span class="p">,</span> <span class="n">test</span><span class="p">))</span>
+			<span class="k">if</span> <span class="n">ep</span> <span class="o">%</span> <span class="mi">5</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">saveHistory</span><span class="p">()</span>
+			<span class="nb">print</span><span class="p">()</span>
+		<span class="n">reses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">testEpoch</span><span class="p">()</span>
+		<span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">makePrint</span><span class="p">(</span><span class="s1">&#39;Test&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">epoch</span><span class="p">,</span> <span class="n">reses</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">saveHistory</span><span class="p">()</span>
+
+	<span class="k">def</span> <span class="nf">multiHeadAttention</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">localReps</span><span class="p">,</span> <span class="n">glbRep</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">numHeads</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">):</span>
+		<span class="n">query</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">FC</span><span class="p">(</span><span class="n">glbRep</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">,</span> <span class="n">useBias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">]),</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">numHeads</span><span class="p">,</span> <span class="n">inpDim</span><span class="o">//</span><span class="n">numHeads</span><span class="p">])</span>
+		<span class="n">temLocals</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">localReps</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">])</span>
+		<span class="n">key</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">FC</span><span class="p">(</span><span class="n">temLocals</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">,</span> <span class="n">useBias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">numHeads</span><span class="p">,</span> <span class="n">inpDim</span><span class="o">//</span><span class="n">numHeads</span><span class="p">])</span>
+		<span class="n">val</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">FC</span><span class="p">(</span><span class="n">temLocals</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">,</span> <span class="n">useBias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">numHeads</span><span class="p">,</span> <span class="n">inpDim</span><span class="o">//</span><span class="n">numHeads</span><span class="p">])</span>
+		<span class="n">att</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">query</span> <span class="o">*</span> <span class="n">key</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">numHeads</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+		<span class="n">attRep</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">val</span> <span class="o">*</span> <span class="n">att</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">])</span>
+		<span class="k">return</span> <span class="n">attRep</span>
+
+	<span class="k">def</span> <span class="nf">selfAttention</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">localReps</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="n">inpDim</span><span class="p">):</span>
+		<span class="n">attReps</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">number</span>
+		<span class="n">stkReps</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">localReps</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">number</span><span class="p">):</span>
+			<span class="n">glbRep</span> <span class="o">=</span> <span class="n">localReps</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+			<span class="n">temAttRep</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">multiHeadAttention</span><span class="p">(</span><span class="n">stkReps</span><span class="p">,</span> <span class="n">glbRep</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="n">number</span><span class="p">,</span> <span class="n">numHeads</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">att_head</span><span class="p">,</span> <span class="n">inpDim</span><span class="o">=</span><span class="n">inpDim</span><span class="p">)</span> <span class="o">+</span> <span class="n">glbRep</span>
+			<span class="c1"># fc1 = FC(temAttRep, inpDim, reg=True, useBias=True, activation=&#39;relu&#39;) + temAttRep</span>
+			<span class="c1"># fc2 = FC(fc1, inpDim, reg=True, useBias=True, activation=&#39;relu&#39;) + fc1</span>
+			<span class="n">attReps</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temAttRep</span><span class="c1">#fc2</span>
+		<span class="k">return</span> <span class="n">attReps</span>
+
+	<span class="k">def</span> <span class="nf">divide</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interaction</span><span class="p">):</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">intTypes</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intTypes</span><span class="p">):</span>
+			<span class="n">ret</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">to_float</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">bitwise</span><span class="o">.</span><span class="n">bitwise_and</span><span class="p">(</span><span class="n">interaction</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">i</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">i</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">ret</span>
+
+	<span class="k">def</span> <span class="nf">mine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interaction</span><span class="p">):</span>
+		<span class="n">activation</span> <span class="o">=</span> <span class="s1">&#39;relu&#39;</span>
+		<span class="n">V</span> <span class="o">=</span> <span class="n">defineParam</span><span class="p">(</span><span class="s1">&#39;v&#39;</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inpDim</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">],</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+		<span class="n">divideLst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">interaction</span><span class="p">)</span>
+		<span class="n">catlat1</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">dividInp</span> <span class="ow">in</span> <span class="n">divideLst</span><span class="p">:</span>
+			<span class="n">catlat1</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dividInp</span> <span class="o">@</span> <span class="n">V</span><span class="p">)</span>
+		<span class="n">catlat2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selfAttention</span><span class="p">(</span><span class="n">catlat1</span><span class="p">,</span> <span class="n">number</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">intTypes</span><span class="p">,</span> <span class="n">inpDim</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">)</span>
+		<span class="n">catlat3</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">memoAtt</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">intTypes</span><span class="p">):</span>
+			<span class="n">resCatlat</span> <span class="o">=</span> <span class="n">catlat2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">catlat1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+			<span class="n">memoatt</span> <span class="o">=</span> <span class="n">FC</span><span class="p">(</span><span class="n">resCatlat</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">memosize</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">useBias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+			<span class="n">memoTrans</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">FC</span><span class="p">(</span><span class="n">memoatt</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;memoTrans&#39;</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">])</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">memoAtt</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">memoatt</span><span class="p">)</span>
+
+			<span class="n">tem</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">resCatlat</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">])</span>
+			<span class="n">transCatlat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tem</span> <span class="o">@</span> <span class="n">memoTrans</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">])</span>
+			<span class="n">catlat3</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">transCatlat</span><span class="p">)</span>
+
+		<span class="n">stkCatlat3</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">catlat3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+		<span class="n">weights</span> <span class="o">=</span> <span class="n">defineParam</span><span class="p">(</span><span class="s1">&#39;fuseAttWeight&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">intTypes</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">initializer</span><span class="o">=</span><span class="s1">&#39;zeros&#39;</span><span class="p">)</span>
+		<span class="n">sftW</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">weights</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+		<span class="n">fusedLat</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">sftW</span> <span class="o">*</span> <span class="n">stkCatlat3</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">memoAtt</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">memoAtt</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+		<span class="n">lat</span> <span class="o">=</span> <span class="n">fusedLat</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+			<span class="n">lat</span> <span class="o">=</span> <span class="n">FC</span><span class="p">(</span><span class="n">lat</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">,</span> <span class="n">useBias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">)</span> <span class="o">+</span> <span class="n">lat</span>
+		<span class="k">return</span> <span class="n">lat</span>
+
+	<span class="k">def</span> <span class="nf">prepareModel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">intTypes</span> <span class="o">=</span> <span class="mi">4</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">interaction</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">inpDim</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;interaction&#39;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">posLabel</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;posLabel&#39;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">negLabel</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;negLabel&#39;</span><span class="p">)</span>
+		<span class="n">intEmbed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mine</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interaction</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">learnedEmbed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">intEmbed</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">])</span>
+
+		<span class="n">W</span> <span class="o">=</span> <span class="n">defineParam</span><span class="p">(</span><span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">inpDim</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">latdim</span><span class="p">],</span> <span class="n">reg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+		<span class="n">posEmbeds</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">posLabel</span><span class="p">),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+		<span class="n">negEmbeds</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="n">W</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negLabel</span><span class="p">),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+		<span class="n">sampnum</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">posLabel</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+		<span class="n">posPred</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">intEmbed</span> <span class="o">@</span> <span class="n">posEmbeds</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">sampnum</span><span class="p">])</span>
+		<span class="n">negPred</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">intEmbed</span> <span class="o">@</span> <span class="n">negEmbeds</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">sampnum</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">posPred</span> <span class="o">=</span> <span class="n">posPred</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">preLoss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="n">posPred</span> <span class="o">-</span> <span class="n">negPred</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">regLoss</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">reg</span> <span class="o">*</span> <span class="n">Regularize</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="s1">&#39;L2&#39;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">preLoss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">regLoss</span>
+
+		<span class="n">globalStep</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">trainable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+		<span class="n">learningRate</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">exponential_decay</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span> <span class="n">globalStep</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">decay_step</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">decay</span><span class="p">,</span> <span class="n">staircase</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">AdamOptimizer</span><span class="p">(</span><span class="n">learningRate</span><span class="p">)</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">,</span> <span class="n">global_step</span><span class="o">=</span><span class="n">globalStep</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">trainEpoch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">trnMat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trnMat</span>
+		<span class="n">num</span> <span class="o">=</span> <span class="n">trnMat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="n">trnSfIds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">num</span><span class="p">)[:</span><span class="n">args</span><span class="o">.</span><span class="n">trn_num</span><span class="p">]</span>
+		<span class="n">tstSfIds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tstUsrs</span>
+		<span class="n">sfIds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">trnSfIds</span><span class="p">,</span> <span class="n">tstSfIds</span><span class="p">)))</span>
+		<span class="c1"># sfIds = trnSfIds</span>
+		<span class="n">epochLoss</span><span class="p">,</span> <span class="n">epochPreLoss</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+		<span class="n">num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sfIds</span><span class="p">)</span>
+		<span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">num</span> <span class="o">/</span> <span class="n">args</span><span class="o">.</span><span class="n">batch</span><span class="p">))</span>
+
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+			<span class="n">curLst</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inpDim</span><span class="p">))</span>
+			<span class="n">st</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">batch</span>
+			<span class="n">ed</span> <span class="o">=</span> <span class="nb">min</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">batch</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+			<span class="n">batchIds</span> <span class="o">=</span> <span class="n">sfIds</span><span class="p">[</span><span class="n">st</span><span class="p">:</span> <span class="n">ed</span><span class="p">]</span>
+
+			<span class="n">temTrn</span> <span class="o">=</span> <span class="n">trnMat</span><span class="p">[</span><span class="n">batchIds</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+			<span class="n">tembuy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buyMat</span><span class="p">[</span><span class="n">batchIds</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+			<span class="n">temPos</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">posbat</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">negsamp</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batchIds</span><span class="p">))]</span>
+			<span class="n">temNeg</span> <span class="o">=</span> <span class="p">[[</span><span class="kc">None</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">posbat</span><span class="o">*</span><span class="n">args</span><span class="o">.</span><span class="n">negsamp</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batchIds</span><span class="p">))]</span>
+			<span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batchIds</span><span class="p">)):</span>
+				<span class="n">row</span> <span class="o">=</span> <span class="n">batchIds</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span>
+				<span class="n">posset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">tembuy</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">!=</span><span class="mi">0</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+				<span class="n">negset</span> <span class="o">=</span> <span class="n">negSamp</span><span class="p">(</span><span class="n">tembuy</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">curLst</span><span class="p">)</span>
+				<span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+				<span class="c1"># if len(posset) == 0:</span>
+				<span class="c1"># 	posset = np.random.choice(list(range(args.item)), args.posbat)</span>
+				<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">posset</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">posbat</span><span class="p">):</span>
+					<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">negset</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">negsamp</span><span class="p">):</span>
+						<span class="n">temPos</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">j</span>
+						<span class="n">temNeg</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+						<span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
+			<span class="n">target</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">preLoss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">regLoss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">]</span>
+			<span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interaction</span><span class="p">:</span> <span class="p">(</span><span class="n">temTrn</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">),</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">posLabel</span><span class="p">:</span> <span class="n">temPos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negLabel</span><span class="p">:</span> <span class="n">temNeg</span>
+				<span class="p">},</span> <span class="n">options</span><span class="o">=</span><span class="n">config_pb2</span><span class="o">.</span><span class="n">RunOptions</span><span class="p">(</span><span class="n">report_tensor_allocations_upon_oom</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+			<span class="n">preLoss</span><span class="p">,</span> <span class="n">regLoss</span><span class="p">,</span> <span class="n">loss</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+			<span class="n">epochLoss</span> <span class="o">+=</span> <span class="n">loss</span>
+			<span class="n">epochPreLoss</span> <span class="o">+=</span> <span class="n">preLoss</span>
+			<span class="n">log</span><span class="p">(</span><span class="s1">&#39;Step </span><span class="si">%d</span><span class="s1">/</span><span class="si">%d</span><span class="s1">: loss = </span><span class="si">%.2f</span><span class="s1">, regLoss = </span><span class="si">%.2f</span><span class="s1">       &#39;</span> <span class="o">%</span>\
+				<span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">regLoss</span><span class="p">),</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">oneline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+		<span class="n">ret</span><span class="p">[</span><span class="s1">&#39;Loss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epochLoss</span> <span class="o">/</span> <span class="n">steps</span>
+		<span class="n">ret</span><span class="p">[</span><span class="s1">&#39;preLoss&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epochPreLoss</span> <span class="o">/</span> <span class="n">steps</span>
+		<span class="k">return</span> <span class="n">ret</span>
+
+	<span class="k">def</span> <span class="nf">testEpoch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">trnMat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">trnMat</span>
+		<span class="n">tstInt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tstInt</span>
+		<span class="n">epochHit</span><span class="p">,</span> <span class="n">epochNdcg</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span>
+		<span class="n">ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tstUsrs</span>
+		<span class="n">num</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+		<span class="n">testbatch</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">batch</span>
+		<span class="n">steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">num</span> <span class="o">/</span> <span class="n">testbatch</span><span class="p">))</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps</span><span class="p">):</span>
+			<span class="n">st</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">testbatch</span>
+			<span class="n">ed</span> <span class="o">=</span> <span class="nb">min</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">testbatch</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span>
+			<span class="n">batchIds</span> <span class="o">=</span> <span class="n">ids</span><span class="p">[</span><span class="n">st</span><span class="p">:</span><span class="n">ed</span><span class="p">]</span>
+
+			<span class="n">temTrn</span> <span class="o">=</span> <span class="n">trnMat</span><span class="p">[</span><span class="n">batchIds</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+			<span class="n">temTst</span> <span class="o">=</span> <span class="n">tstInt</span><span class="p">[</span><span class="n">batchIds</span><span class="p">]</span>
+			<span class="n">tembuy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buyMat</span><span class="p">[</span><span class="n">batchIds</span><span class="p">]</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+
+			<span class="c1"># get test locations</span>
+			<span class="n">tstLocs</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">batchIds</span><span class="p">)</span>
+			<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batchIds</span><span class="p">)):</span>
+				<span class="n">negset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">tembuy</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">==</span><span class="mi">0</span><span class="p">),</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+				<span class="n">rdnNegSet</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">negset</span><span class="p">)</span>
+				<span class="n">tstLocs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">rdnNegSet</span><span class="p">[:</span><span class="mi">99</span><span class="p">])</span>
+				<span class="n">tem</span> <span class="o">=</span> <span class="p">([</span><span class="n">rdnNegSet</span><span class="p">[</span><span class="mi">99</span><span class="p">]]</span> <span class="k">if</span> <span class="n">temTst</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">in</span> <span class="n">tstLocs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="k">else</span> <span class="p">[</span><span class="n">temTst</span><span class="p">[</span><span class="n">j</span><span class="p">]])</span>
+				<span class="n">tstLocs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">tstLocs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">+</span> <span class="n">tem</span>
+
+			<span class="n">preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">posPred</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">interaction</span><span class="p">:</span><span class="n">temTrn</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">posLabel</span><span class="p">:</span> <span class="n">tstLocs</span><span class="p">},</span> <span class="n">options</span><span class="o">=</span><span class="n">config_pb2</span><span class="o">.</span><span class="n">RunOptions</span><span class="p">(</span><span class="n">report_tensor_allocations_upon_oom</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+			<span class="n">hit</span><span class="p">,</span> <span class="n">ndcg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calcRes</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">temTst</span><span class="p">,</span> <span class="n">tstLocs</span><span class="p">)</span>
+			<span class="n">epochHit</span> <span class="o">+=</span> <span class="n">hit</span>
+			<span class="n">epochNdcg</span> <span class="o">+=</span> <span class="n">ndcg</span>
+			<span class="n">log</span><span class="p">(</span><span class="s1">&#39;Step </span><span class="si">%d</span><span class="s1">/</span><span class="si">%d</span><span class="s1">: hit = </span><span class="si">%d</span><span class="s1">, ndcg = </span><span class="si">%d</span><span class="s1">      &#39;</span> <span class="o">%</span>\
+				<span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">steps</span><span class="p">,</span> <span class="n">hit</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">),</span> <span class="n">save</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">oneline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+		<span class="n">ret</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+		<span class="n">ret</span><span class="p">[</span><span class="s1">&#39;HR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epochHit</span> <span class="o">/</span> <span class="n">num</span>
+		<span class="n">ret</span><span class="p">[</span><span class="s1">&#39;NDCG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epochNdcg</span> <span class="o">/</span> <span class="n">num</span>
+		<span class="k">return</span> <span class="n">ret</span>
+
+	<span class="k">def</span> <span class="nf">calcRes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preds</span><span class="p">,</span> <span class="n">temTst</span><span class="p">,</span> <span class="n">tstLocs</span><span class="p">):</span>
+		<span class="n">hit</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="n">ndcg</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">preds</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+			<span class="n">predvals</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">tstLocs</span><span class="p">[</span><span class="n">j</span><span class="p">]))</span>
+			<span class="n">predvals</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+			<span class="n">shoot</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">predvals</span><span class="p">[:</span><span class="n">args</span><span class="o">.</span><span class="n">shoot</span><span class="p">]))</span>
+			<span class="k">if</span> <span class="n">temTst</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="ow">in</span> <span class="n">shoot</span><span class="p">:</span>
+				<span class="n">hit</span> <span class="o">+=</span> <span class="mi">1</span>
+				<span class="n">ndcg</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">shoot</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">temTst</span><span class="p">[</span><span class="n">j</span><span class="p">])</span><span class="o">+</span><span class="mi">2</span><span class="p">))</span>
+		<span class="k">return</span> <span class="n">hit</span><span class="p">,</span> <span class="n">ndcg</span>
+	
+	<span class="k">def</span> <span class="nf">saveHistory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">epoch</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="k">return</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;History/&#39;</span> <span class="o">+</span> <span class="n">args</span><span class="o">.</span><span class="n">save_path</span> <span class="o">+</span> <span class="s1">&#39;.his&#39;</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fs</span><span class="p">:</span>
+			<span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metrics</span><span class="p">,</span> <span class="n">fs</span><span class="p">)</span>
+
+		<span class="n">saver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Saver</span><span class="p">()</span>
+		<span class="n">saver</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sess</span><span class="p">,</span> <span class="s1">&#39;Models/&#39;</span> <span class="o">+</span> <span class="n">args</span><span class="o">.</span><span class="n">save_path</span><span class="p">)</span>
+		<span class="n">log</span><span class="p">(</span><span class="s1">&#39;Model Saved: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="o">.</span><span class="n">save_path</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">loadModel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">saver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Saver</span><span class="p">()</span>
+		<span class="n">saver</span><span class="o">.</span><span class="n">restore</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="s1">&#39;Models/&#39;</span> <span class="o">+</span> <span class="n">args</span><span class="o">.</span><span class="n">load_model</span><span class="p">)</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;History/&#39;</span> <span class="o">+</span> <span class="n">args</span><span class="o">.</span><span class="n">load_model</span> <span class="o">+</span> <span class="s1">&#39;.his&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fs</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">metrics</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fs</span><span class="p">)</span>
+		<span class="n">log</span><span class="p">(</span><span class="s1">&#39;Model Loaded&#39;</span><span class="p">)</span>	
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+	<span class="n">saveDefault</span> <span class="o">=</span> <span class="kc">True</span>
+	<span class="n">config</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">ConfigProto</span><span class="p">()</span>
+	<span class="n">config</span><span class="o">.</span><span class="n">gpu_options</span><span class="o">.</span><span class="n">allow_growth</span> <span class="o">=</span> <span class="kc">True</span>
+
+	<span class="n">log</span><span class="p">(</span><span class="s1">&#39;Start&#39;</span><span class="p">)</span>
+	<span class="n">datas</span> <span class="o">=</span> <span class="n">LoadData</span><span class="p">()</span>
+	<span class="n">log</span><span class="p">(</span><span class="s1">&#39;Load Data&#39;</span><span class="p">)</span>
+
+	<span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">Session</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">sess</span><span class="p">:</span>
+		<span class="n">recom</span> <span class="o">=</span> <span class="n">Recommender</span><span class="p">(</span><span class="n">sess</span><span class="p">,</span> <span class="n">datas</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">item</span><span class="p">)</span>
+		<span class="n">recom</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>2021-10-13 08:21:57.938067: Start
+2021-10-13 08:21:58.005996: Load Data
+WARNING:tensorflow:From &lt;ipython-input-8-86d53fcea4f1&gt;:71: to_float (from tensorflow.python.ops.math_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use `tf.cast` instead.
+WARNING:tensorflow:From /tensorflow-1.15.2/python3.7/tensorflow_core/python/ops/math_grad.py:1424: where (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+2021-10-13 08:22:00.422211: Model Prepared
+2021-10-13 08:22:00.979723: Variables Inited
+2021-10-13 08:23:00.035440: Epoch 0/12, Train: Loss = 37.1899, preLoss = 35.8160  
+2021-10-13 08:23:12.182542: Epoch 0/12, Test: HR = 0.3306, NDCG = 0.1771  
+2021-10-13 08:23:12.621136: Model Saved: tem
+
+2021-10-13 08:24:11.020664: Epoch 1/12, Train: Loss = 25.9994, preLoss = 24.2789  
+
+2021-10-13 08:25:09.313385: Epoch 2/12, Train: Loss = 20.5651, preLoss = 18.6902  
+
+2021-10-13 08:26:07.765660: Epoch 3/12, Train: Loss = 18.4499, preLoss = 16.5704  
+2021-10-13 08:26:19.691564: Epoch 3/12, Test: HR = 0.4413, NDCG = 0.2375  
+
+2021-10-13 08:27:17.658203: Epoch 4/12, Train: Loss = 17.4562, preLoss = 15.6297  
+
+2021-10-13 08:28:15.284263: Epoch 5/12, Train: Loss = 16.9354, preLoss = 15.2013  
+2021-10-13 08:28:15.721673: Model Saved: tem
+
+2021-10-13 08:29:12.905669: Epoch 6/12, Train: Loss = 16.6569, preLoss = 15.0294  
+2021-10-13 08:29:24.723370: Epoch 6/12, Test: HR = 0.4530, NDCG = 0.2438  
+
+2021-10-13 08:30:22.763829: Epoch 7/12, Train: Loss = 16.3886, preLoss = 14.8580  
+
+2021-10-13 08:31:20.847308: Epoch 8/12, Train: Loss = 16.2173, preLoss = 14.7782  
+
+2021-10-13 08:32:18.827044: Epoch 9/12, Train: Loss = 16.0591, preLoss = 14.7042  
+2021-10-13 08:32:30.636556: Epoch 9/12, Test: HR = 0.4546, NDCG = 0.2477  
+
+2021-10-13 08:33:28.724700: Epoch 10/12, Train: Loss = 15.9482, preLoss = 14.6634  
+2021-10-13 08:33:29.182999: Model Saved: tem
+
+2021-10-13 08:34:27.757194: Epoch 11/12, Train: Loss = 15.6551, preLoss = 14.4224  
+
+2021-10-13 08:34:39.632292: Epoch 12/12, Test: HR = 0.4688, NDCG = 0.2555  
+2021-10-13 08:34:40.116667: Model Saved: tem
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/22/matn-yelp.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

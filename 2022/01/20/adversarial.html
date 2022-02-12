@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Adversarial Training (Regularization) on a Recommender System | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Adversarial Training (Regularization) on a Recommender System" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/20/adversarial.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/20/adversarial.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-20T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Adversarial Training (Regularization) on a Recommender System" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-20T00:00:00-06:00","datePublished":"2022-01-20T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Adversarial Training (Regularization) on a Recommender System","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/20/adversarial.html"},"url":"https://nb.recohut.com/2022/01/20/adversarial.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Adversarial Training (Regularization) on a Recommender System</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-20T00:00:00-06:00" itemprop="datePublished">
+        Jan 20, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      12 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-20-adversarial.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-20-adversarial.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-20-adversarial.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-20-adversarial.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-20-adversarial.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Adversarial training (also adversarial regularization) is a defense strategy against adversarial perturbations. The main intuition is to increase the robustness of a recommender system on minimal adversarial perturbation of model parameters by adding further training iterations that takes into account the application of such perturbations.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In this notebook, we become familiar with the usefulness of the adversarial regularization by:</p>
+<ul>
+<li>Training classical model-based recommender (BPR-MF) on a small part of Movielens-1M</li>
+<li>Attacking the learned model with FGSM-like Adversarial Perturbations</li>
+<li>Adversarially Training the model-based recommender (BPR-MF) with Adversarial Personalized Ranking (APR)</li>
+<li>Attacking the robustified model</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Imports">Imports<a class="anchor-link" href="#Imports"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">timethis</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span>
+<span class="kn">from</span> <span class="nn">timethis</span> <span class="kn">import</span> <span class="n">timethis</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Global-settings">Global settings<a class="anchor-link" href="#Global-settings"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Utils">Utils<a class="anchor-link" href="#Utils"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span>
+
+<span class="c1"># A simple decorator</span>
+<span class="k">def</span> <span class="nf">timethis</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">r</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Evaluator">Evaluator<a class="anchor-link" href="#Evaluator"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">cpu_count</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+
+
+<span class="n">_feed_dict</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_dataset</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_sess</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_K</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">_init_eval_model</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">_dataset</span>
+    <span class="n">_dataset</span> <span class="o">=</span> <span class="n">data</span>
+
+    <span class="n">pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">cpu_count</span><span class="p">()</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">feed_dicts</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">_evaluate_input</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">_dataset</span><span class="o">.</span><span class="n">num_users</span><span class="p">))</span>
+    <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">feed_dicts</span>
+
+
+<span class="k">def</span> <span class="nf">_evaluate_input</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="c1"># generate items_list</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">test_item</span> <span class="o">=</span> <span class="n">_dataset</span><span class="o">.</span><span class="n">test</span><span class="p">[</span><span class="n">user</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">item_input</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">_dataset</span><span class="o">.</span><span class="n">num_items</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">_dataset</span><span class="o">.</span><span class="n">train_list</span><span class="p">[</span><span class="n">user</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">test_item</span> <span class="ow">in</span> <span class="n">item_input</span><span class="p">:</span>
+            <span class="n">item_input</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">test_item</span><span class="p">)</span>
+        <span class="n">item_input</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">item_input</span><span class="p">)</span>
+        <span class="n">item_input</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test_item</span><span class="p">)</span>
+        <span class="n">user_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">item_input</span><span class="p">),</span> <span class="n">user</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">item_input</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">item_input</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;******&#39;</span> <span class="o">+</span> <span class="n">user</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+
+
+<span class="k">def</span> <span class="nf">_eval_by_user</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="c1"># get predictions of data in testing set</span>
+    <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input</span> <span class="o">=</span> <span class="n">_feed_dicts</span><span class="p">[</span><span class="n">user</span><span class="p">]</span>
+    <span class="n">predictions</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_model</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">,</span> <span class="n">item_input</span><span class="p">)</span>
+
+    <span class="n">neg_predict</span><span class="p">,</span> <span class="n">pos_predict</span> <span class="o">=</span> <span class="n">predictions</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">predictions</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">position</span> <span class="o">=</span> <span class="p">(</span><span class="n">neg_predict</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">pos_predict</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="c1"># calculate from HR@1 to HR@100, and from NDCG@1 to NDCG@100, AUC</span>
+    <span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">,</span> <span class="n">auc</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_K</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">hr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">position</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">ndcg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">position</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="n">position</span> <span class="o">&lt;</span> <span class="n">k</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">auc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span><span class="n">position</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">neg_predict</span><span class="p">)))</span>  <span class="c1"># formula: [#(Xui&gt;Xuj) / #(Items)] = [1 - #(Xui&lt;=Xuj) / #(Items)]</span>
+
+    <span class="k">return</span> <span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">,</span> <span class="n">auc</span>
+
+
+<span class="k">class</span> <span class="nc">Evaluator</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Class to manage all the evaluation methods and operation</span>
+<span class="sd">        :param data: dataset object</span>
+<span class="sd">        :param k: top-k evaluation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">k</span> <span class="o">=</span> <span class="n">k</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eval_feed_dicts</span> <span class="o">=</span> <span class="n">_init_eval_model</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+
+    <span class="k">def</span> <span class="nf">eval</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">results</span><span class="o">=</span><span class="p">{},</span> <span class="n">epoch_text</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">start_time</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Runtime Evaluation of Accuracy Performance (top-k)</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">global</span> <span class="n">_model</span>
+        <span class="k">global</span> <span class="n">_K</span>
+        <span class="k">global</span> <span class="n">_dataset</span>
+        <span class="k">global</span> <span class="n">_feed_dicts</span>
+        <span class="n">_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">_K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span>
+        <span class="n">_feed_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_feed_dicts</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">num_users</span><span class="p">):</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_eval_by_user</span><span class="p">(</span><span class="n">user</span><span class="p">))</span>
+
+        <span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">,</span> <span class="n">auc</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%.3f</span><span class="s2"> Performance@</span><span class="si">%d</span><span class="s2"> </span><span class="se">\t</span><span class="s2">HR: </span><span class="si">%.4f</span><span class="se">\t</span><span class="s2">nDCG: </span><span class="si">%.4f</span><span class="se">\t</span><span class="s2">AUC: </span><span class="si">%.4f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">epoch_text</span><span class="p">,</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">,</span> <span class="n">_K</span><span class="p">,</span> <span class="n">hr</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">ndcg</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">auc</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">epoch_text</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;hr&#39;</span><span class="p">:</span> <span class="n">hr</span><span class="p">,</span> <span class="s1">&#39;ndcg&#39;</span><span class="p">:</span> <span class="n">ndcg</span><span class="p">,</span> <span class="s1">&#39;auc&#39;</span><span class="p">:</span> <span class="n">auc</span><span class="p">[</span><span class="mi">0</span><span class="p">]}</span>
+
+    <span class="k">def</span> <span class="nf">store_recommendation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attack_name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Store recommendation list (top-k) in order to be used for the ranksys framework (sisinflab)</span>
+<span class="sd">        attack_name: The name for the attack stored file</span>
+<span class="sd">        :return:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">get_full_inference</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}{1}</span><span class="s1">_best</span><span class="si">{2}</span><span class="s1">_top</span><span class="si">{3}</span><span class="s1">_rec.tsv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">path_output_rec_result</span><span class="p">,</span>
+                                                         <span class="n">attack_name</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">path_output_rec_result</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span>
+                                                             <span class="o">-</span><span class="mi">2</span><span class="p">],</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">best</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">),</span>
+                  <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="n">results</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">train_list</span><span class="p">[</span><span class="n">u</span><span class="p">]]</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+                <span class="n">top_k_id</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">u</span><span class="p">]</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">k</span><span class="p">:][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">top_k_score</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">u</span><span class="p">][</span><span class="n">top_k_id</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">top_k_id</span><span class="p">):</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">top_k_score</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Runtime Evaluation of Accuracy Performance (top-k)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">global</span> <span class="n">_model</span>
+        <span class="k">global</span> <span class="n">_K</span>
+        <span class="k">global</span> <span class="n">_dataset</span>
+        <span class="k">global</span> <span class="n">_feed_dicts</span>
+        <span class="n">_dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span>
+        <span class="n">_K</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">k</span>
+        <span class="n">_feed_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_feed_dicts</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">num_users</span><span class="p">):</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_eval_by_user</span><span class="p">(</span><span class="n">user</span><span class="p">))</span>
+
+        <span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">,</span> <span class="n">auc</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">res</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Performance@</span><span class="si">%d</span><span class="se">\n\t</span><span class="s2">HR: </span><span class="si">%.4f</span><span class="se">\t</span><span class="s2">nDCG: </span><span class="si">%.4f</span><span class="se">\t</span><span class="s2">AUC: </span><span class="si">%.4f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">_K</span><span class="p">,</span> <span class="n">hr</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">ndcg</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">auc</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="n">hr</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">ndcg</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="n">auc</span><span class="p">[</span><span class="n">_K</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data">Data<a class="anchor-link" href="#Data"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Dataloader">Dataloader<a class="anchor-link" href="#Dataloader"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">Pool</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">cpu_count</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">dok_matrix</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+
+
+<span class="n">_user_input</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_item_input_pos</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_batch_size</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_index</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_train</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_test</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">_num_items</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">_get_train_batch</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generation of a batch in multiprocessing</span>
+<span class="sd">    :param i: index to control the batch generayion</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">user_batch</span><span class="p">,</span> <span class="n">item_pos_batch</span><span class="p">,</span> <span class="n">item_neg_batch</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="n">begin</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">_batch_size</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">begin</span><span class="p">,</span> <span class="n">begin</span> <span class="o">+</span> <span class="n">_batch_size</span><span class="p">):</span>
+        <span class="n">user_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_user_input</span><span class="p">[</span><span class="n">_index</span><span class="p">[</span><span class="n">idx</span><span class="p">]])</span>
+        <span class="n">item_pos_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_item_input_pos</span><span class="p">[</span><span class="n">_index</span><span class="p">[</span><span class="n">idx</span><span class="p">]])</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">_num_items</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">_train</span><span class="p">[</span><span class="n">_user_input</span><span class="p">[</span><span class="n">_index</span><span class="p">[</span><span class="n">idx</span><span class="p">]]]:</span>
+            <span class="n">j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">_num_items</span><span class="p">)</span>
+        <span class="n">item_neg_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">user_batch</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">item_pos_batch</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">item_neg_batch</span><span class="p">)[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">DataLoader</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load train and test dataset</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_train_data</span><span class="p">,</span> <span class="n">path_test_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Constructor of DataLoader</span>
+<span class="sd">        :param path_train_data: relative path for train file</span>
+<span class="sd">        :param path_test_data: relative path for test file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_users</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_length</span><span class="p">(</span><span class="n">path_train_data</span><span class="p">,</span> <span class="n">path_test_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_train_file</span><span class="p">(</span><span class="n">path_train_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_train_file_as_list</span><span class="p">(</span><span class="n">path_train_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_test_file</span><span class="p">(</span><span class="n">path_test_data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user_input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item_input_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> - Loaded&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_train_data</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{0}</span><span class="s1"> - Loaded&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path_test_data</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">get_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_name</span><span class="p">,</span> <span class="n">test_name</span><span class="p">):</span>
+        <span class="n">train</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">train_name</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">test_name</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">train</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;t&#39;</span><span class="p">]</span>
+            <span class="n">test</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;t&#39;</span><span class="p">]</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">train</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">]</span>
+            <span class="n">test</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="s1">&#39;item&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">]</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">train</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;item&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">load_train_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read /data/dataset_name/train file and Return the matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get number of users and items</span>
+        <span class="c1"># self.num_users, self.num_items = 0, 0</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="c1"># self.num_users = max(self.num_users, u)</span>
+                <span class="c1"># self.num_items = max(self.num_items, i)</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+
+        <span class="c1"># Construct URM</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">dok_matrix</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">num_users</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_items</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">rating</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">rating</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="p">[</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+
+        <span class="c1"># self.num_users = self.train.shape[0]</span>
+        <span class="c1"># self.num_items = self.train.shape[1]</span>
+
+    <span class="k">def</span> <span class="nf">load_train_file_as_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="c1"># Get number of users and items</span>
+        <span class="n">u_</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_list</span><span class="p">,</span> <span class="n">items</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="n">line</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">u_</span> <span class="o">&lt;</span> <span class="n">u</span><span class="p">:</span>
+                    <span class="n">index</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">train_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+                    <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">u_</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">index</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load_test_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+            <span class="k">while</span> <span class="n">line</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">line</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                <span class="n">arr</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">user</span><span class="p">,</span> <span class="n">item</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">int</span><span class="p">(</span><span class="n">arr</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">test</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">user</span><span class="p">,</span> <span class="n">item</span><span class="p">])</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">sampling</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_user_input</span><span class="p">,</span> <span class="n">_item_input_pos</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="c1"># positive instance</span>
+            <span class="n">_user_input</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+            <span class="n">_item_input_pos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_user_input</span><span class="p">,</span> <span class="n">_item_input_pos</span>
+
+    <span class="k">def</span> <span class="nf">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shuffle dataset to create batch with batch size</span>
+<span class="sd">        Variable are global to be faster!</span>
+<span class="sd">        :param batch_size: default 512</span>
+<span class="sd">        :return: set of all generated random batches</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">global</span> <span class="n">_user_input</span>
+        <span class="k">global</span> <span class="n">_item_input_pos</span>
+        <span class="k">global</span> <span class="n">_batch_size</span>
+        <span class="k">global</span> <span class="n">_index</span>
+        <span class="k">global</span> <span class="n">_model</span>
+        <span class="k">global</span> <span class="n">_train</span>
+        <span class="k">global</span> <span class="n">_num_items</span>
+
+        <span class="n">_user_input</span><span class="p">,</span> <span class="n">_item_input_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user_input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_item_input_pos</span>
+        <span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="n">_index</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_user_input</span><span class="p">)))</span>
+        <span class="n">_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_list</span>
+        <span class="n">_num_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_items</span>
+
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">_index</span><span class="p">)</span>
+        <span class="n">_num_batches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_user_input</span><span class="p">)</span> <span class="o">//</span> <span class="n">_batch_size</span>
+        <span class="n">pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="p">(</span><span class="n">cpu_count</span><span class="p">())</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">_get_train_batch</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">_num_batches</span><span class="p">))</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+        <span class="n">user_input</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res</span><span class="p">]</span>
+        <span class="n">item_input_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res</span><span class="p">]</span>
+        <span class="n">item_input_neg</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">res</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input_pos</span><span class="p">,</span> <span class="n">item_input_neg</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Download">Download<a class="anchor-link" href="#Download"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sisinflab</span><span class="o">/</span><span class="n">HandsOn</span><span class="o">-</span><span class="n">ECIR2021</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">movielens</span><span class="o">-</span><span class="mi">500</span><span class="o">/</span><span class="n">trainingset</span><span class="o">.</span><span class="n">tsv</span>
+<span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sisinflab</span><span class="o">/</span><span class="n">HandsOn</span><span class="o">-</span><span class="n">ECIR2021</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">movielens</span><span class="o">-</span><span class="mi">500</span><span class="o">/</span><span class="n">testset</span><span class="o">.</span><span class="n">tsv</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>trainingset.tsv.2   100%[===================&gt;]   1.40M  --.-KB/s    in 0.1s    
+testset.tsv.2       100%[===================&gt;]   9.83K  --.-KB/s    in 0s      
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>First, we will load a short version of Movielens 1M dataset, which has been pre-processed and stored as a TSV file with the following structure: user_id, item_id, rating, timestamp. We have already divided the dataset in training and test sets using the leave-one-out evaluation protocol. We have used a small version with 500 users to reduce the computation time. To execute with the full dataset, you can change 'movielens-500' with 'movielens'.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Load">Load<a class="anchor-link" href="#Load"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">path_train_data</span><span class="o">=</span><span class="s1">&#39;trainingset.tsv&#39;</span><span class="p">,</span> <span class="n">path_test_data</span><span class="o">=</span><span class="s1">&#39;testset.tsv&#39;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Statistics:</span><span class="se">\n</span><span class="s1">Number of Users: </span><span class="si">{0}</span><span class="se">\n</span><span class="s1">Number of Items: </span><span class="si">{1}</span><span class="se">\n</span><span class="s1">Training User-Item Ratings: </span><span class="si">{2}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">num_users</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">num_items</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">train</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>trainingset.tsv - Loaded
+testset.tsv - Loaded
+
+Statistics:
+Number of Users: 500
+Number of Items: 3172
+Training User-Item Ratings: 73371
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model">Model<a class="anchor-link" href="#Model"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Define-the-model">Define the model<a class="anchor-link" href="#Define-the-model"> </a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We will define a new Tensorflow 2 model class to define the model (BPR-MF). For a matter of simplicity we have also implemented the adversarial attack and defense strategies,, that will be used in the later sections.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">RecommenderModel</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This class represents a recommender model.</span>
+<span class="sd">    You can load a pretrained model by specifying its ckpt path and use it for training/testing purposes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">path_output_rec_result</span><span class="p">,</span> <span class="n">path_output_rec_weight</span><span class="p">,</span> <span class="n">rec</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RecommenderModel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rec</span> <span class="o">=</span> <span class="n">rec</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_items</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">num_items</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_users</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">num_users</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path_output_rec_result</span> <span class="o">=</span> <span class="n">path_output_rec_result</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path_output_rec_weight</span> <span class="o">=</span> <span class="n">path_output_rec_weight</span>
+
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">TOPK</span> <span class="o">=</span> <span class="mi">100</span> <span class="c1"># Top-K</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">BPRMF</span><span class="p">(</span><span class="n">RecommenderModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">path_output_rec_result</span><span class="p">,</span> <span class="n">path_output_rec_weight</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BPRMF</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data_loader</span><span class="p">,</span> <span class="n">path_output_rec_result</span><span class="p">,</span> <span class="n">path_output_rec_weight</span><span class="p">,</span> <span class="s1">&#39;bprmf&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_size</span> <span class="o">=</span> <span class="mi">64</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.05</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reg</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="mi">512</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">Evaluator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">TOPK</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_model_parameters</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_perturbations</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_optimizer</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">initialize_model_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Initialize Model Parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">num_users</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_size</span><span class="p">],</span> <span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">0.01</span><span class="p">))</span>  <span class="c1"># (users, embedding_size)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">truncated_normal</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">num_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_size</span><span class="p">],</span> <span class="n">mean</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">stddev</span><span class="o">=</span><span class="mf">0.01</span><span class="p">))</span>  <span class="c1"># (items, embedding_size)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">initialize_optimizer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Optimizer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Adagrad</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_rate</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">initialize_perturbations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Set delta variables useful to store delta perturbations,</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta_P</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">num_users</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_size</span><span class="p">]),</span> <span class="n">trainable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta_Q</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">num_items</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_size</span><span class="p">]),</span> <span class="n">trainable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_inference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input_pos</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Generate Prediction Matrix with respect to passed users and items identifiers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_p</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta_P</span><span class="p">,</span> <span class="n">user_input</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding_q</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">embedding_lookup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta_Q</span><span class="p">,</span> <span class="n">item_input_pos</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_p</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_q</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">h</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_q</span>  <span class="c1"># (b, embedding_size) * (embedding_size, 1)</span>
+
+    <span class="k">def</span> <span class="nf">get_full_inference</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Get Full Predictions useful for Full Store of Predictions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta_P</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">delta_Q</span><span class="p">))</span>
+
+    <span class="nd">@timethis</span>
+    <span class="k">def</span> <span class="nf">_train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batches</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Apply a Single Training Step (across all the batches in the dataset).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input_pos</span><span class="p">,</span> <span class="n">item_input_neg</span> <span class="o">=</span> <span class="n">batches</span>
+
+        <span class="k">for</span> <span class="n">batch_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">user_input</span><span class="p">)):</span>
+            <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">watch</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span><span class="p">])</span>
+
+                <span class="c1"># Model Inference</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_pos</span><span class="p">,</span> <span class="n">embed_p_pos</span><span class="p">,</span> <span class="n">embed_q_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">],</span>
+                                                                               <span class="n">item_input_pos</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_neg</span><span class="p">,</span> <span class="n">embed_p_neg</span><span class="p">,</span> <span class="n">embed_q_neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">],</span>
+                                                                               <span class="n">item_input_neg</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">clip_by_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_neg</span><span class="p">,</span> <span class="o">-</span><span class="mf">80.0</span><span class="p">,</span> <span class="mf">1e8</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">))</span>
+
+                <span class="c1"># Regularization Component</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reg_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_p_pos</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_q_pos</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_q_neg</span><span class="p">))</span>
+
+                <span class="c1"># Loss Function</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">loss_opt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_loss</span>
+
+            <span class="n">gradients</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_opt</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">gradients</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span><span class="p">]))</span>
+    
+    <span class="nd">@timethis</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span>
+            <span class="n">batches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_train_step</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Epoch </span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="p">))</span>
+
+    <span class="nd">@timethis</span>
+    <span class="k">def</span> <span class="nf">_adversarial_train_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batches</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Apply a Single Training Step (across all the batches in the dataset).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input_pos</span><span class="p">,</span> <span class="n">item_input_neg</span> <span class="o">=</span> <span class="n">batches</span>
+        <span class="n">adv_reg</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">for</span> <span class="n">batch_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">user_input</span><span class="p">)):</span>
+            <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">t</span><span class="p">:</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">watch</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span><span class="p">])</span>
+
+                <span class="c1"># Model Inference</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_pos</span><span class="p">,</span> <span class="n">embed_p_pos</span><span class="p">,</span> <span class="n">embed_q_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">],</span>
+                                                                               <span class="n">item_input_pos</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_neg</span><span class="p">,</span> <span class="n">embed_p_neg</span><span class="p">,</span> <span class="n">embed_q_neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">],</span>
+                                                                               <span class="n">item_input_neg</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">clip_by_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_pos</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_neg</span><span class="p">,</span> <span class="o">-</span><span class="mf">80.0</span><span class="p">,</span> <span class="mf">1e8</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">))</span>
+
+                <span class="c1"># Regularization Component</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">reg_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_p_pos</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_q_pos</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_q_neg</span><span class="p">))</span>
+
+                <span class="c1"># Adversarial Regularization Component</span>
+                <span class="c1">##  Execute the Adversarial Attack on the Current Model (Perturb Model Parameters)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">execute_adversarial_attack</span><span class="p">(</span><span class="n">epsilon</span><span class="p">)</span>
+                <span class="c1">##  Inference on the Adversarial Perturbed Model</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_pos_adver</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">],</span> <span class="n">item_input_pos</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">output_neg_adver</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">],</span> <span class="n">item_input_neg</span><span class="p">[</span><span class="n">batch_idx</span><span class="p">])</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">result_adver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">clip_by_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_pos_adver</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_neg_adver</span><span class="p">,</span> <span class="o">-</span><span class="mf">80.0</span><span class="p">,</span> <span class="mf">1e8</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">loss_adver</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">result_adver</span><span class="p">))</span>
+
+                <span class="c1"># Loss Function</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">adversarial_regularizer</span> <span class="o">=</span> <span class="n">adv_reg</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_adver</span> <span class="c1"># AMF = Adversarial Matrix Factorization</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bprmf_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg_loss</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">amf_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bprmf_loss</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">adversarial_regularizer</span>
+
+            <span class="n">gradients</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">amf_loss</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">gradients</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span><span class="p">]))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_perturbations</span><span class="p">()</span>
+
+
+    <span class="nd">@timethis</span>
+    <span class="k">def</span> <span class="nf">adversarial_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">adversarial_epochs</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">adversarial_epochs</span><span class="p">):</span>
+            <span class="n">batches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_adversarial_train_step</span><span class="p">(</span><span class="n">batches</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Epoch </span><span class="si">{0}</span><span class="s1">/</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="o">+</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">epochs</span><span class="o">+</span><span class="n">adversarial_epochs</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">execute_adversarial_attack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">):</span>
+        <span class="n">user_input</span><span class="p">,</span> <span class="n">item_input_pos</span><span class="p">,</span> <span class="n">item_input_neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">_user_input</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_perturbations</span><span class="p">()</span>
+
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">tape_adv</span><span class="p">:</span>
+            <span class="n">tape_adv</span><span class="o">.</span><span class="n">watch</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span><span class="p">])</span>
+            <span class="c1"># Evaluate Current Model Inference</span>
+            <span class="n">output_pos</span><span class="p">,</span> <span class="n">embed_p_pos</span><span class="p">,</span> <span class="n">embed_q_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                                      <span class="n">item_input_pos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">output_neg</span><span class="p">,</span> <span class="n">embed_p_neg</span><span class="p">,</span> <span class="n">embed_q_neg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_inference</span><span class="p">(</span><span class="n">user_input</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                                                      <span class="n">item_input_neg</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">clip_by_value</span><span class="p">(</span><span class="n">output_pos</span> <span class="o">-</span> <span class="n">output_neg</span><span class="p">,</span> <span class="o">-</span><span class="mf">80.0</span><span class="p">,</span> <span class="mf">1e8</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="o">-</span><span class="n">result</span><span class="p">))</span>
+            <span class="n">loss</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reg</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span>
+                <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_p_pos</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_q_pos</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">embed_q_neg</span><span class="p">))</span>
+        <span class="c1"># Evaluate the Gradient</span>
+        <span class="n">grad_P</span><span class="p">,</span> <span class="n">grad_Q</span> <span class="o">=</span> <span class="n">tape_adv</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">embedding_P</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding_Q</span><span class="p">])</span>
+        <span class="n">grad_P</span><span class="p">,</span> <span class="n">grad_Q</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">grad_P</span><span class="p">),</span> <span class="n">tf</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">grad_Q</span><span class="p">)</span>
+
+        <span class="c1"># Use the Gradient to Build the Adversarial Perturbations (https://doi.org/10.1145/3209978.3209981)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta_P</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">l2_normalize</span><span class="p">(</span><span class="n">grad_P</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">epsilon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delta_Q</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">l2_normalize</span><span class="p">(</span><span class="n">grad_Q</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">epsilon</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Initialize-and-Train-The-Model">Initialize and Train The Model<a class="anchor-link" href="#Initialize-and-Train-The-Model"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="n">rec_result</span> <span class="n">rec_weights</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommender_model</span> <span class="o">=</span> <span class="n">BPRMF</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="s1">&#39;rec_result/&#39;</span><span class="p">,</span> <span class="s1">&#39;rec_weights/&#39;</span><span class="p">)</span>
+<span class="n">recommender_model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>2.111112356185913
+Epoch 1/5
+2.135735273361206
+Epoch 2/5
+2.1026523113250732
+Epoch 3/5
+2.0907275676727295
+Epoch 4/5
+2.070622682571411
+Epoch 5/5
+15.236634731292725
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluate-The-Model">Evaluate The Model<a class="anchor-link" href="#Evaluate-The-Model"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The evaluation is computed on TOPK recommendation lists (default K = 100).</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">before_adv_hr</span><span class="p">,</span> <span class="n">before_adv_ndcg</span><span class="p">,</span> <span class="n">before_adv_auc</span> <span class="o">=</span> <span class="n">recommender_model</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Performance@100
+	HR: 0.2760	nDCG: 0.0656	AUC: 0.8229
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Adversarial-Attack-Against-The-Model">Adversarial Attack Against The Model<a class="anchor-link" href="#Adversarial-Attack-Against-The-Model"> </a></h2><p>We can attack the model with adversarial perturbation and measure the performance after the attack. Epsilon is the perturbation budget.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Running the Attack with Epsilon = </span><span class="si">{0}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epsilon</span><span class="p">))</span>
+<span class="n">recommender_model</span><span class="o">.</span><span class="n">execute_adversarial_attack</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The model has been Adversarially Perturbed.&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Running the Attack with Epsilon = 0.5
+The model has been Adversarially Perturbed.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluate-the-Effects-of-the-Adversarial-Attack">Evaluate the Effects of the Adversarial Attack<a class="anchor-link" href="#Evaluate-the-Effects-of-the-Adversarial-Attack"> </a></h2><p>We will now evaluate the performance of the attacked model.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">after_adv_hr</span><span class="p">,</span> <span class="n">after_adv_ndcg</span><span class="p">,</span> <span class="n">after_adv_auc</span> <span class="o">=</span> <span class="n">recommender_model</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;HR decreases by </span><span class="si">%.2f%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">after_adv_hr</span><span class="o">/</span><span class="n">before_adv_hr</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;nDCG decreases by </span><span class="si">%.2f%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">after_adv_ndcg</span><span class="o">/</span><span class="n">before_adv_ndcg</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;AUC decreases by </span><span class="si">%.2f%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">after_adv_auc</span><span class="o">/</span><span class="n">before_adv_auc</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Performance@100
+	HR: 0.2200	nDCG: 0.0514	AUC: 0.7935
+HR decreases by 20.29%
+nDCG decreases by 21.58%
+AUC decreases by 3.57%
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Implement-The-Adversarial-Training/Regularization">Implement The Adversarial Training/Regularization<a class="anchor-link" href="#Implement-The-Adversarial-Training/Regularization"> </a></h2><p>We have identified the clear performance degradation of the recommender under adversarial attack. Now, we can test whether the adversarial regularization will make the model more robust.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommender_model</span><span class="o">.</span><span class="n">adversarial_train</span><span class="p">(</span><span class="n">adversarial_epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>187.35591626167297
+Epoch 6/6
+188.3142421245575
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluated-The-Adversarially-Defended-Model-before-the-Attack">Evaluated The Adversarially Defended Model before the Attack<a class="anchor-link" href="#Evaluated-The-Adversarially-Defended-Model-before-the-Attack"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">before_adv_hr</span><span class="p">,</span> <span class="n">before_adv_ndcg</span><span class="p">,</span> <span class="n">before_adv_auc</span> <span class="o">=</span> <span class="n">recommender_model</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Performance@100
+	HR: 0.2920	nDCG: 0.0686	AUC: 0.8336
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Adversarial-Attack-Against-The-Defended-Model">Adversarial Attack Against The Defended Model<a class="anchor-link" href="#Adversarial-Attack-Against-The-Defended-Model"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">recommender_model</span><span class="o">.</span><span class="n">execute_adversarial_attack</span><span class="p">(</span><span class="n">epsilon</span><span class="o">=</span><span class="n">epsilon</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluate-the-Effects-of-the-Adversarial-Attack-against-the-Defended-Model">Evaluate the Effects of the Adversarial Attack against the Defended Model<a class="anchor-link" href="#Evaluate-the-Effects-of-the-Adversarial-Attack-against-the-Defended-Model"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">after_adv_hr</span><span class="p">,</span> <span class="n">after_adv_ndcg</span><span class="p">,</span> <span class="n">after_adv_auc</span> <span class="o">=</span> <span class="n">recommender_model</span><span class="o">.</span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;HR decreases by </span><span class="si">%.2f%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">after_adv_hr</span><span class="o">/</span><span class="n">before_adv_hr</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;nDCG decreases by </span><span class="si">%.2f%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">after_adv_ndcg</span><span class="o">/</span><span class="n">before_adv_ndcg</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;AUC decreases by </span><span class="si">%.2f%%</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">after_adv_auc</span><span class="o">/</span><span class="n">before_adv_auc</span><span class="p">)</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Performance@100
+	HR: 0.2500	nDCG: 0.0591	AUC: 0.8048
+HR decreases by 14.38%
+nDCG decreases by 13.80%
+AUC decreases by 3.46%
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Consequences">Consequences<a class="anchor-link" href="#Consequences"> </a></h2><p>At this point, we have seen that the adversarial training has been effective in reducing the effectiveness of the FGSM-based adversarial attack against the recommender model. Furthermore, we have also identified another important consequences of the adversarial regularization. If we compare the performance of the model before and after the attack we can identify that there has been a performance improvement. For this reason, several recent works have implemented this robustification technique as an additional model component to increase the accuracy power of the recommender model.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="References">References<a class="anchor-link" href="#References"> </a></h2><ul>
+<li>Steffen Rendle, Christoph Freudenthaler, Zeno Gantner, Lars Schmidt-Thieme: BPR: Bayesian Personalized Ranking from Implicit Feedback. UAI 2009: 452-461</li>
+<li>Xiangnan He, Zhankui He, Xiaoyu Du, Tat-Seng Chua: Adversarial Personalized Ranking for Recommendation. SIGIR 2018: 355-364</li>
+<li><a href="https://github.com/merrafelice/HandsOn-RecSys2020">https://github.com/merrafelice/HandsOn-RecSys2020</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/20/adversarial.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

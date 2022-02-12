@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>NFM on Criteo Ad Dataset in TF 2.x | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="NFM on Criteo Ad Dataset in TF 2.x" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/21/nfm.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/21/nfm.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-21T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="NFM on Criteo Ad Dataset in TF 2.x" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-21T00:00:00-06:00","datePublished":"2022-01-21T00:00:00-06:00","description":"Jupyter notebook database.","headline":"NFM on Criteo Ad Dataset in TF 2.x","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/21/nfm.html"},"url":"https://nb.recohut.com/2022/01/21/nfm.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">NFM on Criteo Ad Dataset in TF 2.x</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-21T00:00:00-06:00" itemprop="datePublished">
+        Jan 21, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      9 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-21-nfm.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-21-nfm.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-21-nfm.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-21-nfm.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-21-nfm.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">tensorflow</span><span class="o">==</span><span class="mf">2.5</span><span class="o">.</span><span class="mi">0</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="o">-</span><span class="n">U</span> <span class="n">kaggle</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">--</span><span class="n">upgrade</span> <span class="o">--</span><span class="n">force</span><span class="o">-</span><span class="n">reinstall</span> <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">deps</span> <span class="n">kaggle</span>
+<span class="err">!</span><span class="n">mkdir</span> <span class="o">~/.</span><span class="n">kaggle</span>
+<span class="err">!</span><span class="n">cp</span> <span class="o">/</span><span class="n">content</span><span class="o">/</span><span class="n">drive</span><span class="o">/</span><span class="n">MyDrive</span><span class="o">/</span><span class="n">kaggle</span><span class="o">.</span><span class="n">json</span> <span class="o">~/.</span><span class="n">kaggle</span><span class="o">/</span>
+<span class="err">!</span><span class="n">chmod</span> <span class="mi">600</span> <span class="o">~/.</span><span class="n">kaggle</span><span class="o">/</span><span class="n">kaggle</span><span class="o">.</span><span class="n">json</span>
+<span class="err">!</span><span class="n">kaggle</span> <span class="n">datasets</span> <span class="n">download</span> <span class="o">-</span><span class="n">d</span> <span class="n">mrkmakr</span><span class="o">/</span><span class="n">criteo</span><span class="o">-</span><span class="n">dataset</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Collecting kaggle
+  Downloading kaggle-1.5.12.tar.gz (58 kB)
+     |████████████████████████████████| 58 kB 2.6 MB/s 
+Building wheels for collected packages: kaggle
+  Building wheel for kaggle (setup.py) ... done
+  Created wheel for kaggle: filename=kaggle-1.5.12-py3-none-any.whl size=73051 sha256=d0e4b97f111ac4c64a7c2fead5edb3baa0f1f4f21eca031e865b06b3f40f3bbb
+  Stored in directory: /root/.cache/pip/wheels/62/d6/58/5853130f941e75b2177d281eb7e44b4a98ed46dd155f556dc5
+Successfully built kaggle
+Installing collected packages: kaggle
+  Attempting uninstall: kaggle
+    Found existing installation: kaggle 1.5.12
+    Uninstalling kaggle-1.5.12:
+      Successfully uninstalled kaggle-1.5.12
+Successfully installed kaggle-1.5.12
+Downloading criteo-dataset.zip to /content
+100% 4.31G/4.31G [02:05&lt;00:00, 44.7MB/s]
+100% 4.31G/4.31G [02:05&lt;00:00, 36.8MB/s]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">unzip</span> <span class="n">criteo</span><span class="o">-</span><span class="n">dataset</span><span class="o">.</span><span class="n">zip</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Archive:  criteo-dataset.zip
+  inflating: dac/readme.txt          
+  inflating: dac/test.txt            
+  inflating: dac/train.txt           
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">LabelEncoder</span><span class="p">,</span> <span class="n">KBinsDiscretizer</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Layer</span><span class="p">,</span> <span class="n">Input</span><span class="p">,</span> <span class="n">ReLU</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Embedding</span><span class="p">,</span> <span class="n">Dropout</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">BatchNormalization</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.regularizers</span> <span class="kn">import</span> <span class="n">l2</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.losses</span> <span class="kn">import</span> <span class="n">binary_crossentropy</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.callbacks</span> <span class="kn">import</span> <span class="n">EarlyStopping</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.optimizers</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.metrics</span> <span class="kn">import</span> <span class="n">AUC</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;TF_CPP_MIN_LOG_LEVEL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;2&#39;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CUDA_VISIBLE_DEVICES&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+
+<span class="n">file</span> <span class="o">=</span> <span class="s1">&#39;dac/train.txt&#39;</span>
+<span class="n">read_part</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">sample_num</span> <span class="o">=</span> <span class="mi">10000</span>
+<span class="n">test_size</span> <span class="o">=</span> <span class="mf">0.2</span>
+
+<span class="n">embed_dim</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">dnn_dropout</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">hidden_units</span> <span class="o">=</span> <span class="p">[</span><span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">]</span>
+
+<span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">4096</span>
+<span class="n">epochs</span> <span class="o">=</span> <span class="mi">10</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">sparseFeature</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">feat_num</span><span class="p">,</span> <span class="n">embed_dim</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    create dictionary for sparse feature</span>
+<span class="sd">    :param feat: feature name</span>
+<span class="sd">    :param feat_num: the total number of sparse features that do not repeat</span>
+<span class="sd">    :param embed_dim: embedding dimension</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;feat_name&#39;</span><span class="p">:</span> <span class="n">feat</span><span class="p">,</span> <span class="s1">&#39;feat_num&#39;</span><span class="p">:</span> <span class="n">feat_num</span><span class="p">,</span> <span class="s1">&#39;embed_dim&#39;</span><span class="p">:</span> <span class="n">embed_dim</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">denseFeature</span><span class="p">(</span><span class="n">feat</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    create dictionary for dense feature</span>
+<span class="sd">    :param feat: dense feature name</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;feat_name&#39;</span><span class="p">:</span> <span class="n">feat</span><span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">create_criteo_dataset</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">embed_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">read_part</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sample_num</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    a example about creating criteo dataset</span>
+<span class="sd">    :param file: dataset&#39;s path</span>
+<span class="sd">    :param embed_dim: the embedding dimension of sparse features</span>
+<span class="sd">    :param read_part: whether to read part of it</span>
+<span class="sd">    :param sample_num: the number of instances if read_part is True</span>
+<span class="sd">    :param test_size: ratio of test dataset</span>
+<span class="sd">    :return: feature columns, train, test</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="s1">&#39;I1&#39;</span><span class="p">,</span> <span class="s1">&#39;I2&#39;</span><span class="p">,</span> <span class="s1">&#39;I3&#39;</span><span class="p">,</span> <span class="s1">&#39;I4&#39;</span><span class="p">,</span> <span class="s1">&#39;I5&#39;</span><span class="p">,</span> <span class="s1">&#39;I6&#39;</span><span class="p">,</span> <span class="s1">&#39;I7&#39;</span><span class="p">,</span> <span class="s1">&#39;I8&#39;</span><span class="p">,</span> <span class="s1">&#39;I9&#39;</span><span class="p">,</span> <span class="s1">&#39;I10&#39;</span><span class="p">,</span> <span class="s1">&#39;I11&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;I12&#39;</span><span class="p">,</span> <span class="s1">&#39;I13&#39;</span><span class="p">,</span> <span class="s1">&#39;C1&#39;</span><span class="p">,</span> <span class="s1">&#39;C2&#39;</span><span class="p">,</span> <span class="s1">&#39;C3&#39;</span><span class="p">,</span> <span class="s1">&#39;C4&#39;</span><span class="p">,</span> <span class="s1">&#39;C5&#39;</span><span class="p">,</span> <span class="s1">&#39;C6&#39;</span><span class="p">,</span> <span class="s1">&#39;C7&#39;</span><span class="p">,</span> <span class="s1">&#39;C8&#39;</span><span class="p">,</span> <span class="s1">&#39;C9&#39;</span><span class="p">,</span> <span class="s1">&#39;C10&#39;</span><span class="p">,</span> <span class="s1">&#39;C11&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;C12&#39;</span><span class="p">,</span> <span class="s1">&#39;C13&#39;</span><span class="p">,</span> <span class="s1">&#39;C14&#39;</span><span class="p">,</span> <span class="s1">&#39;C15&#39;</span><span class="p">,</span> <span class="s1">&#39;C16&#39;</span><span class="p">,</span> <span class="s1">&#39;C17&#39;</span><span class="p">,</span> <span class="s1">&#39;C18&#39;</span><span class="p">,</span> <span class="s1">&#39;C19&#39;</span><span class="p">,</span> <span class="s1">&#39;C20&#39;</span><span class="p">,</span> <span class="s1">&#39;C21&#39;</span><span class="p">,</span> <span class="s1">&#39;C22&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;C23&#39;</span><span class="p">,</span> <span class="s1">&#39;C24&#39;</span><span class="p">,</span> <span class="s1">&#39;C25&#39;</span><span class="p">,</span> <span class="s1">&#39;C26&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">read_part</span><span class="p">:</span>
+        <span class="n">data_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">iterator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">data_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">get_chunk</span><span class="p">(</span><span class="n">sample_num</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">names</span><span class="o">=</span><span class="n">names</span><span class="p">)</span>
+
+    <span class="n">sparse_features</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;C&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">27</span><span class="p">)]</span>
+    <span class="n">dense_features</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;I&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">14</span><span class="p">)]</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="n">sparse_features</span> <span class="o">+</span> <span class="n">dense_features</span>
+
+    <span class="n">data_df</span><span class="p">[</span><span class="n">sparse_features</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_df</span><span class="p">[</span><span class="n">sparse_features</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="s1">&#39;-1&#39;</span><span class="p">)</span>
+    <span class="n">data_df</span><span class="p">[</span><span class="n">dense_features</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_df</span><span class="p">[</span><span class="n">dense_features</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Bin continuous data into intervals.</span>
+    <span class="n">est</span> <span class="o">=</span> <span class="n">KBinsDiscretizer</span><span class="p">(</span><span class="n">n_bins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">encode</span><span class="o">=</span><span class="s1">&#39;ordinal&#39;</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">)</span>
+    <span class="n">data_df</span><span class="p">[</span><span class="n">dense_features</span><span class="p">]</span> <span class="o">=</span> <span class="n">est</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data_df</span><span class="p">[</span><span class="n">dense_features</span><span class="p">])</span>
+
+    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">sparse_features</span><span class="p">:</span>
+        <span class="n">le</span> <span class="o">=</span> <span class="n">LabelEncoder</span><span class="p">()</span>
+        <span class="n">data_df</span><span class="p">[</span><span class="n">feat</span><span class="p">]</span> <span class="o">=</span> <span class="n">le</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">data_df</span><span class="p">[</span><span class="n">feat</span><span class="p">])</span>
+
+    <span class="c1"># ==============Feature Engineering===================</span>
+
+    <span class="c1"># ====================================================</span>
+    <span class="n">feature_columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">sparseFeature</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">data_df</span><span class="p">[</span><span class="n">feat</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">embed_dim</span><span class="o">=</span><span class="n">embed_dim</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]</span>
+    <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">data_df</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="n">test_size</span><span class="p">)</span>
+
+    <span class="n">train_X</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="n">features</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+    <span class="n">train_y</span> <span class="o">=</span> <span class="n">train</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+    <span class="n">test_X</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="n">features</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+    <span class="n">test_y</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">feature_columns</span><span class="p">,</span> <span class="p">(</span><span class="n">train_X</span><span class="p">,</span> <span class="n">train_y</span><span class="p">),</span> <span class="p">(</span><span class="n">test_X</span><span class="p">,</span> <span class="n">test_y</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">DNN</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hidden_units</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deep Neural Network</span>
+<span class="sd">		:param hidden_units: A list. Neural network hidden units.</span>
+<span class="sd">		:param activation: A string. Activation function of dnn.</span>
+<span class="sd">		:param dropout: A scalar. Dropout number.</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DNN</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dnn_network</span> <span class="o">=</span> <span class="p">[</span><span class="n">Dense</span><span class="p">(</span><span class="n">units</span><span class="o">=</span><span class="n">unit</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">activation</span><span class="p">)</span> <span class="k">for</span> <span class="n">unit</span> <span class="ow">in</span> <span class="n">hidden_units</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span>
+        <span class="k">for</span> <span class="n">dnn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dnn_network</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">dnn</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">NFM</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_columns</span><span class="p">,</span> <span class="n">hidden_units</span><span class="p">,</span> <span class="n">dnn_dropout</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">bn_use</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">embed_reg</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        NFM architecture</span>
+<span class="sd">        :param feature_columns: A list. sparse column feature information.</span>
+<span class="sd">        :param hidden_units: A list. Neural network hidden units.</span>
+<span class="sd">        :param activation: A string. Activation function of dnn.</span>
+<span class="sd">        :param dnn_dropout: A scalar. Dropout of dnn.</span>
+<span class="sd">        :param bn_use: A Boolean. Use BatchNormalization or not.</span>
+<span class="sd">        :param embed_reg: A scalar. The regularizer of embedding.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NFM</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparse_feature_columns</span> <span class="o">=</span> <span class="n">feature_columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embed_layers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;embed_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="n">Embedding</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="n">feat</span><span class="p">[</span><span class="s1">&#39;feat_num&#39;</span><span class="p">],</span>
+                                         <span class="n">input_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                         <span class="n">output_dim</span><span class="o">=</span><span class="n">feat</span><span class="p">[</span><span class="s1">&#39;embed_dim&#39;</span><span class="p">],</span>
+                                         <span class="n">embeddings_initializer</span><span class="o">=</span><span class="s1">&#39;random_normal&#39;</span><span class="p">,</span>
+                                         <span class="n">embeddings_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">embed_reg</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_feature_columns</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bn</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bn_use</span> <span class="o">=</span> <span class="n">bn_use</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dnn_network</span> <span class="o">=</span> <span class="n">DNN</span><span class="p">(</span><span class="n">hidden_units</span><span class="p">,</span> <span class="n">activation</span><span class="p">,</span> <span class="n">dnn_dropout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dense</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="c1"># Inputs layer</span>
+        <span class="n">sparse_inputs</span> <span class="o">=</span> <span class="n">inputs</span>
+        <span class="c1"># Embedding layer</span>
+        <span class="n">sparse_embed</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">embed_layers</span><span class="p">[</span><span class="s1">&#39;embed_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)](</span><span class="n">sparse_inputs</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sparse_inputs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="n">sparse_embed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">sparse_embed</span><span class="p">),</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>  <span class="c1"># (None, filed_num, embed_dim)</span>
+        <span class="c1"># Bi-Interaction Layer</span>
+        <span class="n">sparse_embed</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">sparse_embed</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span>
+                       <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">sparse_embed</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># (None, embed_dim)</span>
+        <span class="c1"># Concat</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">sparse_embed</span>
+        <span class="c1"># BatchNormalization</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bn_use</span><span class="p">)</span>
+        <span class="c1"># Hidden Layers</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dnn_network</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">outputs</span>
+
+    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sparse_inputs</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_feature_columns</span><span class="p">),),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">sparse_inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">sparse_inputs</span><span class="p">))</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">feature_columns</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">create_criteo_dataset</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">file</span><span class="p">,</span>
+                                                        <span class="n">embed_dim</span><span class="o">=</span><span class="n">embed_dim</span><span class="p">,</span>
+                                                        <span class="n">read_part</span><span class="o">=</span><span class="n">read_part</span><span class="p">,</span>
+                                                        <span class="n">sample_num</span><span class="o">=</span><span class="n">sample_num</span><span class="p">,</span>
+                                                        <span class="n">test_size</span><span class="o">=</span><span class="n">test_size</span><span class="p">)</span>
+<span class="n">train_X</span><span class="p">,</span> <span class="n">train_y</span> <span class="o">=</span> <span class="n">train</span>
+<span class="n">test_X</span><span class="p">,</span> <span class="n">test_y</span> <span class="o">=</span> <span class="n">test</span>
+<span class="c1"># ============================Build Model==========================</span>
+<span class="n">mirrored_strategy</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">distribute</span><span class="o">.</span><span class="n">MirroredStrategy</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">mirrored_strategy</span><span class="o">.</span><span class="n">scope</span><span class="p">():</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">NFM</span><span class="p">(</span><span class="n">feature_columns</span><span class="p">,</span> <span class="n">hidden_units</span><span class="p">,</span> <span class="n">dnn_dropout</span><span class="o">=</span><span class="n">dnn_dropout</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+    <span class="c1"># =========================Compile============================</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="n">binary_crossentropy</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="n">Adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">),</span>
+                    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="n">AUC</span><span class="p">()])</span>
+<span class="c1"># ============================model checkpoint======================</span>
+<span class="c1"># check_path = &#39;save/nfm_weights.epoch_{epoch:04d}.val_loss_{val_loss:.4f}.ckpt&#39;</span>
+<span class="c1"># checkpoint = tf.keras.callbacks.ModelCheckpoint(check_path, save_weights_only=True,</span>
+<span class="c1">#                                                 verbose=1, period=5)</span>
+<span class="c1"># ===========================Fit==============================</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+    <span class="n">train_X</span><span class="p">,</span>
+    <span class="n">train_y</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">=</span><span class="n">epochs</span><span class="p">,</span>
+    <span class="n">callbacks</span><span class="o">=</span><span class="p">[</span><span class="n">EarlyStopping</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="s1">&#39;val_loss&#39;</span><span class="p">,</span> <span class="n">patience</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">restore_best_weights</span><span class="o">=</span><span class="kc">True</span><span class="p">)],</span>  <span class="c1"># checkpoint</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.1</span>
+<span class="p">)</span>
+<span class="c1"># ===========================Test==============================</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;test AUC: </span><span class="si">%f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">test_X</span><span class="p">,</span> <span class="n">test_y</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>WARNING:tensorflow:There are non-GPU devices in `tf.distribute.Strategy`, not using nccl allreduce.
+WARNING:tensorflow:Collective ops is not configured at program startup. Some performance features may not be enabled.
+INFO:tensorflow:Using MirroredStrategy with devices (&#39;/job:localhost/replica:0/task:0/device:CPU:0&#39;,)
+Model: &#34;model_1&#34;
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to                     
+==================================================================================================
+input_4 (InputLayer)            [(None, 39)]         0                                            
+__________________________________________________________________________________________________
+tf.__operators__.getitem_39 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_40 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_41 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_42 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_43 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_44 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_45 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_46 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_47 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_48 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_49 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_50 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_51 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_52 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_53 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_54 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_55 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_56 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_57 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_58 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_59 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_60 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_61 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_62 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_63 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_64 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_65 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_66 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_67 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_68 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_69 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_70 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_71 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_72 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_73 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_74 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_75 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_76 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+tf.__operators__.getitem_77 (Sl (None,)              0           input_4[0][0]                    
+__________________________________________________________________________________________________
+embedding_117 (Embedding)       (None, 8)            1400        tf.__operators__.getitem_39[0][0]
+__________________________________________________________________________________________________
+embedding_118 (Embedding)       (None, 8)            3088        tf.__operators__.getitem_40[0][0]
+__________________________________________________________________________________________________
+embedding_119 (Embedding)       (None, 8)            44168       tf.__operators__.getitem_41[0][0]
+__________________________________________________________________________________________________
+embedding_120 (Embedding)       (None, 8)            32264       tf.__operators__.getitem_42[0][0]
+__________________________________________________________________________________________________
+embedding_121 (Embedding)       (None, 8)            448         tf.__operators__.getitem_43[0][0]
+__________________________________________________________________________________________________
+embedding_122 (Embedding)       (None, 8)            64          tf.__operators__.getitem_44[0][0]
+__________________________________________________________________________________________________
+embedding_123 (Embedding)       (None, 8)            25472       tf.__operators__.getitem_45[0][0]
+__________________________________________________________________________________________________
+embedding_124 (Embedding)       (None, 8)            744         tf.__operators__.getitem_46[0][0]
+__________________________________________________________________________________________________
+embedding_125 (Embedding)       (None, 8)            24          tf.__operators__.getitem_47[0][0]
+__________________________________________________________________________________________________
+embedding_126 (Embedding)       (None, 8)            23888       tf.__operators__.getitem_48[0][0]
+__________________________________________________________________________________________________
+embedding_127 (Embedding)       (None, 8)            16672       tf.__operators__.getitem_49[0][0]
+__________________________________________________________________________________________________
+embedding_128 (Embedding)       (None, 8)            42272       tf.__operators__.getitem_50[0][0]
+__________________________________________________________________________________________________
+embedding_129 (Embedding)       (None, 8)            13800       tf.__operators__.getitem_51[0][0]
+__________________________________________________________________________________________________
+embedding_130 (Embedding)       (None, 8)            192         tf.__operators__.getitem_52[0][0]
+__________________________________________________________________________________________________
+embedding_131 (Embedding)       (None, 8)            16280       tf.__operators__.getitem_53[0][0]
+__________________________________________________________________________________________________
+embedding_132 (Embedding)       (None, 8)            37792       tf.__operators__.getitem_54[0][0]
+__________________________________________________________________________________________________
+embedding_133 (Embedding)       (None, 8)            72          tf.__operators__.getitem_55[0][0]
+__________________________________________________________________________________________________
+embedding_134 (Embedding)       (None, 8)            9192        tf.__operators__.getitem_56[0][0]
+__________________________________________________________________________________________________
+embedding_135 (Embedding)       (None, 8)            4376        tf.__operators__.getitem_57[0][0]
+__________________________________________________________________________________________________
+embedding_136 (Embedding)       (None, 8)            32          tf.__operators__.getitem_58[0][0]
+__________________________________________________________________________________________________
+embedding_137 (Embedding)       (None, 8)            40296       tf.__operators__.getitem_59[0][0]
+__________________________________________________________________________________________________
+embedding_138 (Embedding)       (None, 8)            64          tf.__operators__.getitem_60[0][0]
+__________________________________________________________________________________________________
+embedding_139 (Embedding)       (None, 8)            96          tf.__operators__.getitem_61[0][0]
+__________________________________________________________________________________________________
+embedding_140 (Embedding)       (None, 8)            20200       tf.__operators__.getitem_62[0][0]
+__________________________________________________________________________________________________
+embedding_141 (Embedding)       (None, 8)            320         tf.__operators__.getitem_63[0][0]
+__________________________________________________________________________________________________
+embedding_142 (Embedding)       (None, 8)            15512       tf.__operators__.getitem_64[0][0]
+__________________________________________________________________________________________________
+embedding_143 (Embedding)       (None, 8)            800         tf.__operators__.getitem_65[0][0]
+__________________________________________________________________________________________________
+embedding_144 (Embedding)       (None, 8)            800         tf.__operators__.getitem_66[0][0]
+__________________________________________________________________________________________________
+embedding_145 (Embedding)       (None, 8)            800         tf.__operators__.getitem_67[0][0]
+__________________________________________________________________________________________________
+embedding_146 (Embedding)       (None, 8)            800         tf.__operators__.getitem_68[0][0]
+__________________________________________________________________________________________________
+embedding_147 (Embedding)       (None, 8)            800         tf.__operators__.getitem_69[0][0]
+__________________________________________________________________________________________________
+embedding_148 (Embedding)       (None, 8)            800         tf.__operators__.getitem_70[0][0]
+__________________________________________________________________________________________________
+embedding_149 (Embedding)       (None, 8)            800         tf.__operators__.getitem_71[0][0]
+__________________________________________________________________________________________________
+embedding_150 (Embedding)       (None, 8)            800         tf.__operators__.getitem_72[0][0]
+__________________________________________________________________________________________________
+embedding_151 (Embedding)       (None, 8)            800         tf.__operators__.getitem_73[0][0]
+__________________________________________________________________________________________________
+embedding_152 (Embedding)       (None, 8)            800         tf.__operators__.getitem_74[0][0]
+__________________________________________________________________________________________________
+embedding_153 (Embedding)       (None, 8)            800         tf.__operators__.getitem_75[0][0]
+__________________________________________________________________________________________________
+embedding_154 (Embedding)       (None, 8)            800         tf.__operators__.getitem_76[0][0]
+__________________________________________________________________________________________________
+embedding_155 (Embedding)       (None, 8)            800         tf.__operators__.getitem_77[0][0]
+__________________________________________________________________________________________________
+tf.convert_to_tensor (TFOpLambd (39, None, 8)        0           embedding_117[0][0]              
+                                                                 embedding_118[0][0]              
+                                                                 embedding_119[0][0]              
+                                                                 embedding_120[0][0]              
+                                                                 embedding_121[0][0]              
+                                                                 embedding_122[0][0]              
+                                                                 embedding_123[0][0]              
+                                                                 embedding_124[0][0]              
+                                                                 embedding_125[0][0]              
+                                                                 embedding_126[0][0]              
+                                                                 embedding_127[0][0]              
+                                                                 embedding_128[0][0]              
+                                                                 embedding_129[0][0]              
+                                                                 embedding_130[0][0]              
+                                                                 embedding_131[0][0]              
+                                                                 embedding_132[0][0]              
+                                                                 embedding_133[0][0]              
+                                                                 embedding_134[0][0]              
+                                                                 embedding_135[0][0]              
+                                                                 embedding_136[0][0]              
+                                                                 embedding_137[0][0]              
+                                                                 embedding_138[0][0]              
+                                                                 embedding_139[0][0]              
+                                                                 embedding_140[0][0]              
+                                                                 embedding_141[0][0]              
+                                                                 embedding_142[0][0]              
+                                                                 embedding_143[0][0]              
+                                                                 embedding_144[0][0]              
+                                                                 embedding_145[0][0]              
+                                                                 embedding_146[0][0]              
+                                                                 embedding_147[0][0]              
+                                                                 embedding_148[0][0]              
+                                                                 embedding_149[0][0]              
+                                                                 embedding_150[0][0]              
+                                                                 embedding_151[0][0]              
+                                                                 embedding_152[0][0]              
+                                                                 embedding_153[0][0]              
+                                                                 embedding_154[0][0]              
+                                                                 embedding_155[0][0]              
+__________________________________________________________________________________________________
+tf.compat.v1.transpose (TFOpLam (None, 39, 8)        0           tf.convert_to_tensor[0][0]       
+__________________________________________________________________________________________________
+tf.math.reduce_sum (TFOpLambda) (None, 8)            0           tf.compat.v1.transpose[0][0]     
+__________________________________________________________________________________________________
+tf.math.pow_1 (TFOpLambda)      (None, 39, 8)        0           tf.compat.v1.transpose[0][0]     
+__________________________________________________________________________________________________
+tf.math.pow (TFOpLambda)        (None, 8)            0           tf.math.reduce_sum[0][0]         
+__________________________________________________________________________________________________
+tf.math.reduce_sum_1 (TFOpLambd (None, 8)            0           tf.math.pow_1[0][0]              
+__________________________________________________________________________________________________
+tf.math.subtract (TFOpLambda)   (None, 8)            0           tf.math.pow[0][0]                
+                                                                 tf.math.reduce_sum_1[0][0]       
+__________________________________________________________________________________________________
+tf.math.multiply (TFOpLambda)   (None, 8)            0           tf.math.subtract[0][0]           
+__________________________________________________________________________________________________
+batch_normalization_2 (BatchNor (None, 8)            32          tf.math.multiply[0][0]           
+__________________________________________________________________________________________________
+dnn_3 (DNN)                     (None, 64)           43456       batch_normalization_2[0][0]      
+__________________________________________________________________________________________________
+dense_15 (Dense)                (None, 1)            65          dnn_3[0][0]                      
+__________________________________________________________________________________________________
+tf.math.sigmoid_1 (TFOpLambda)  (None, 1)            0           dense_15[0][0]                   
+==================================================================================================
+Total params: 402,681
+Trainable params: 402,665
+Non-trainable params: 16
+__________________________________________________________________________________________________
+Epoch 1/10
+2/2 [==============================] - 8s 2s/step - loss: 0.6853 - auc_1: 0.5147 - val_loss: 0.6370 - val_auc_1: 0.5155
+Epoch 2/10
+2/2 [==============================] - 0s 150ms/step - loss: 0.6274 - auc_1: 0.5184 - val_loss: 0.5907 - val_auc_1: 0.5209
+Epoch 3/10
+2/2 [==============================] - 0s 150ms/step - loss: 0.5832 - auc_1: 0.5255 - val_loss: 0.5553 - val_auc_1: 0.5285
+Epoch 4/10
+2/2 [==============================] - 0s 156ms/step - loss: 0.5446 - auc_1: 0.5696 - val_loss: 0.5325 - val_auc_1: 0.5422
+Epoch 5/10
+2/2 [==============================] - 0s 140ms/step - loss: 0.5191 - auc_1: 0.6053 - val_loss: 0.5253 - val_auc_1: 0.5606
+Epoch 6/10
+2/2 [==============================] - 0s 153ms/step - loss: 0.4979 - auc_1: 0.6648 - val_loss: 0.5286 - val_auc_1: 0.5779
+Epoch 7/10
+2/2 [==============================] - 0s 155ms/step - loss: 0.4860 - auc_1: 0.7103 - val_loss: 0.5317 - val_auc_1: 0.5945
+1/1 [==============================] - 0s 84ms/step - loss: 0.5331 - auc_1: 0.5334
+test AUC: 0.533417
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/21/nfm.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

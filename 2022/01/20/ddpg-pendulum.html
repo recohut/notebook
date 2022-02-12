@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Deep Deterministic Policy Gradient (DDPG) | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Deep Deterministic Policy Gradient (DDPG)" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/20/ddpg-pendulum.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/20/ddpg-pendulum.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-20T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Deep Deterministic Policy Gradient (DDPG)" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-20T00:00:00-06:00","datePublished":"2022-01-20T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Deep Deterministic Policy Gradient (DDPG)","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/20/ddpg-pendulum.html"},"url":"https://nb.recohut.com/2022/01/20/ddpg-pendulum.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Deep Deterministic Policy Gradient (DDPG)</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-20T00:00:00-06:00" itemprop="datePublished">
+        Jan 20, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      14 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-20-ddpg-pendulum.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-20-ddpg-pendulum.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-20-ddpg-pendulum.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-20-ddpg-pendulum.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-20-ddpg-pendulum.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Introduction">Introduction<a class="anchor-link" href="#Introduction"> </a></h2><p><strong>Deep Deterministic Policy Gradient (DDPG)</strong> is a model-free off-policy algorithm for
+learning continous actions.</p>
+<p>It combines ideas from DPG (Deterministic Policy Gradient) and DQN (Deep Q-Network).
+It uses Experience Replay and slow-learning target networks from DQN, and it is based on
+DPG,
+which can operate over continuous action spaces.</p>
+<p>This tutorial closely follow this paper -
+<a href="https://arxiv.org/pdf/1509.02971.pdf">Continuous control with deep reinforcement learning</a></p>
+<h2 id="Problem">Problem<a class="anchor-link" href="#Problem"> </a></h2><p>We are trying to solve the classic <strong>Inverted Pendulum</strong> control problem.
+In this setting, we can take only two actions: swing left or swing right.</p>
+<p>What make this problem challenging for Q-Learning Algorithms is that actions
+are <strong>continuous</strong> instead of being <strong>discrete</strong>. That is, instead of using two
+discrete actions like <code>-1</code> or <code>+1</code>, we have to select from infinite actions
+ranging from <code>-2</code> to <code>+2</code>.</p>
+<h2 id="Quick-theory">Quick theory<a class="anchor-link" href="#Quick-theory"> </a></h2><p>Just like the Actor-Critic method, we have two networks:</p>
+<ol>
+<li>Actor - It proposes an action given a state.</li>
+<li>Critic - It predicts if the action is good (positive value) or bad (negative value)
+given a state and an action.</li>
+</ol>
+<p>DDPG uses two more techniques not present in the original DQN:</p>
+<p><strong>First, it uses two Target networks.</strong></p>
+<p><strong>Why?</strong> Because it add stability to training. In short, we are learning from estimated
+targets and Target networks are updated slowly, hence keeping our estimated targets
+stable.</p>
+<p>Conceptually, this is like saying, "I have an idea of how to play this well,
+I'm going to try it out for a bit until I find something better",
+as opposed to saying "I'm going to re-learn how to play this entire game after every
+move".
+See this <a href="https://stackoverflow.com/a/54238556/13475679">StackOverflow answer</a>.</p>
+<p><strong>Second, it uses Experience Replay.</strong></p>
+<p>We store list of tuples <code>(state, action, reward, next_state)</code>, and instead of
+learning only from recent experience, we learn from sampling all of our experience
+accumulated so far.</p>
+<p>Now, let's see how is it implemented.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">gym</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">layers</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We use <a href="http://gym.openai.com/docs">OpenAIGym</a> to create the environment.
+We will use the <code>upper_bound</code> parameter to scale our actions later.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">problem</span> <span class="o">=</span> <span class="s2">&quot;Pendulum-v0&quot;</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">gym</span><span class="o">.</span><span class="n">make</span><span class="p">(</span><span class="n">problem</span><span class="p">)</span>
+
+<span class="n">num_states</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Size of State Space -&gt;  </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_states</span><span class="p">))</span>
+<span class="n">num_actions</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Size of Action Space -&gt;  </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_actions</span><span class="p">))</span>
+
+<span class="n">upper_bound</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">high</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">lower_bound</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">low</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max Value of Action -&gt;  </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">upper_bound</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Min Value of Action -&gt;  </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lower_bound</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Size of State Space -&gt;  3
+Size of Action Space -&gt;  1
+Max Value of Action -&gt;  2.0
+Min Value of Action -&gt;  -2.0
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>To implement better exploration by the Actor network, we use noisy perturbations,
+specifically
+an <strong>Ornstein-Uhlenbeck process</strong> for generating noise, as described in the paper.
+It samples noise from a correlated normal distribution.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">OUActionNoise</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std_deviation</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">x_initial</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">std_dev</span> <span class="o">=</span> <span class="n">std_deviation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_initial</span> <span class="o">=</span> <span class="n">x_initial</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Formula taken from https://www.wikipedia.org/wiki/Ornstein-Uhlenbeck_process.</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_prev</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_prev</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+            <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">std_dev</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># Store x into x_prev</span>
+        <span class="c1"># Makes next noise dependent on current one</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x_prev</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="k">return</span> <span class="n">x</span>
+
+    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_initial</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_prev</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">x_initial</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">x_prev</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The <code>Buffer</code> class implements Experience Replay.</p>
+<hr />
+<h2 id="Algorithm">Algorithm<a class="anchor-link" href="#Algorithm"> </a></h2><p><strong>Critic loss</strong> - Mean Squared Error of <code>y - Q(s, a)</code>
+where <code>y</code> is the expected return as seen by the Target network,
+and <code>Q(s, a)</code> is action value predicted by the Critic network. <code>y</code> is a moving target
+that the critic model tries to achieve; we make this target
+stable by updating the Target model slowly.</p>
+<p><strong>Actor loss</strong> - This is computed using the mean of the value given by the Critic network
+for the actions taken by the Actor network. We seek to maximize this quantity.</p>
+<p>Hence we update the Actor network so that it produces actions that get
+the maximum predicted value as seen by the Critic, for a given state.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Buffer</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">buffer_capacity</span><span class="o">=</span><span class="mi">100000</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">64</span><span class="p">):</span>
+        <span class="c1"># Number of &quot;experiences&quot; to store at max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_capacity</span> <span class="o">=</span> <span class="n">buffer_capacity</span>
+        <span class="c1"># Num of tuples to train on.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+
+        <span class="c1"># Its tells us num of times record() was called.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_counter</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># Instead of list of tuples as the exp.replay concept go</span>
+        <span class="c1"># We use different np.arrays for each tuple element</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_capacity</span><span class="p">,</span> <span class="n">num_states</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_capacity</span><span class="p">,</span> <span class="n">num_actions</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reward_buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_capacity</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_state_buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_capacity</span><span class="p">,</span> <span class="n">num_states</span><span class="p">))</span>
+
+    <span class="c1"># Takes (s,a,r,s&#39;) obervation tuple as input</span>
+    <span class="k">def</span> <span class="nf">record</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs_tuple</span><span class="p">):</span>
+        <span class="c1"># Set index to zero if buffer_capacity is exceeded,</span>
+        <span class="c1"># replacing old records</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_counter</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_capacity</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_buffer</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">obs_tuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_buffer</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">obs_tuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reward_buffer</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">obs_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">next_state_buffer</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">obs_tuple</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">buffer_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># Eager execution is turned on by default in TensorFlow 2. Decorating with tf.function allows</span>
+    <span class="c1"># TensorFlow to build a static graph out of the logic and computations in our function.</span>
+    <span class="c1"># This provides a large speed up for blocks of code that contain many small TensorFlow operations such as this one.</span>
+    <span class="nd">@tf</span><span class="o">.</span><span class="n">function</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">state_batch</span><span class="p">,</span> <span class="n">action_batch</span><span class="p">,</span> <span class="n">reward_batch</span><span class="p">,</span> <span class="n">next_state_batch</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># Training and updating Actor &amp; Critic networks.</span>
+        <span class="c1"># See Pseudo Code.</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">tape</span><span class="p">:</span>
+            <span class="n">target_actions</span> <span class="o">=</span> <span class="n">target_actor</span><span class="p">(</span><span class="n">next_state_batch</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">reward_batch</span> <span class="o">+</span> <span class="n">gamma</span> <span class="o">*</span> <span class="n">target_critic</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">next_state_batch</span><span class="p">,</span> <span class="n">target_actions</span><span class="p">],</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="n">critic_value</span> <span class="o">=</span> <span class="n">critic_model</span><span class="p">([</span><span class="n">state_batch</span><span class="p">,</span> <span class="n">action_batch</span><span class="p">],</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">critic_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">critic_value</span><span class="p">))</span>
+
+        <span class="n">critic_grad</span> <span class="o">=</span> <span class="n">tape</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">critic_loss</span><span class="p">,</span> <span class="n">critic_model</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">)</span>
+        <span class="n">critic_optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">critic_grad</span><span class="p">,</span> <span class="n">critic_model</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">GradientTape</span><span class="p">()</span> <span class="k">as</span> <span class="n">tape</span><span class="p">:</span>
+            <span class="n">actions</span> <span class="o">=</span> <span class="n">actor_model</span><span class="p">(</span><span class="n">state_batch</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">critic_value</span> <span class="o">=</span> <span class="n">critic_model</span><span class="p">([</span><span class="n">state_batch</span><span class="p">,</span> <span class="n">actions</span><span class="p">],</span> <span class="n">training</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="c1"># Used `-value` as we want to maximize the value given</span>
+            <span class="c1"># by the critic for our actions</span>
+            <span class="n">actor_loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">critic_value</span><span class="p">)</span>
+
+        <span class="n">actor_grad</span> <span class="o">=</span> <span class="n">tape</span><span class="o">.</span><span class="n">gradient</span><span class="p">(</span><span class="n">actor_loss</span><span class="p">,</span> <span class="n">actor_model</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">)</span>
+        <span class="n">actor_optimizer</span><span class="o">.</span><span class="n">apply_gradients</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">actor_grad</span><span class="p">,</span> <span class="n">actor_model</span><span class="o">.</span><span class="n">trainable_variables</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># We compute the loss and update parameters</span>
+    <span class="k">def</span> <span class="nf">learn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Get sampling range</span>
+        <span class="n">record_range</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer_counter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer_capacity</span><span class="p">)</span>
+        <span class="c1"># Randomly sample indices</span>
+        <span class="n">batch_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">record_range</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
+
+        <span class="c1"># Convert to tensors</span>
+        <span class="n">state_batch</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state_buffer</span><span class="p">[</span><span class="n">batch_indices</span><span class="p">])</span>
+        <span class="n">action_batch</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">action_buffer</span><span class="p">[</span><span class="n">batch_indices</span><span class="p">])</span>
+        <span class="n">reward_batch</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reward_buffer</span><span class="p">[</span><span class="n">batch_indices</span><span class="p">])</span>
+        <span class="n">reward_batch</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">reward_batch</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">next_state_batch</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">next_state_buffer</span><span class="p">[</span><span class="n">batch_indices</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">state_batch</span><span class="p">,</span> <span class="n">action_batch</span><span class="p">,</span> <span class="n">reward_batch</span><span class="p">,</span> <span class="n">next_state_batch</span><span class="p">)</span>
+
+
+<span class="c1"># This update target parameters slowly</span>
+<span class="c1"># Based on rate `tau`, which is much less than one.</span>
+<span class="nd">@tf</span><span class="o">.</span><span class="n">function</span>
+<span class="k">def</span> <span class="nf">update_target</span><span class="p">(</span><span class="n">target_weights</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">tau</span><span class="p">):</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">target_weights</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+        <span class="n">a</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">tau</span> <span class="o">+</span> <span class="n">a</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">tau</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here we define the Actor and Critic networks. These are basic Dense models
+with <code>ReLU</code> activation.</p>
+<p>Note: We need the initialization for last layer of the Actor to be between
+<code>-0.003</code> and <code>0.003</code> as this prevents us from getting <code>1</code> or <code>-1</code> output values in
+the initial stages, which would squash our gradients to zero,
+as we use the <code>tanh</code> activation.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_actor</span><span class="p">():</span>
+    <span class="c1"># Initialize weights between -3e-3 and 3-e3</span>
+    <span class="n">last_init</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">random_uniform_initializer</span><span class="p">(</span><span class="n">minval</span><span class="o">=-</span><span class="mf">0.003</span><span class="p">,</span> <span class="n">maxval</span><span class="o">=</span><span class="mf">0.003</span><span class="p">)</span>
+
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">num_states</span><span class="p">,))</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)(</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)(</span><span class="n">out</span><span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;tanh&quot;</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">last_init</span><span class="p">)(</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="c1"># Our upper bound is 2.0 for Pendulum.</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">outputs</span> <span class="o">*</span> <span class="n">upper_bound</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span>
+
+
+<span class="k">def</span> <span class="nf">get_critic</span><span class="p">():</span>
+    <span class="c1"># State as input</span>
+    <span class="n">state_input</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">num_states</span><span class="p">))</span>
+    <span class="n">state_out</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)(</span><span class="n">state_input</span><span class="p">)</span>
+    <span class="n">state_out</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)(</span><span class="n">state_out</span><span class="p">)</span>
+
+    <span class="c1"># Action as input</span>
+    <span class="n">action_input</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">num_actions</span><span class="p">))</span>
+    <span class="n">action_out</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)(</span><span class="n">action_input</span><span class="p">)</span>
+
+    <span class="c1"># Both are passed through seperate layer before concatenating</span>
+    <span class="n">concat</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Concatenate</span><span class="p">()([</span><span class="n">state_out</span><span class="p">,</span> <span class="n">action_out</span><span class="p">])</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)(</span><span class="n">concat</span><span class="p">)</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">)(</span><span class="n">out</span><span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">)(</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="c1"># Outputs single value for give state-action</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">([</span><span class="n">state_input</span><span class="p">,</span> <span class="n">action_input</span><span class="p">],</span> <span class="n">outputs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><code>policy()</code> returns an action sampled from our Actor network plus some noise for
+exploration.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">policy</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">noise_object</span><span class="p">):</span>
+    <span class="n">sampled_actions</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">actor_model</span><span class="p">(</span><span class="n">state</span><span class="p">))</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="n">noise_object</span><span class="p">()</span>
+    <span class="c1"># Adding noise to action</span>
+    <span class="n">sampled_actions</span> <span class="o">=</span> <span class="n">sampled_actions</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span> <span class="o">+</span> <span class="n">noise</span>
+
+    <span class="c1"># We make sure action is within bounds</span>
+    <span class="n">legal_action</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sampled_actions</span><span class="p">,</span> <span class="n">lower_bound</span><span class="p">,</span> <span class="n">upper_bound</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">legal_action</span><span class="p">)]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Training-hyperparameters">Training hyperparameters<a class="anchor-link" href="#Training-hyperparameters"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">std_dev</span> <span class="o">=</span> <span class="mf">0.2</span>
+<span class="n">ou_noise</span> <span class="o">=</span> <span class="n">OUActionNoise</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">std_deviation</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">std_dev</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+
+<span class="n">actor_model</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
+<span class="n">critic_model</span> <span class="o">=</span> <span class="n">get_critic</span><span class="p">()</span>
+
+<span class="n">target_actor</span> <span class="o">=</span> <span class="n">get_actor</span><span class="p">()</span>
+<span class="n">target_critic</span> <span class="o">=</span> <span class="n">get_critic</span><span class="p">()</span>
+
+<span class="c1"># Making the weights equal initially</span>
+<span class="n">target_actor</span><span class="o">.</span><span class="n">set_weights</span><span class="p">(</span><span class="n">actor_model</span><span class="o">.</span><span class="n">get_weights</span><span class="p">())</span>
+<span class="n">target_critic</span><span class="o">.</span><span class="n">set_weights</span><span class="p">(</span><span class="n">critic_model</span><span class="o">.</span><span class="n">get_weights</span><span class="p">())</span>
+
+<span class="c1"># Learning rate for actor-critic models</span>
+<span class="n">critic_lr</span> <span class="o">=</span> <span class="mf">0.002</span>
+<span class="n">actor_lr</span> <span class="o">=</span> <span class="mf">0.001</span>
+
+<span class="n">critic_optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">critic_lr</span><span class="p">)</span>
+<span class="n">actor_optimizer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Adam</span><span class="p">(</span><span class="n">actor_lr</span><span class="p">)</span>
+
+<span class="n">total_episodes</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="c1"># Discount factor for future rewards</span>
+<span class="n">gamma</span> <span class="o">=</span> <span class="mf">0.99</span>
+<span class="c1"># Used to update target networks</span>
+<span class="n">tau</span> <span class="o">=</span> <span class="mf">0.005</span>
+
+<span class="n">buffer</span> <span class="o">=</span> <span class="n">Buffer</span><span class="p">(</span><span class="mi">50000</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Now we implement our main training loop, and iterate over episodes.
+We sample actions using <code>policy()</code> and train with <code>learn()</code> at each time step,
+along with updating the Target networks at a rate <code>tau</code>.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">ep_reward_list</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1"># To store average reward history of last few episodes</span>
+<span class="n">avg_reward_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># Takes about 4 min to train</span>
+<span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">total_episodes</span><span class="p">):</span>
+
+    <span class="n">prev_state</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="n">episodic_reward</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="c1"># Uncomment this to see the Actor in action</span>
+        <span class="c1"># But not in a python notebook.</span>
+        <span class="c1"># env.render()</span>
+
+        <span class="n">tf_prev_state</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">prev_state</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">action</span> <span class="o">=</span> <span class="n">policy</span><span class="p">(</span><span class="n">tf_prev_state</span><span class="p">,</span> <span class="n">ou_noise</span><span class="p">)</span>
+        <span class="c1"># Recieve state and reward from environment.</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+
+        <span class="n">buffer</span><span class="o">.</span><span class="n">record</span><span class="p">((</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">reward</span><span class="p">,</span> <span class="n">state</span><span class="p">))</span>
+        <span class="n">episodic_reward</span> <span class="o">+=</span> <span class="n">reward</span>
+
+        <span class="n">buffer</span><span class="o">.</span><span class="n">learn</span><span class="p">()</span>
+        <span class="n">update_target</span><span class="p">(</span><span class="n">target_actor</span><span class="o">.</span><span class="n">variables</span><span class="p">,</span> <span class="n">actor_model</span><span class="o">.</span><span class="n">variables</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+        <span class="n">update_target</span><span class="p">(</span><span class="n">target_critic</span><span class="o">.</span><span class="n">variables</span><span class="p">,</span> <span class="n">critic_model</span><span class="o">.</span><span class="n">variables</span><span class="p">,</span> <span class="n">tau</span><span class="p">)</span>
+
+        <span class="c1"># End this episode when `done` is True</span>
+        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="k">break</span>
+
+        <span class="n">prev_state</span> <span class="o">=</span> <span class="n">state</span>
+
+    <span class="n">ep_reward_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">episodic_reward</span><span class="p">)</span>
+
+    <span class="c1"># Mean of last 40 episodes</span>
+    <span class="n">avg_reward</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ep_reward_list</span><span class="p">[</span><span class="o">-</span><span class="mi">40</span><span class="p">:])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Episode * </span><span class="si">{}</span><span class="s2"> * Avg Reward is ==&gt; </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ep</span><span class="p">,</span> <span class="n">avg_reward</span><span class="p">))</span>
+    <span class="n">avg_reward_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">avg_reward</span><span class="p">)</span>
+
+<span class="c1"># Plotting graph</span>
+<span class="c1"># Episodes versus Avg. Rewards</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">avg_reward_list</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Episode&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;Avg. Epsiodic Reward&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Episode * 0 * Avg Reward is ==&gt; -1031.393801751828
+Episode * 1 * Avg Reward is ==&gt; -1001.4122969452699
+Episode * 2 * Avg Reward is ==&gt; -1154.0194837596487
+Episode * 3 * Avg Reward is ==&gt; -1274.9962364158325
+Episode * 4 * Avg Reward is ==&gt; -1324.8200599627812
+Episode * 5 * Avg Reward is ==&gt; -1357.11072936987
+Episode * 6 * Avg Reward is ==&gt; -1370.2358034379813
+Episode * 7 * Avg Reward is ==&gt; -1386.4023073510496
+Episode * 8 * Avg Reward is ==&gt; -1365.4480094489163
+Episode * 9 * Avg Reward is ==&gt; -1351.5652485936698
+Episode * 10 * Avg Reward is ==&gt; -1333.5145997501013
+Episode * 11 * Avg Reward is ==&gt; -1303.451390076461
+Episode * 12 * Avg Reward is ==&gt; -1281.5195446596695
+Episode * 13 * Avg Reward is ==&gt; -1297.078297740523
+Episode * 14 * Avg Reward is ==&gt; -1261.1109902227197
+Episode * 15 * Avg Reward is ==&gt; -1205.992082658429
+Episode * 16 * Avg Reward is ==&gt; -1172.8276662540202
+Episode * 17 * Avg Reward is ==&gt; -1122.3378522854046
+Episode * 18 * Avg Reward is ==&gt; -1069.848163210649
+Episode * 19 * Avg Reward is ==&gt; -1022.682194186561
+Episode * 20 * Avg Reward is ==&gt; -980.0395190574376
+Episode * 21 * Avg Reward is ==&gt; -947.8407929379409
+Episode * 22 * Avg Reward is ==&gt; -911.7253420883317
+Episode * 23 * Avg Reward is ==&gt; -878.9710012518927
+Episode * 24 * Avg Reward is ==&gt; -853.5142851202367
+Episode * 25 * Avg Reward is ==&gt; -825.3216031593131
+Episode * 26 * Avg Reward is ==&gt; -810.0207557196541
+Episode * 27 * Avg Reward is ==&gt; -781.1428586375083
+Episode * 28 * Avg Reward is ==&gt; -762.5322797332663
+Episode * 29 * Avg Reward is ==&gt; -745.097706307817
+Episode * 30 * Avg Reward is ==&gt; -728.5102987329069
+Episode * 31 * Avg Reward is ==&gt; -709.2964223924703
+Episode * 32 * Avg Reward is ==&gt; -691.6155720428305
+Episode * 33 * Avg Reward is ==&gt; -674.7314798578614
+Episode * 34 * Avg Reward is ==&gt; -658.909541431935
+Episode * 35 * Avg Reward is ==&gt; -647.123081326658
+Episode * 36 * Avg Reward is ==&gt; -632.9488448541059
+Episode * 37 * Avg Reward is ==&gt; -622.9841800962644
+Episode * 38 * Avg Reward is ==&gt; -612.9685473247998
+Episode * 39 * Avg Reward is ==&gt; -600.6190062215062
+Episode * 40 * Avg Reward is ==&gt; -577.8898853202488
+Episode * 41 * Avg Reward is ==&gt; -559.5322415467996
+Episode * 42 * Avg Reward is ==&gt; -530.1608050977984
+Episode * 43 * Avg Reward is ==&gt; -489.2389927626553
+Episode * 44 * Avg Reward is ==&gt; -454.2296784750973
+Episode * 45 * Avg Reward is ==&gt; -424.8678724622192
+Episode * 46 * Avg Reward is ==&gt; -391.64818676538954
+Episode * 47 * Avg Reward is ==&gt; -357.27515059401014
+Episode * 48 * Avg Reward is ==&gt; -327.372257586571
+Episode * 49 * Avg Reward is ==&gt; -299.8467998713595
+Episode * 50 * Avg Reward is ==&gt; -274.12247684731597
+Episode * 51 * Avg Reward is ==&gt; -258.3670836650724
+Episode * 52 * Avg Reward is ==&gt; -238.80482127974665
+Episode * 53 * Avg Reward is ==&gt; -204.36322482809683
+Episode * 54 * Avg Reward is ==&gt; -194.444973104481
+Episode * 55 * Avg Reward is ==&gt; -188.07203262935548
+Episode * 56 * Avg Reward is ==&gt; -178.25689664249612
+Episode * 57 * Avg Reward is ==&gt; -177.67305067466972
+Episode * 58 * Avg Reward is ==&gt; -177.71701811221564
+Episode * 59 * Avg Reward is ==&gt; -183.4136032571859
+Episode * 60 * Avg Reward is ==&gt; -183.38901553575835
+Episode * 61 * Avg Reward is ==&gt; -182.76876694387556
+Episode * 62 * Avg Reward is ==&gt; -183.0613280611546
+Episode * 63 * Avg Reward is ==&gt; -180.11965665287715
+Episode * 64 * Avg Reward is ==&gt; -177.29273047135922
+Episode * 65 * Avg Reward is ==&gt; -177.275594406153
+Episode * 66 * Avg Reward is ==&gt; -170.20176925991896
+Episode * 67 * Avg Reward is ==&gt; -173.38746108007717
+Episode * 68 * Avg Reward is ==&gt; -167.58193882136914
+Episode * 69 * Avg Reward is ==&gt; -164.88172375764805
+Episode * 70 * Avg Reward is ==&gt; -162.31132720868587
+Episode * 71 * Avg Reward is ==&gt; -162.62845895030824
+Episode * 72 * Avg Reward is ==&gt; -162.67011047291265
+Episode * 73 * Avg Reward is ==&gt; -162.95685043383276
+Episode * 74 * Avg Reward is ==&gt; -162.9896585287749
+Episode * 75 * Avg Reward is ==&gt; -162.9797011416734
+Episode * 76 * Avg Reward is ==&gt; -163.0534450541733
+Episode * 77 * Avg Reward is ==&gt; -162.67042925824768
+Episode * 78 * Avg Reward is ==&gt; -159.9903671436885
+Episode * 79 * Avg Reward is ==&gt; -166.12894462117475
+Episode * 80 * Avg Reward is ==&gt; -171.3963445682386
+Episode * 81 * Avg Reward is ==&gt; -168.549219348753
+Episode * 82 * Avg Reward is ==&gt; -164.48069166528393
+Episode * 83 * Avg Reward is ==&gt; -167.40561393178672
+Episode * 84 * Avg Reward is ==&gt; -167.2909600120499
+Episode * 85 * Avg Reward is ==&gt; -164.81844293753457
+Episode * 86 * Avg Reward is ==&gt; -161.90873991919034
+Episode * 87 * Avg Reward is ==&gt; -167.62760766886876
+Episode * 88 * Avg Reward is ==&gt; -173.71554517943224
+Episode * 89 * Avg Reward is ==&gt; -176.3859613883104
+Episode * 90 * Avg Reward is ==&gt; -176.37209561952477
+Episode * 91 * Avg Reward is ==&gt; -173.60776050563078
+Episode * 92 * Avg Reward is ==&gt; -192.10167578642003
+Episode * 93 * Avg Reward is ==&gt; -218.60407233426946
+Episode * 94 * Avg Reward is ==&gt; -222.25665948868027
+Episode * 95 * Avg Reward is ==&gt; -225.39201869169375
+Episode * 96 * Avg Reward is ==&gt; -222.3098764216764
+Episode * 97 * Avg Reward is ==&gt; -222.43985589420194
+Episode * 98 * Avg Reward is ==&gt; -225.756069599307
+Episode * 99 * Avg Reward is ==&gt; -222.82292711548658
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+" />
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>If training proceeds correctly, the average episodic reward will increase with time.</p>
+<p>Feel free to try different learning rates, <code>tau</code> values, and architectures for the
+Actor and Critic networks.</p>
+<p>The Inverted Pendulum problem has low complexity, but DDPG work great on many other
+problems.</p>
+<p>Another great environment to try this on is <code>LunarLandingContinuous-v2</code>, but it will take
+more episodes to obtain good results.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">actor_model</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="s2">&quot;pendulum_actor.h5&quot;</span><span class="p">)</span>
+<span class="n">critic_model</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="s2">&quot;pendulum_critic.h5&quot;</span><span class="p">)</span>
+
+<span class="n">target_actor</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="s2">&quot;pendulum_target_actor.h5&quot;</span><span class="p">)</span>
+<span class="n">target_critic</span><span class="o">.</span><span class="n">save_weights</span><span class="p">(</span><span class="s2">&quot;pendulum_target_critic.h5&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>apt-get -qq install tree
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Selecting previously unselected package tree.
+(Reading database ... 157584 files and directories currently installed.)
+Preparing to unpack .../tree_1.7.0-5_amd64.deb ...
+Unpacking tree (1.7.0-5) ...
+Setting up tree (1.7.0-5) ...
+Processing triggers for man-db (2.8.3-2ubuntu0.1) ...
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>tree -h --du -C .
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-blue-intense-fg ansi-bold">.</span>
+├── [279K]  pendulum_actor.h5
+├── [351K]  pendulum_critic.h5
+├── [279K]  pendulum_target_actor.h5
+└── [351K]  pendulum_target_critic.h5
+
+ 1.2M used in 0 directories, 4 files
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>pip install -q watermark
+<span class="o">%</span><span class="k">reload_ext</span> watermark
+<span class="o">%</span><span class="k">watermark</span> -a &quot;Sparsh A.&quot; -m -iv -u -t -d
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Author: Sparsh A.
+
+Last updated: 2021-11-27 06:36:34
+
+Compiler    : GCC 7.5.0
+OS          : Linux
+Release     : 5.4.104+
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 2
+Architecture: 64bit
+
+gym       : 0.17.3
+keras     : 2.7.0
+matplotlib: 3.2.2
+IPython   : 5.5.0
+numpy     : 1.19.5
+tensorflow: 2.7.0
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>END</strong></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/20/ddpg-pendulum.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

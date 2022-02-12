@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Data Poisoning Attacks on Factorization-Based Collaborative Filtering | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Data Poisoning Attacks on Factorization-Based Collaborative Filtering" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/20/poison-attack.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/20/poison-attack.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-20T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Data Poisoning Attacks on Factorization-Based Collaborative Filtering" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-20T00:00:00-06:00","datePublished":"2022-01-20T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Data Poisoning Attacks on Factorization-Based Collaborative Filtering","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/20/poison-attack.html"},"url":"https://nb.recohut.com/2022/01/20/poison-attack.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Data Poisoning Attacks on Factorization-Based Collaborative Filtering</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-20T00:00:00-06:00" itemprop="datePublished">
+        Jan 20, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      58 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-20-poison-attack.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-20-poison-attack.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-20-poison-attack.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-20-poison-attack.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-20-poison-attack.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Dataset">Dataset<a class="anchor-link" href="#Dataset"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sparse</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span>
+
+
+<span class="k">def</span> <span class="nf">load_movielens_ratings</span><span class="p">(</span><span class="n">ratings_file</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">ratings_file</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">ratings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+        <span class="c1"># for line in islice(f, 1, None):  </span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)[:</span><span class="mi">3</span><span class="p">]</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">l</span><span class="p">))</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">line</span><span class="p">]</span>
+            <span class="n">ratings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ratings</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ratings</span>
+
+<span class="k">def</span> <span class="nf">build_user_item_matrix</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">ratings</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Build user-item matrix</span>
+<span class="sd">    Return</span>
+<span class="sd">    ------</span>
+<span class="sd">        sparse matrix with shape (n_user, n_item)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">row_ind</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">col_ind</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sparse</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">row_ind</span><span class="p">,</span> <span class="n">col_ind</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Evaluation">Evaluation<a class="anchor-link" href="#Evaluation"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">max_rating</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">min_rating</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">u_features</span> <span class="o">=</span> <span class="n">user_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
+    <span class="n">i_features</span> <span class="o">=</span> <span class="n">item_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">preds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">u_features</span> <span class="o">*</span> <span class="n">i_features</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">mean_rating_</span>
+    <span class="k">if</span> <span class="n">max_rating</span><span class="p">:</span>
+        <span class="n">preds</span><span class="p">[</span><span class="n">preds</span> <span class="o">&gt;</span> <span class="n">max_rating</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_rating</span>
+    <span class="k">if</span> <span class="n">min_rating</span><span class="p">:</span>
+        <span class="n">preds</span><span class="p">[</span><span class="n">preds</span> <span class="o">&lt;</span> <span class="n">min_rating</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_rating</span>
+    <span class="k">return</span> <span class="n">preds</span>
+
+<span class="k">def</span> <span class="nf">RMSE</span><span class="p">(</span><span class="n">estimation</span><span class="p">,</span> <span class="n">truth</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Root Mean Square Error&quot;&quot;&quot;</span>
+    <span class="n">estimation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">estimation</span><span class="p">)</span>
+    <span class="n">truth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">(</span><span class="n">truth</span><span class="p">)</span>
+    <span class="n">num_sample</span> <span class="o">=</span> <span class="n">estimation</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="c1"># sum square error</span>
+    <span class="n">sse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">truth</span> <span class="o">-</span> <span class="n">estimation</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">sse</span><span class="p">,</span> <span class="n">num_sample</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Compute-gradients">Compute gradients<a class="anchor-link" href="#Compute-gradients"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">xrange</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">inv</span>
+
+
+<span class="c1">#compute the gradient of the hyrid utility function</span>
+<span class="k">def</span> <span class="nf">compute_utility_grad</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">,</span><span class="n">user_features_origin_</span><span class="p">,</span> <span class="n">item_features_origin_</span><span class="p">,</span> \
+    <span class="n">w_j0</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">u1</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">u2</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">):</span>
+    <span class="n">ratings_csr_</span> <span class="o">=</span> <span class="n">build_user_item_matrix</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">train</span><span class="p">)</span>
+    <span class="n">grad_av</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">user_features_origin_</span><span class="p">,</span> <span class="n">item_features_origin_</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_user</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">item_idx</span> <span class="o">=</span> <span class="n">ratings_csr_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="n">grad_av</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">item_idx</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">avg_rating</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="o">.</span><span class="n">T</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">perfer_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">avg_rating</span> <span class="o">&gt;</span> <span class="mf">0.03</span><span class="p">)</span>
+    <span class="n">J0</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">perfer_index</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">grad_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">])</span>
+    <span class="n">grad_in</span><span class="p">[:,</span> <span class="n">J0</span><span class="p">]</span> <span class="o">=</span> <span class="n">w_j0</span> 
+    <span class="n">grad_hy</span> <span class="o">=</span> <span class="n">u1</span> <span class="o">*</span> <span class="n">grad_av</span> <span class="o">+</span> <span class="n">u2</span> <span class="o">*</span> <span class="n">grad_in</span>
+    <span class="k">return</span> <span class="n">grad_hy</span>
+
+<span class="k">def</span> <span class="nf">compute_grad</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">mal_user</span><span class="p">,</span> <span class="n">mal_ratings</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">mal_user_features_</span><span class="p">,</span> \
+    <span class="n">item_features_</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">user_features_origin_</span><span class="p">,</span> <span class="n">item_features_origin_</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    A : inv(lamda_v * Ik + sum(u_i* u_i))   (for u_i of item j)  k * k</span>
+<span class="sd">    u_i : 1 * k</span>
+<span class="sd">    grad_model: d(u_i * v_j.T)/d(M_ij) = u_i * A * u_i.T</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">grad_R</span> <span class="o">=</span> <span class="n">compute_utility_grad</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> \
+            <span class="n">item_features_</span><span class="p">,</span> <span class="n">user_features_origin_</span><span class="p">,</span> <span class="n">item_features_origin_</span><span class="p">)</span>
+    <span class="n">ratings_csr_</span> <span class="o">=</span> <span class="n">build_user_item_matrix</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">train</span><span class="p">)</span>
+    <span class="n">ratings_csc_</span> <span class="o">=</span> <span class="n">ratings_csr_</span><span class="o">.</span><span class="n">tocsc</span><span class="p">()</span>
+    <span class="n">mal_ratings_csr_</span> <span class="o">=</span> <span class="n">build_user_item_matrix</span><span class="p">(</span><span class="n">mal_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">mal_ratings</span><span class="p">)</span>
+    <span class="n">mal_ratings_csc_</span> <span class="o">=</span> <span class="n">mal_ratings_csr_</span><span class="o">.</span><span class="n">tocsc</span><span class="p">()</span>
+    <span class="n">grad_total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">mal_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">mal_user</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_item</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Computing the </span><span class="si">%d</span><span class="s1">th malicious user, the </span><span class="si">%d</span><span class="s1"> item(total users: </span><span class="si">%d</span><span class="s1">, total items: </span><span class="si">%d</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">))</span>
+            <span class="n">user_idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ratings_csc_</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+            <span class="n">mal_user_idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mal_ratings_csc_</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+            <span class="n">user_features</span> <span class="o">=</span> <span class="n">user_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">user_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">mal_user_features</span> <span class="o">=</span> <span class="n">mal_user_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">mal_user_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">U</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">user_features</span><span class="p">,</span> <span class="n">mal_user_features</span><span class="p">))</span>  
+            <span class="n">u_i</span> <span class="o">=</span> <span class="n">user_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">U</span><span class="p">)</span> <span class="o">+</span> <span class="n">lamda_v</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_feature</span><span class="p">)</span>  
+            <span class="n">A_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">u_i</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+            <span class="n">grad_model</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_user</span><span class="p">):</span>
+                <span class="n">u_m</span> <span class="o">=</span> <span class="n">user_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="n">grad_model</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">u_m</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">A</span><span class="p">),</span> <span class="n">u_i</span><span class="o">.</span><span class="n">T</span><span class="p">))</span>
+            <span class="n">grad_total</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">grad_model</span> <span class="o">*</span> <span class="n">grad_R</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">grad_total</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="ALS-Optimize">ALS Optimize<a class="anchor-link" href="#ALS-Optimize"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">xrange</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">inv</span>
+
+
+<span class="k">def</span> <span class="nf">_update_user_feature</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">ratings_csr_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    n_u : number of rating items of user i</span>
+<span class="sd">    item_features: n_u * n_feature (108 * 8)  </span>
+<span class="sd">    A_i = v_j&#39; * u_i + lamda_u * I(n_feature)</span>
+<span class="sd">    V_i = sum(M_ij * v_j)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_user</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">item_idx</span> <span class="o">=</span> <span class="n">ratings_csr_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="n">n_u</span> <span class="o">=</span> <span class="n">item_idx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n_u</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">item_features</span> <span class="o">=</span> <span class="n">item_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">item_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
+
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">ratings_csr_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">mean_rating_</span> 
+        <span class="n">A_i</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">item_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">item_features</span><span class="p">)</span> <span class="o">+</span>
+                   <span class="n">lamda_u</span> <span class="o">*</span> <span class="n">n_u</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_feature</span><span class="p">))</span>
+        <span class="n">V_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">item_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span>
+        <span class="n">user_features_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">A_i</span><span class="p">),</span> <span class="n">V_i</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_update_item_feature</span><span class="p">(</span><span class="n">n_item</span><span class="p">,</span> <span class="n">ratings_csc_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    n_i : number of rating items of item j</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_item</span><span class="p">):</span>
+        <span class="n">user_idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ratings_csc_</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="n">n_i</span> <span class="o">=</span> <span class="n">user_idx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n_i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">user_features</span> <span class="o">=</span> <span class="n">user_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">user_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">ratings_csc_</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">mean_rating_</span>
+    
+        <span class="n">A_j</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">user_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">user_features</span><span class="p">)</span>  <span class="o">+</span> <span class="n">lamda_v</span> <span class="o">*</span> <span class="n">n_i</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_feature</span><span class="p">))</span>
+        <span class="n">V_j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">user_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span>
+        <span class="n">item_features_</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">A_j</span><span class="p">),</span> <span class="n">V_j</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">ALS_origin</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">ratings</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">):</span>
+    <span class="n">ratings_csr_</span> <span class="o">=</span> <span class="n">build_user_item_matrix</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span>
+    <span class="n">ratings_csc_</span> <span class="o">=</span> <span class="n">ratings_csr_</span><span class="o">.</span><span class="n">tocsc</span><span class="p">()</span>
+    <span class="n">_update_user_feature</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">ratings_csr_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">)</span>
+    <span class="n">_update_item_feature</span><span class="p">(</span><span class="n">n_item</span><span class="p">,</span> <span class="n">ratings_csc_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">_update_user_feature</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">ratings_csr_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    n_u : number of rating items of user i</span>
+<span class="sd">    item_features: n_u * n_feature (108 * 8)  </span>
+<span class="sd">    A_i = v_j&#39; * u_i + lamda_u * I(n_feature)</span>
+<span class="sd">    V_i = sum(M_ij * v_j)</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_user</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">item_idx</span> <span class="o">=</span> <span class="n">ratings_csr_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="n">n_u</span> <span class="o">=</span> <span class="n">item_idx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n_u</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">item_features</span> <span class="o">=</span> <span class="n">item_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">item_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
+
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">ratings_csr_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">mean_rating_</span> 
+        <span class="n">A_i</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">item_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">item_features</span><span class="p">)</span> <span class="o">+</span>
+                   <span class="n">lamda_u</span> <span class="o">*</span> <span class="n">n_u</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_feature</span><span class="p">))</span>
+        <span class="n">V_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">item_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span>
+        <span class="n">user_features_</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">A_i</span><span class="p">),</span> <span class="n">V_i</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_update_mal_feature</span><span class="p">(</span><span class="n">mal_user</span><span class="p">,</span> <span class="n">mal_ratings_csr_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">mal_mean_rating_</span><span class="p">,</span> <span class="n">mal_user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">mal_user</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">item_idx</span> <span class="o">=</span> <span class="n">mal_ratings_csr_</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="n">n_m</span> <span class="o">=</span> <span class="n">item_idx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n_m</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">item_features</span> <span class="o">=</span> <span class="n">item_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">item_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
+        
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">mal_ratings_csr_</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">mal_mean_rating_</span> 
+        <span class="n">A_i</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">item_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">item_features</span><span class="p">)</span> <span class="o">+</span>
+                   <span class="n">lamda_u</span> <span class="o">*</span> <span class="n">n_m</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_feature</span><span class="p">))</span>
+        <span class="n">V_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">item_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span>
+        <span class="n">mal_user_features_</span><span class="p">[</span><span class="n">m</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">A_i</span><span class="p">),</span> <span class="n">V_i</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_update_item_feature</span><span class="p">(</span><span class="n">n_item</span><span class="p">,</span> <span class="n">ratings_csc_</span><span class="p">,</span> <span class="n">mal_ratings_csc_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> \
+    <span class="n">mal_mean_rating_</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">mal_user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    n_i : number of rating items of item j</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_item</span><span class="p">):</span>
+        <span class="n">user_idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ratings_csc_</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="n">n_i</span> <span class="o">=</span> <span class="n">user_idx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">n_i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">user_features</span> <span class="o">=</span> <span class="n">user_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">user_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ratings</span> <span class="o">=</span> <span class="n">ratings_csc_</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">mean_rating_</span>
+        
+        <span class="n">mal_user_idx</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mal_ratings_csc_</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="n">m_i</span> <span class="o">=</span> <span class="n">mal_user_idx</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">m_i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">mal_user_features</span> <span class="o">=</span> <span class="n">mal_user_features_</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">mal_user_idx</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">mal_ratings</span> <span class="o">=</span> <span class="n">mal_ratings_csc_</span><span class="p">[:,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">mal_mean_rating_</span>
+
+        <span class="n">A_j</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">user_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">user_features</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mal_user_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">mal_user_features</span><span class="p">)</span> \
+                <span class="o">+</span> <span class="n">lamda_v</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_i</span> <span class="o">+</span> <span class="n">m_i</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_feature</span><span class="p">))</span>
+        <span class="n">V_j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">user_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mal_user_features</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">mal_ratings</span><span class="p">)</span>
+        <span class="n">item_features_</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">inv</span><span class="p">(</span><span class="n">A_j</span><span class="p">),</span> <span class="n">V_j</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">ALS</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">mal_user</span><span class="p">,</span> <span class="n">ratings</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">mal_mean_rating_</span><span class="p">,</span> <span class="n">mal_ratings</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> \
+    <span class="n">user_features_</span><span class="p">,</span> <span class="n">mal_user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">):</span>
+    <span class="n">ratings_csr_</span> <span class="o">=</span> <span class="n">build_user_item_matrix</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">ratings</span><span class="p">)</span>
+    <span class="n">ratings_csc_</span> <span class="o">=</span> <span class="n">ratings_csr_</span><span class="o">.</span><span class="n">tocsc</span><span class="p">()</span>
+    <span class="n">mal_ratings_csr_</span> <span class="o">=</span> <span class="n">build_user_item_matrix</span><span class="p">(</span><span class="n">mal_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">mal_ratings</span><span class="p">)</span>
+    <span class="n">mal_ratings_csc_</span> <span class="o">=</span> <span class="n">mal_ratings_csr_</span><span class="o">.</span><span class="n">tocsc</span><span class="p">()</span>
+
+    <span class="n">_update_user_feature</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">ratings_csr_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">)</span>
+    <span class="n">_update_mal_feature</span><span class="p">(</span><span class="n">mal_user</span><span class="p">,</span> <span class="n">mal_ratings_csr_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">mal_mean_rating_</span><span class="p">,</span> <span class="n">mal_user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">)</span>
+    <span class="n">_update_item_feature</span><span class="p">(</span><span class="n">n_item</span><span class="p">,</span> <span class="n">ratings_csc_</span><span class="p">,</span> <span class="n">mal_ratings_csc_</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> \
+    <span class="n">mal_mean_rating_</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">mal_user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Main">Main<a class="anchor-link" href="#Main"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="c1"># !unzip ml-20m.zip</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">files</span><span class="o">.</span><span class="n">grouplens</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">movielens</span><span class="o">/</span><span class="n">ml</span><span class="o">-</span><span class="mi">100</span><span class="n">k</span><span class="o">.</span><span class="n">zip</span>
+<span class="err">!</span><span class="n">unzip</span> <span class="n">ml</span><span class="o">-</span><span class="mi">100</span><span class="n">k</span><span class="o">.</span><span class="n">zip</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>ml-100k.zip         100%[===================&gt;]   4.70M  13.9MB/s    in 0.3s    
+Archive:  ml-100k.zip
+   creating: ml-100k/
+  inflating: ml-100k/allbut.pl       
+  inflating: ml-100k/mku.sh          
+  inflating: ml-100k/README          
+  inflating: ml-100k/u.data          
+  inflating: ml-100k/u.genre         
+  inflating: ml-100k/u.info          
+  inflating: ml-100k/u.item          
+  inflating: ml-100k/u.occupation    
+  inflating: ml-100k/u.user          
+  inflating: ml-100k/u1.base         
+  inflating: ml-100k/u1.test         
+  inflating: ml-100k/u2.base         
+  inflating: ml-100k/u2.test         
+  inflating: ml-100k/u3.base         
+  inflating: ml-100k/u3.test         
+  inflating: ml-100k/u4.base         
+  inflating: ml-100k/u4.test         
+  inflating: ml-100k/u5.base         
+  inflating: ml-100k/u5.test         
+  inflating: ml-100k/ua.base         
+  inflating: ml-100k/ua.test         
+  inflating: ml-100k/ub.base         
+  inflating: ml-100k/ub.test         
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p><div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">six.moves</span> <span class="kn">import</span> <span class="n">xrange</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <span class="n">RandomState</span>
+<span class="kn">from</span> <span class="nn">numpy.linalg</span> <span class="kn">import</span> <span class="n">inv</span>
+
+
+<span class="c1"># ratings_file = &#39;ml-20m/ratings.csv&#39;</span>
+<span class="n">ratings_file</span> <span class="o">=</span> <span class="s1">&#39;ml-100k/u.data&#39;</span>
+<span class="n">ratings</span> <span class="o">=</span> <span class="n">load_movielens_ratings</span><span class="p">(</span><span class="n">ratings_file</span><span class="p">)</span>
+<span class="n">rand_state</span> <span class="o">=</span> <span class="n">RandomState</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">max_rating</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ratings</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+<span class="n">min_rating</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ratings</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">])</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">parameters:</span>
+<span class="sd">lamda_u: the regularization parameter of user</span>
+<span class="sd">lamda_v: the regularization parameter of item</span>
+<span class="sd">alpha: the proportion of malicious users</span>
+<span class="sd">B: the items of malicious users rating</span>
+<span class="sd">n_iter: number of iteration</span>
+<span class="sd">converge: the least RMSE between two iterations</span>
+<span class="sd">train_pct: the proportion of train dataset</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">lamda_u</span> <span class="o">=</span> <span class="mf">5e-2</span>
+<span class="n">lamda_v</span> <span class="o">=</span> <span class="mf">5e-2</span>
+<span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.005</span>
+<span class="n">B</span> <span class="o">=</span> <span class="mi">25</span>
+<span class="n">n_iters</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">n_feature</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">last_rmse</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">converge</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">mal_item</span> <span class="o">=</span> <span class="n">B</span>
+<span class="c1"># split data to training &amp; testing</span>
+<span class="n">train_pct</span> <span class="o">=</span> <span class="mf">0.9</span>
+<span class="n">rand_state</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">ratings</span><span class="p">)</span>
+<span class="n">train_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">train_pct</span> <span class="o">*</span> <span class="n">ratings</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">train</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[:</span><span class="n">train_size</span><span class="p">]</span>
+<span class="n">validation</span> <span class="o">=</span> <span class="n">ratings</span><span class="p">[</span><span class="n">train_size</span><span class="p">:]</span>
+
+
+<span class="n">n_user</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">train</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="n">n_item</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">train</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span> 
+<span class="n">mal_user</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">n_user</span><span class="p">)</span> 
+
+
+<span class="c1"># add malicious users data</span>
+<span class="n">mal_ratings</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">mal_user</span><span class="p">):</span>
+    <span class="n">mal_user_idx</span> <span class="o">=</span> <span class="n">u</span>
+    <span class="n">mal_item_idx</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n_item</span><span class="p">),</span> <span class="n">mal_item</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">mal_item</span><span class="p">):</span>
+        <span class="n">mal_movie_idx</span> <span class="o">=</span> <span class="n">mal_item_idx</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">mal_rating</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">mal_ratings</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">mal_user_idx</span><span class="p">,</span> <span class="n">mal_movie_idx</span><span class="p">,</span> <span class="n">mal_rating</span><span class="p">])</span>
+        
+<span class="n">mal_ratings</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mal_ratings</span><span class="p">)</span>
+<span class="c1">#initialize the matrix U U~ and V </span>
+<span class="n">user_features_</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">)</span>
+<span class="n">mal_user_features_</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">mal_user</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">)</span>
+<span class="n">item_features_</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n_item</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">)</span>
+<span class="n">mean_rating_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">mal_mean_rating_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">mal_ratings</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">user_features_origin_</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">)</span>
+<span class="n">item_features_origin_</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="n">n_item</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">)</span>
+
+
+<span class="c1">#train origin model</span>
+<span class="k">def</span> <span class="nf">optimize_model_origin</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Start training model without data poisoning attacks!&quot;</span><span class="p">)</span>
+    <span class="n">last_rmse</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_iters</span><span class="p">):</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">ALS_origin</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> <span class="n">user_features_origin_</span><span class="p">,</span> <span class="n">item_features_origin_</span><span class="p">)</span>
+        <span class="n">train_preds</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">take</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">user_features_origin_</span><span class="p">,</span> <span class="n">item_features_origin_</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">)</span>
+        <span class="n">train_rmse</span> <span class="o">=</span> <span class="n">RMSE</span><span class="p">(</span><span class="n">train_preds</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The </span><span class="si">%d</span><span class="s2"> th iteration </span><span class="se">\t</span><span class="s2"> time: </span><span class="si">%d</span><span class="s2">s </span><span class="se">\t</span><span class="s2"> RMSE: </span><span class="si">%f</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="n">train_rmse</span><span class="p">))</span>
+        <span class="c1"># stop when converge</span>
+        <span class="k">if</span> <span class="n">last_rmse</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">train_rmse</span> <span class="o">-</span> <span class="n">last_rmse</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">converge</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">last_rmse</span> <span class="o">=</span> <span class="n">train_rmse</span>
+    <span class="k">return</span> <span class="n">last_rmse</span>
+
+
+<span class="c1">#train added attack data model</span>
+<span class="k">def</span> <span class="nf">optimize_model</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Start training model with data poisoning attacks!&quot;</span><span class="p">)</span>
+    <span class="n">last_rmse</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">n_iters</span><span class="p">):</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">ALS</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">mal_user</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">,</span> <span class="n">mal_mean_rating_</span><span class="p">,</span> <span class="n">mal_ratings</span><span class="p">,</span> <span class="n">lamda_u</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> \
+        <span class="n">user_features_</span><span class="p">,</span> <span class="n">mal_user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">)</span>
+        <span class="n">train_preds</span> <span class="o">=</span> <span class="n">predict</span><span class="p">(</span><span class="n">train</span><span class="o">.</span><span class="n">take</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="p">,</span> <span class="n">mean_rating_</span><span class="p">)</span>
+        <span class="n">train_rmse</span> <span class="o">=</span> <span class="n">RMSE</span><span class="p">(</span><span class="n">train_preds</span><span class="p">,</span> <span class="n">train</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The </span><span class="si">%d</span><span class="s2"> th iteration </span><span class="se">\t</span><span class="s2"> time: </span><span class="si">%d</span><span class="s2">s </span><span class="se">\t</span><span class="s2"> RMSE: </span><span class="si">%f</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="n">train_rmse</span><span class="p">))</span>
+        <span class="c1"># stop when converge</span>
+        <span class="k">if</span> <span class="n">last_rmse</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">train_rmse</span> <span class="o">-</span> <span class="n">last_rmse</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">converge</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">last_rmse</span> <span class="o">=</span> <span class="n">train_rmse</span>
+    <span class="k">return</span> <span class="n">last_rmse</span>
+
+
+<span class="c1">#using the algorithm of PGA to optimize the utility function</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">m_iters: number of iteration in PGA</span>
+<span class="sd">s_t: step size </span>
+<span class="sd">Lamda: the contraint of vector</span>
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="n">m_iters</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">s_t</span> <span class="o">=</span> <span class="mf">0.2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="n">m_iters</span><span class="p">])</span>
+<span class="n">converge</span> <span class="o">=</span> <span class="mf">1e-5</span>
+<span class="n">Lamda</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">last_rmse</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="c1">#optimize_model_origin()</span>
+<span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">xrange</span><span class="p">(</span><span class="n">m_iters</span><span class="p">):</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="c1">#optimize_model()</span>
+    <span class="n">grad_total</span> <span class="o">=</span> <span class="n">compute_grad</span><span class="p">(</span><span class="n">n_user</span><span class="p">,</span> <span class="n">n_item</span><span class="p">,</span> <span class="n">mal_user</span><span class="p">,</span> <span class="n">mal_ratings</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">user_features_</span><span class="p">,</span> <span class="n">mal_user_features_</span><span class="p">,</span> \
+                        <span class="n">item_features_</span><span class="p">,</span> <span class="n">lamda_v</span><span class="p">,</span> <span class="n">n_feature</span><span class="p">,</span> <span class="n">user_features_origin_</span><span class="p">,</span> <span class="n">item_features_origin_</span><span class="p">)</span>
+    <span class="n">mal_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">mal_user_features_</span><span class="p">,</span> <span class="n">item_features_</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">mal_data</span>
+    <span class="n">mal_data</span> <span class="o">+=</span>  <span class="n">grad_total</span> <span class="o">*</span> <span class="n">s_t</span><span class="p">[</span><span class="n">t</span><span class="p">]</span>
+    <span class="n">mal_data</span><span class="p">[</span><span class="n">mal_data</span> <span class="o">&gt;</span> <span class="n">Lamda</span><span class="p">]</span> <span class="o">=</span> <span class="n">Lamda</span>
+    <span class="n">mal_data</span><span class="p">[</span><span class="n">mal_data</span> <span class="o">&lt;</span> <span class="o">-</span> <span class="n">Lamda</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="n">Lamda</span>
+    <span class="n">rmse</span> <span class="o">=</span> <span class="n">RMSE</span><span class="p">(</span><span class="n">mal_data</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The </span><span class="si">%d</span><span class="s2"> th iteration </span><span class="se">\t</span><span class="s2"> time: </span><span class="si">%d</span><span class="s2">s </span><span class="se">\t</span><span class="s2"> RMSE: </span><span class="si">%f</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="n">rmse</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">last_rmse</span> <span class="ow">and</span> <span class="nb">abs</span><span class="p">(</span><span class="n">rmse</span> <span class="o">-</span> <span class="n">last_rmse</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">converge</span><span class="p">:</span>
+        <span class="k">break</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">last_rmse</span> <span class="o">=</span> <span class="n">rmse</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+</p>
+    </details>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 1 th iteration 	 time: 252s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 2 th iteration 	 time: 252s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 3 th iteration 	 time: 254s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 4 th iteration 	 time: 254s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 5 th iteration 	 time: 254s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 6 th iteration 	 time: 254s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 7 th iteration 	 time: 256s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 8 th iteration 	 time: 256s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 9 th iteration 	 time: 255s 	 RMSE: 0.000000 
+Computing the 0th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 0th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 1th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 2th malicious user, the 1600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 0 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 600 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 700 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 800 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 900 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1000 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1100 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1200 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1300 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1400 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1500 item(total users: 944, total items: 1683)
+Computing the 3th malicious user, the 1600 item(total users: 944, total items: 1683)
+The 10 th iteration 	 time: 256s 	 RMSE: 0.000000 
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/20/poison-attack.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

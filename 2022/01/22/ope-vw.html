@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Offline Policy Evaluation with VW Command Line | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Offline Policy Evaluation with VW Command Line" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/22/ope-vw.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/22/ope-vw.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-22T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Offline Policy Evaluation with VW Command Line" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-22T00:00:00-06:00","datePublished":"2022-01-22T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Offline Policy Evaluation with VW Command Line","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/22/ope-vw.html"},"url":"https://nb.recohut.com/2022/01/22/ope-vw.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Offline Policy Evaluation with VW Command Line</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-22T00:00:00-06:00" itemprop="datePublished">
+        Jan 22, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      13 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-22-ope-vw.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-22-ope-vw.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-22-ope-vw.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-22-ope-vw.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-22-ope-vw.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>VW implements several estimators to reduce policy evaluation to supervised learning-type evaluation. The simplest method, the direct method (DM), simply trains a regression model that estimates the cost (negative reward) of an (action, context) pair. As you might suspect, this method is generally biased, because the partial information problem means you typically see many more rewards for good actions than bad ones (assuming your production policy is working normally). Biased estimators should not be used for offline policy evaluation, but VW implements provably unbiased estimators like inverse propensity weighting (IPS) and doubly robust (DR) that can be used for this purpose.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Batch-scenario:-policy-evaluation-with-a-pre-trained-VW-policy,-cb-format-data">Batch scenario: policy evaluation with a pre-trained VW policy, cb-format data<a class="anchor-link" href="#Batch-scenario:-policy-evaluation-with-a-pre-trained-VW-policy,-cb-format-data"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let’s say you have collected the following bandit data from your production policy, and that the data is ordered such that the oldest data is first (don’t worry about the actual numbers in this toy example):</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<div class="highlight"><pre><span></span>1:1:0.5 | user_age:25
+2:0:0.5 | user_age:25
+2:1:0.5 | user_age:55
+2:1:0.5 | user_age:56
+2:1:0.5 | user_age:55
+2:1:0.5 | user_age:56
+1:1:0.5 | user_age:27
+2:0:0.5 | user_age:21
+2:0:0.5 | user_age:23
+2:0:0.5 | user_age:56
+2:1:0.5 | user_age:55
+2:1:0.5 | user_age:36
+1:1:0.5 | user_age:25
+2:0:0.5 | user_age:25
+2:1:0.5 | user_age:55
+2:1:0.5 | user_age:56
+2:1:0.5 | user_age:55
+2:1:0.5 | user_age:56
+1:1:0.5 | user_age:27
+2:0:0.5 | user_age:21
+2:0:0.5 | user_age:23
+2:0:0.5 | user_age:56
+2:1:0.5 | user_age:55
+2:1:0.5 | user_age:36
+</pre></div>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In order to do OPE, it is useful to think carefully about what you wish to evaluate. In a batch setting, you are interested in training a candidate policy and evaluating its performance on unseen data that is fresher than what you trained on. So, let’s split our data into two files. Starting from the oldest data first, we do e.g. and 70%/30% split, and save the results as train.dat and test.dat:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">writefile</span> <span class="n">train</span><span class="o">.</span><span class="n">dat</span>
+<span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">25</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">25</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">27</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">21</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">23</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">36</span>
+<span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">25</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">25</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Writing train.dat
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">writefile</span> <span class="n">test</span><span class="o">.</span><span class="n">dat</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">27</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">21</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">23</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">36</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Writing test.dat
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Before continuing, it is worth understanding that policy value estimators such as IPS, DM and DR aren’t only useful for policy value estimation. Since they provide us a way to fill in fake rewards for untaken actions, they allow us to reduce bandit learning to supervised learning, and used to train policies. For example, say you have a (biased) DM estimator. For each untaken action per round, you can predict a reward, thus forming a supervised learning example where the loss of each action is known (estimated). You can then train an importance-weighted classification model, or even a regression model that estimates costs of arms given contexts, and use these models as policies. This is, in fact, what VW does: estimators serve a dual purpose and are used not only for evaluation, but also optimisation/training.</p>
+<p>Now that we know that the same estimators that are used for OPE can also be used to train policies, let’s train a new candidate policy on the train set using e.g. IPS, and save the model as candidate-model.vw. In this instance we have two arms, so the command will look something like:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">vowpal</span><span class="o">-</span><span class="n">wabbit</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">vw</span> <span class="o">--</span><span class="n">cb</span> <span class="mi">2</span> <span class="o">--</span><span class="n">cb_type</span> <span class="n">ips</span> <span class="o">-</span><span class="n">d</span> <span class="n">train</span><span class="o">.</span><span class="n">dat</span> <span class="o">-</span><span class="n">f</span> <span class="n">candidate</span><span class="o">-</span><span class="n">model</span><span class="o">.</span><span class="n">vw</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>final_regressor = candidate-model.vw
+Num weight bits = 18
+learning rate = 0.5
+initial_t = 0
+power_t = 0.5
+using no cache
+Reading datafile = train.dat
+num sources = 1
+average  since         example        example  current  current  current
+loss     last          counter         weight    label  predict features
+2.000000 2.000000            1            1.0    known        1        2
+1.000000 0.000000            2            2.0    known        2        2
+1.000000 1.000000            4            4.0    known        1        2
+0.750000 0.500000            8            8.0    known        1        2
+0.500000 0.250000           16           16.0    known        1        2
+
+finished run
+number of examples per pass = 16
+passes used = 1
+weighted example sum = 16.000000
+weighted label sum = 0.000000
+average loss = 0.500000
+total feature number = 32
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The average loss above is of less interest to us in this scenario since we have a separate test set. Let’s load candidate-model.vw using -i and test against our test set. Remember to use the -t flag to disable learning, and to use the same cb_type as you did when training:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">vw</span> <span class="o">-</span><span class="n">i</span> <span class="n">candidate</span><span class="o">-</span><span class="n">model</span><span class="o">.</span><span class="n">vw</span> <span class="o">--</span><span class="n">cb_type</span> <span class="n">ips</span> <span class="o">-</span><span class="n">t</span> <span class="o">-</span><span class="n">d</span> <span class="n">test</span><span class="o">.</span><span class="n">dat</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>only testing
+ignoring duplicate option: &#39;--cb_type ips&#39;
+Num weight bits = 18
+learning rate = 0.5
+initial_t = 0
+power_t = 0.5
+using no cache
+Reading datafile = test.dat
+num sources = 1
+average  since         example        example  current  current  current
+loss     last          counter         weight    label  predict features
+0.000000 0.000000            1            1.0    known        1        2
+0.000000 0.000000            2            2.0    known        1        2
+0.500000 1.000000            4            4.0    known        1        2
+0.250000 0.000000            8            8.0    known        1        2
+
+finished run
+number of examples per pass = 8
+passes used = 1
+weighted example sum = 8.000000
+weighted label sum = 0.000000
+average loss = 0.250000
+total feature number = 16
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The average loss reported is the OPE estimate for this policy, and in this case, calculated against our test set. Since we specified --cb_type ips, the IPS estimator is used, which is unbiased. Feel free to use dr, too, but note that although VW will allow it, the use of dm is discouraged for OPE since it is biased. If you are unsure, we suggest using dr. Note that VW will complain if you train using one cb_type but test using another; mixing estimators in training and evaluation is currently not supported.</p>
+<p>Now that you have an OPE estimate of 0.250000, how does it compare to the production policy in production? This comparison is easy to make since, for the same time period, we have the ground truth in the test.dat file. If we sum the costs in that file and divide by the number of examples, we get 0.625. Generally, our toy example has far too little data with which to perform reliable estimates, but the principle applied: lower is better, so your candidate policy is estimated to perform better than the production policy in production. The exact definition of OPE is important: in this case, it means that had you deployed the candidate policy, with no exploration, instead of the production policy you could have expected to see the average cost reduce from 0.625 to 0.250000 for the period of time covered in the test set.</p>
+<p>Feel free to gridsearch several candidate policies using the same setup, to determine a combination of hyperparameters that work well for your use case. Note however that mixing different cb_type options when gridsearching is discouraged, even if all specified estimators are unbiased. Choose either IPS or DR beforehand.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Batch-scenario:-policy-evaluation-with-a-pre-trained-VW-policy,-cb_adf-format-data">Batch scenario: policy evaluation with a pre-trained VW policy, cb_adf-format data<a class="anchor-link" href="#Batch-scenario:-policy-evaluation-with-a-pre-trained-VW-policy,-cb_adf-format-data"> </a></h2><p>The cb_adf format is especially useful if you have rich features associated with an arm, or a variable number of arms per round. If you have adf-format data, the same procedure as above applies – just change cb to cb_adf in the corresponding commands.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Online-scenario:-policy-evaluation-with-an-incrementally-trained-VW-policy,-cb-format-data">Online scenario: policy evaluation with an incrementally trained VW policy, cb-format data<a class="anchor-link" href="#Online-scenario:-policy-evaluation-with-an-incrementally-trained-VW-policy,-cb-format-data"> </a></h2><p>In the online scenario, when you deploy a new policy behind e.g. a REST endpoint, that policy will continue to update itself from second to second, as and when new examples come in. Learning is incremental: you don’t iterate over the same training examples more than once.</p>
+<p>Online learning is particularly useful in settings where you need to react to changes in the world as fast as possible. From the point of view of OPE, the objective is the same: determining if a candidate policy is better than the one currently in production. But the setup differs slightly: since any policy deployed will continue to learn online, the key question is how well it will generalise to new examples coming in, considering that the policy is constantly evolving. So in this case, our candidate policy is in fact not a fixed policy, but one that changes constantly. It may help to think of it as a set of hyperparameters instead. The aim is to find out which set of these hyperparameters learns best in an online fashion.</p>
+<p>To answer this question, we leverage progressive validation (PV), a validation process implemented in VW. PV is explained in detail elsewhere (see e.g. John Langford’s talk on real world interactive learning), but for this tutorial, it is enough to know that for one-pass learning, the loss reported by progressive validation deviates like a test set yet allows you to train on all of your data. It’s a good indicator of the generalisation performance for online learning.</p>
+<p>VW reports PV loss automatically if you only iterate once over your data when training, i.e. --passes is 1 (the default). In this case, obtaining an OPE estimate is simply a matter of taking the bandit data from the production policy, again ordered oldest example first, and training as normal – no train/test split is needed.</p>
+<p>First, save your bandit data to a file, e.g data.dat:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">writefile</span> <span class="n">data</span><span class="o">.</span><span class="n">dat</span>
+<span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">25</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">25</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">27</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">21</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">23</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">36</span>
+<span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">25</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">25</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">1</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">27</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">21</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">23</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">0</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">56</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">55</span>
+<span class="mi">2</span><span class="p">:</span><span class="mi">1</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">user_age</span><span class="p">:</span><span class="mi">36</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Writing data.dat
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Then, train a policy incrementally. For the above data, with 2 possible actions and an IPS estimator, the command would be vw --cb 2 --cb_type ips -d data.dat (plus any additional options).</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">vw</span> <span class="o">--</span><span class="n">cb</span> <span class="mi">2</span> <span class="o">--</span><span class="n">cb_type</span> <span class="n">ips</span> <span class="o">-</span><span class="n">d</span> <span class="n">data</span><span class="o">.</span><span class="n">dat</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Num weight bits = 18
+learning rate = 0.5
+initial_t = 0
+power_t = 0.5
+using no cache
+Reading datafile = data.dat
+num sources = 1
+average  since         example        example  current  current  current
+loss     last          counter         weight    label  predict features
+2.000000 2.000000            1            1.0    known        1        2
+1.000000 0.000000            2            2.0    known        2        2
+1.000000 1.000000            4            4.0    known        1        2
+0.750000 0.500000            8            8.0    known        1        2
+0.500000 0.250000           16           16.0    known        1        2
+
+finished run
+number of examples per pass = 24
+passes used = 1
+weighted example sum = 24.000000
+weighted label sum = 0.000000
+average loss = 0.416667
+total feature number = 48
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The average loss here is the OPE estimate, calculated using progressive validation, with the cb_type estimator you specified. The same caveats as before apply: if the specified cb_type is biased, it is generally no recommended to use the average loss as an OPE estimate. Again, if you are unsure, we recommend using the default by omitting cb_type altogether.</p>
+<p>To compare the OPE estimate of the candidate policy to the production policy, calculate the realised average cost in the data.dat file. In this case, it is 0.6667, and since our candidate policy’s 0.416667 is lower, we have found a set of hyperparameters estimated to perform better than our production online learner were it deployed at the time covered by the data.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Online-scenario:-policy-evaluation-with-an-incrementally-trained-VW-policy,-cb_adf-format-data">Online scenario: policy evaluation with an incrementally trained VW policy, cb_adf-format data<a class="anchor-link" href="#Online-scenario:-policy-evaluation-with-an-incrementally-trained-VW-policy,-cb_adf-format-data"> </a></h2><p>If you have adf-format data, the same procedure as above applies – just change cb to cb_adf in the corresponding commands.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Legacy:-policy-evaluation-with-cb-format-data,-using-a-pre-trained-policy">Legacy: policy evaluation with cb-format data, using a pre-trained policy<a class="anchor-link" href="#Legacy:-policy-evaluation-with-cb-format-data,-using-a-pre-trained-policy"> </a></h2><p>If your production policy produces bandit data in the standard cb format, and you already have a candidate policy even one trained outside VW, you can use the legacy --eval option to perform OPE. It is not recommended to use --eval if you are able to use any of the other methods described in this tutorial.</p>
+<p>First, create a new file, e.g. eval.dat. Then, for each instance of your production policy’s bandit data, write it to eval.dat but prepend the line with the action your candidate policy would have chosen given the same context. For example, if your current instance is 1:2:0.5 | feature_a feature_b and your candidate policy chooses action 2 instead given the same context feature_a feature_b, write the line 2 1:2:0.5 | feature_a feature_b (note the space!).</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">writefile</span> <span class="nb">eval</span><span class="o">.</span><span class="n">dat</span>
+<span class="mi">2</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="mf">0.5</span> <span class="o">|</span> <span class="n">feature_a</span> <span class="n">feature_b</span>
+<span class="mi">2</span> <span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="mf">0.4</span> <span class="o">|</span> <span class="n">feature_a</span> <span class="n">feature_c</span>
+<span class="mi">1</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="mf">0.1</span> <span class="o">|</span> <span class="n">feature_b</span> <span class="n">feature_c</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Writing eval.dat
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In the toy example above, the candidate agreed with the production policy for the second and third instances, but disagreed on the first instance.</p>
+<p>You are now ready to run policy evaluation using the command vw --cb <number_of_arms> --eval -d <dataset>. In our example, we have two possible actions, so the command is vw --cb 2 --eval -d eval.dat. This produced the following output (your results might differ based on VW version, or the seed):&lt;/p&gt;
+
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">vw</span> <span class="o">--</span><span class="n">cb</span> <span class="mi">2</span> <span class="o">--</span><span class="nb">eval</span> <span class="o">-</span><span class="n">d</span> <span class="nb">eval</span><span class="o">.</span><span class="n">dat</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Num weight bits = 18
+learning rate = 0.5
+initial_t = 0
+power_t = 0.5
+using no cache
+Reading datafile = eval.dat
+num sources = 1
+average  since         example        example  current  current  current
+loss     last          counter         weight    label  predict features
+0.000000 0.000000            1            1.0    known        2        3
+2.500000 5.000000            2            2.0    known        2        3
+
+finished run
+number of examples per pass = 3
+passes used = 1
+weighted example sum = 3.000000
+weighted label sum = 0.000000
+average loss = 6.501957
+total feature number = 9
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Again, average loss is the OPE estimate, and can be compared against the production policy’s realised average loss to determine if your candidate policy is estimated to work better than the policy in production.</p>
+<p>Note what happens if we try to run --eval with an estimator we know is biased, vw --cb 2 --eval -d eval.dat --cb_type dm. You will end up with an error, to prevent you from making a mistake:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">vw</span> <span class="o">--</span><span class="n">cb</span> <span class="mi">2</span> <span class="o">--</span><span class="nb">eval</span> <span class="o">-</span><span class="n">d</span> <span class="nb">eval</span><span class="o">.</span><span class="n">dat</span> <span class="o">--</span><span class="n">cb_type</span> <span class="n">dm</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Error: direct method can not be used for evaluation --- it is biased.
+
+finished run
+number of examples = 0
+weighted example sum = 0.000000
+weighted label sum = 0.000000
+average loss = n.a.
+total feature number = 0
+vw (cb_algs.cc:168): direct method can not be used for evaluation --- it is biased.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+&lt;/div&gt;
+ 
+
+</dataset></number_of_arms></p></div></div></div></div>
+
+
+  </div><a class="u-url" href="/2022/01/22/ope-vw.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

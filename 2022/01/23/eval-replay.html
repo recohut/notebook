@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>RecSys Evaluation Metrics using RePlay Library | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="RecSys Evaluation Metrics using RePlay Library" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/23/eval-replay.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/23/eval-replay.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-23T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="RecSys Evaluation Metrics using RePlay Library" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-23T00:00:00-06:00","datePublished":"2022-01-23T00:00:00-06:00","description":"Jupyter notebook database.","headline":"RecSys Evaluation Metrics using RePlay Library","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/23/eval-replay.html"},"url":"https://nb.recohut.com/2022/01/23/eval-replay.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">RecSys Evaluation Metrics using RePlay Library</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-23T00:00:00-06:00" itemprop="datePublished">
+        Jan 23, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      6 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-23-eval-replay.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-23-eval-replay.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-23-eval-replay.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-23-eval-replay.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-23-eval-replay.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>Links</strong></p>
+<ul>
+<li><a href="https://sberbank-ai-lab.github.io/RePlay/pages/modules/metrics.html">https://sberbank-ai-lab.github.io/RePlay/pages/modules/metrics.html</a></li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">openjdk</span><span class="o">-</span><span class="mi">8</span><span class="o">-</span><span class="n">jdk</span><span class="o">-</span><span class="n">headless</span> <span class="o">-</span><span class="n">qq</span> <span class="o">&gt;</span> <span class="o">/</span><span class="n">dev</span><span class="o">/</span><span class="n">null</span>
+<span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">archive</span><span class="o">.</span><span class="n">apache</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">dist</span><span class="o">/</span><span class="n">spark</span><span class="o">/</span><span class="n">spark</span><span class="o">-</span><span class="mf">3.0</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="n">spark</span><span class="o">-</span><span class="mf">3.0</span><span class="o">.</span><span class="mi">0</span><span class="o">-</span><span class="nb">bin</span><span class="o">-</span><span class="n">hadoop3</span><span class="o">.</span><span class="mf">2.</span><span class="n">tgz</span>
+<span class="err">!</span><span class="n">tar</span> <span class="n">xf</span> <span class="n">spark</span><span class="o">-</span><span class="mf">3.0</span><span class="o">.</span><span class="mi">0</span><span class="o">-</span><span class="nb">bin</span><span class="o">-</span><span class="n">hadoop3</span><span class="o">.</span><span class="mf">2.</span><span class="n">tgz</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">findspark</span>
+<span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">pyspark</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">replay</span><span class="o">-</span><span class="n">rec</span> <span class="c1">#v0.6.1</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">ipytest</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">ipytest</span>
+<span class="n">ipytest</span><span class="o">.</span><span class="n">autoconfig</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;JAVA_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/usr/lib/jvm/java-8-openjdk-amd64&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;SPARK_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/content/spark-3.0.0-bin-hadoop3.2&quot;</span>
+
+<span class="kn">import</span> <span class="nn">findspark</span>
+<span class="n">findspark</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">pytest</span>
+<span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_allclose</span>
+<span class="kn">from</span> <span class="nn">pyspark.ml.linalg</span> <span class="kn">import</span> <span class="n">DenseVector</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="kn">import</span> <span class="n">DataFrame</span>
+
+<span class="kn">from</span> <span class="nn">replay.metrics</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">replay.distributions</span> <span class="kn">import</span> <span class="n">item_distribution</span>
+<span class="kn">from</span> <span class="nn">replay.metrics.base_metric</span> <span class="kn">import</span> <span class="n">sorter</span>
+<span class="kn">from</span> <span class="nn">replay.constants</span> <span class="kn">import</span> <span class="n">REC_SCHEMA</span><span class="p">,</span> <span class="n">LOG_SCHEMA</span>
+<span class="kn">from</span> <span class="nn">replay.session_handler</span> <span class="kn">import</span> <span class="n">get_spark_session</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">assertDictAlmostEqual</span><span class="p">(</span><span class="n">d1</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">d2</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="nb">set</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">d2</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">d1</span><span class="p">:</span>
+        <span class="n">assert_allclose</span><span class="p">(</span><span class="n">d1</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">d2</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">spark</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">get_spark_session</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">log2</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item5&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">17</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item6&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">14</span><span class="p">),</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">LOG_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">22</span><span class="p">),</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item3&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">23</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">27</span><span class="p">),</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item4&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">24</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">26</span><span class="p">),</span> <span class="mf">5.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">26</span><span class="p">),</span> <span class="mf">5.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item3&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">26</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user4&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">26</span><span class="p">),</span> <span class="mf">5.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user4&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">26</span><span class="p">),</span> <span class="mf">5.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user4&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">26</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">LOG_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">long_log_with_features</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">[</span><span class="s2">&quot;u1&quot;</span><span class="p">,</span> <span class="s2">&quot;i1&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u1&quot;</span><span class="p">,</span> <span class="s2">&quot;i4&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u1&quot;</span><span class="p">,</span> <span class="s2">&quot;i2&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u1&quot;</span><span class="p">,</span> <span class="s2">&quot;i5&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u2&quot;</span><span class="p">,</span> <span class="s2">&quot;i1&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u2&quot;</span><span class="p">,</span> <span class="s2">&quot;i3&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u2&quot;</span><span class="p">,</span> <span class="s2">&quot;i7&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u2&quot;</span><span class="p">,</span> <span class="s2">&quot;i8&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u3&quot;</span><span class="p">,</span> <span class="s2">&quot;i9&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u3&quot;</span><span class="p">,</span> <span class="s2">&quot;i2&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u3&quot;</span><span class="p">,</span> <span class="s2">&quot;i6&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2020</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u3&quot;</span><span class="p">,</span> <span class="s2">&quot;i7&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="s2">&quot;item_id&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;relevance&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">short_log_with_features</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="n">date</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">[</span><span class="s2">&quot;u1&quot;</span><span class="p">,</span> <span class="s2">&quot;i3&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u1&quot;</span><span class="p">,</span> <span class="s2">&quot;i7&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u2&quot;</span><span class="p">,</span> <span class="s2">&quot;i2&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u2&quot;</span><span class="p">,</span> <span class="s2">&quot;i10&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u3&quot;</span><span class="p">,</span> <span class="s2">&quot;i8&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u3&quot;</span><span class="p">,</span> <span class="s2">&quot;i1&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;u4&quot;</span><span class="p">,</span> <span class="s2">&quot;i7&quot;</span><span class="p">,</span> <span class="n">date</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="s2">&quot;item_id&quot;</span><span class="p">,</span> <span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="s2">&quot;relevance&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">user_features</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="p">[(</span><span class="s2">&quot;u1&quot;</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="s2">&quot;M&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;u2&quot;</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="s2">&quot;F&quot;</span><span class="p">)]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">toDF</span><span class="p">(</span><span class="s2">&quot;user_id&quot;</span><span class="p">,</span> <span class="s2">&quot;age&quot;</span><span class="p">,</span> <span class="s2">&quot;mood&quot;</span><span class="p">,</span> <span class="s2">&quot;gender&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">item_features</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="p">(</span><span class="s2">&quot;i1&quot;</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="s2">&quot;cat&quot;</span><span class="p">,</span> <span class="s2">&quot;black&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;i2&quot;</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">&quot;dog&quot;</span><span class="p">,</span> <span class="s2">&quot;green&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;i3&quot;</span><span class="p">,</span> <span class="mf">7.0</span><span class="p">,</span> <span class="s2">&quot;mouse&quot;</span><span class="p">,</span> <span class="s2">&quot;yellow&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;i4&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;cat&quot;</span><span class="p">,</span> <span class="s2">&quot;yellow&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;i5&quot;</span><span class="p">,</span> <span class="mf">11.0</span><span class="p">,</span> <span class="s2">&quot;dog&quot;</span><span class="p">,</span> <span class="s2">&quot;white&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s2">&quot;i6&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">&quot;mouse&quot;</span><span class="p">,</span> <span class="s2">&quot;yellow&quot;</span><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">toDF</span><span class="p">(</span><span class="s2">&quot;item_id&quot;</span><span class="p">,</span> <span class="s2">&quot;iq&quot;</span><span class="p">,</span> <span class="s2">&quot;class&quot;</span><span class="p">,</span> <span class="s2">&quot;color&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">unify_dataframe</span><span class="p">(</span><span class="n">data_frame</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">):</span>
+    <span class="n">pandas_df</span> <span class="o">=</span> <span class="n">data_frame</span><span class="o">.</span><span class="n">toPandas</span><span class="p">()</span>
+    <span class="n">columns_to_sort_by</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pandas_df</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">columns_to_sort_by</span> <span class="o">=</span> <span class="n">pandas_df</span><span class="o">.</span><span class="n">columns</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">pandas_df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">pandas_df</span><span class="p">[</span><span class="n">column</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span> <span class="ow">in</span> <span class="p">{</span>
+                <span class="n">DenseVector</span><span class="p">,</span>
+                <span class="nb">list</span><span class="p">,</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+            <span class="p">}:</span>
+                <span class="n">columns_to_sort_by</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">column</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">pandas_df</span><span class="p">[</span><span class="nb">sorted</span><span class="p">(</span><span class="n">data_frame</span><span class="o">.</span><span class="n">columns</span><span class="p">)]</span>
+        <span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="n">columns_to_sort_by</span><span class="p">))</span>
+        <span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">sparkDataFrameEqual</span><span class="p">(</span><span class="n">df1</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">df2</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">assert_frame_equal</span><span class="p">(</span>
+        <span class="n">unify_dataframe</span><span class="p">(</span><span class="n">df1</span><span class="p">),</span> <span class="n">unify_dataframe</span><span class="p">(</span><span class="n">df2</span><span class="p">),</span> <span class="n">check_like</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">sparkDataFrameNotEqual</span><span class="p">(</span><span class="n">df1</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">,</span> <span class="n">df2</span><span class="p">:</span> <span class="n">DataFrame</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sparkDataFrameEqual</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AssertionError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s2">&quot;spark dataframes are equal&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">del_files_by_pattern</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes files by pattern</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">find_file_by_pattern</span><span class="p">(</span><span class="n">directory</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns path to first found file, if exists</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">ipytest</span>
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">one_user</span><span class="p">():</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;item_id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">]})</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">two_users</span><span class="p">():</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="p">{</span><span class="s2">&quot;user_id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;item_id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;relevance&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]}</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">recs</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item3&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item5&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item3&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item4&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">REC_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">recs2</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item4&quot;</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item5&quot;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">]],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">REC_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">empty_recs</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">REC_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">true</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item5&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">17</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item6&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">14</span><span class="p">),</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2019</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span> <span class="mf">3.0</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">LOG_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">quality_metrics</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">NDCG</span><span class="p">(),</span> <span class="n">HitRate</span><span class="p">(),</span> <span class="n">Precision</span><span class="p">(),</span> <span class="n">Recall</span><span class="p">(),</span> <span class="n">MAP</span><span class="p">(),</span> <span class="n">MRR</span><span class="p">(),</span> <span class="n">RocAuc</span><span class="p">()]</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span> <span class="nf">duplicate_recs</span><span class="p">(</span><span class="n">spark</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">spark</span><span class="o">.</span><span class="n">createDataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="p">[</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item3&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user1&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item5&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user2&quot;</span><span class="p">,</span> <span class="s2">&quot;item2&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item1&quot;</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item3&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="s2">&quot;user3&quot;</span><span class="p">,</span> <span class="s2">&quot;item4&quot;</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">],</span>
+        <span class="p">],</span>
+        <span class="n">schema</span><span class="o">=</span><span class="n">REC_SCHEMA</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_test_is_bigger</span><span class="p">(</span><span class="n">quality_metrics</span><span class="p">,</span> <span class="n">one_user</span><span class="p">,</span> <span class="n">two_users</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">metric</span><span class="p">(</span><span class="n">one_user</span><span class="p">,</span> <span class="n">two_users</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mf">0.5</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_pred_is_bigger</span><span class="p">(</span><span class="n">quality_metrics</span><span class="p">,</span> <span class="n">one_user</span><span class="p">,</span> <span class="n">two_users</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">metric</span><span class="p">(</span><span class="n">two_users</span><span class="p">,</span> <span class="n">one_user</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">metric</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_hit_rate_at_k</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">):</span>
+    <span class="n">assertDictAlmostEqual</span><span class="p">(</span>
+        <span class="n">HitRate</span><span class="p">()(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span>
+        <span class="p">{</span><span class="mi">3</span><span class="p">:</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_user_dist</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">):</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">HitRate</span><span class="p">()</span><span class="o">.</span><span class="n">user_distribution</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">()</span>
+    <span class="n">assert_allclose</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">test_item_dist</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">recs</span><span class="p">):</span>
+    <span class="n">assert_allclose</span><span class="p">(</span>
+        <span class="n">item_distribution</span><span class="p">(</span><span class="n">log</span><span class="p">,</span> <span class="n">recs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="s2">&quot;rec_count&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_list</span><span class="p">(),</span>
+        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_ndcg_at_k</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">):</span>
+    <span class="n">pred</span> <span class="o">=</span> <span class="p">[</span><span class="mi">300</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">]</span>
+    <span class="n">k_set</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+    <span class="n">user_id</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">ground_truth</span> <span class="o">=</span> <span class="p">[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">400</span><span class="p">]</span>
+    <span class="n">ndcg_value</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">NDCG</span><span class="p">()</span><span class="o">.</span><span class="n">_get_metric_value_by_user_all_k</span><span class="p">(</span>
+            <span class="n">k_set</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">pred</span><span class="p">,</span> <span class="n">ground_truth</span>
+        <span class="p">)</span>
+        <span class="o">==</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ndcg_value</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">ndcg_value</span><span class="p">,</span> <span class="mi">3</span><span class="p">)],</span>
+    <span class="p">)</span>
+    <span class="n">assertDictAlmostEqual</span><span class="p">(</span>
+        <span class="n">NDCG</span><span class="p">()(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span>
+        <span class="p">{</span>
+            <span class="mi">1</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span>
+            <span class="mi">3</span><span class="p">:</span> <span class="mi">1</span>
+            <span class="o">/</span> <span class="mi">3</span>
+            <span class="o">*</span> <span class="p">(</span>
+                <span class="mi">1</span>
+                <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">4</span><span class="p">))</span>
+                <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+                <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+            <span class="p">),</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_precision_at_k</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">):</span>
+    <span class="n">assertDictAlmostEqual</span><span class="p">(</span>
+        <span class="n">Precision</span><span class="p">()(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span>
+        <span class="p">{</span><span class="mi">3</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_map_at_k</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">):</span>
+    <span class="n">assertDictAlmostEqual</span><span class="p">(</span>
+        <span class="n">MAP</span><span class="p">()(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span>
+        <span class="p">{</span><span class="mi">3</span><span class="p">:</span> <span class="mi">11</span> <span class="o">/</span> <span class="mi">36</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">3</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_recall_at_k</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">):</span>
+    <span class="n">assertDictAlmostEqual</span><span class="p">(</span>
+        <span class="n">Recall</span><span class="p">()(</span><span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]),</span>
+        <span class="p">{</span><span class="mi">3</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">9</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_surprisal_at_k</span><span class="p">(</span><span class="n">true</span><span class="p">,</span> <span class="n">recs</span><span class="p">,</span> <span class="n">recs2</span><span class="p">):</span>
+    <span class="n">assertDictAlmostEqual</span><span class="p">(</span><span class="n">Surprisal</span><span class="p">(</span><span class="n">true</span><span class="p">)(</span><span class="n">recs2</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]),</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">})</span>
+
+    <span class="n">assert_allclose</span><span class="p">(</span>
+        <span class="n">Surprisal</span><span class="p">(</span><span class="n">true</span><span class="p">)(</span><span class="n">recs</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="mi">5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span> <span class="o">/</span> <span class="mi">9</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">/</span> <span class="mi">9</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_unexpectedness_at_k</span><span class="p">(</span><span class="n">true</span><span class="p">,</span> <span class="n">recs</span><span class="p">,</span> <span class="n">recs2</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">Unexpectedness</span><span class="o">.</span><span class="n">_get_metric_value_by_user</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="k">assert</span> <span class="n">Unexpectedness</span><span class="o">.</span><span class="n">_get_metric_value_by_user</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,))</span> <span class="o">==</span> <span class="mf">0.5</span>
+
+
+<span class="k">def</span> <span class="nf">test_coverage</span><span class="p">(</span><span class="n">true</span><span class="p">,</span> <span class="n">recs</span><span class="p">,</span> <span class="n">empty_recs</span><span class="p">):</span>
+    <span class="n">coverage</span> <span class="o">=</span> <span class="n">Coverage</span><span class="p">(</span><span class="n">recs</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">true</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s2">&quot;timestamp&quot;</span><span class="p">)))</span>
+    <span class="n">assertDictAlmostEqual</span><span class="p">(</span>
+        <span class="n">coverage</span><span class="p">(</span><span class="n">recs</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span>
+        <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mf">0.3333333333333333</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.8333333333333334</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="mf">0.8333333333333334</span><span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">assertDictAlmostEqual</span><span class="p">(</span>
+        <span class="n">coverage</span><span class="p">(</span><span class="n">empty_recs</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span>
+        <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_bad_coverage</span><span class="p">(</span><span class="n">true</span><span class="p">,</span> <span class="n">recs</span><span class="p">):</span>
+    <span class="n">assert_allclose</span><span class="p">(</span><span class="n">Coverage</span><span class="p">(</span><span class="n">true</span><span class="p">)(</span><span class="n">recs</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="mf">1.25</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_empty_recs</span><span class="p">(</span><span class="n">quality_metrics</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="p">:</span>
+        <span class="n">assert_allclose</span><span class="p">(</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">_get_metric_value_by_user</span><span class="p">(</span>
+                <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">pred</span><span class="o">=</span><span class="p">[],</span> <span class="n">ground_truth</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">err_msg</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">metric</span><span class="p">),</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_bad_recs</span><span class="p">(</span><span class="n">quality_metrics</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="p">:</span>
+        <span class="n">assert_allclose</span><span class="p">(</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">_get_metric_value_by_user</span><span class="p">(</span>
+                <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">pred</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">ground_truth</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">err_msg</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">metric</span><span class="p">),</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_not_full_recs</span><span class="p">(</span><span class="n">quality_metrics</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="p">:</span>
+        <span class="n">assert_allclose</span><span class="p">(</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">_get_metric_value_by_user</span><span class="p">(</span>
+                <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">pred</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">ground_truth</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">_get_metric_value_by_user</span><span class="p">(</span>
+                <span class="n">k</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">pred</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">ground_truth</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">err_msg</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">metric</span><span class="p">),</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_duplicate_recs</span><span class="p">(</span><span class="n">quality_metrics</span><span class="p">,</span> <span class="n">duplicate_recs</span><span class="p">,</span> <span class="n">recs</span><span class="p">,</span> <span class="n">true</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">quality_metrics</span><span class="p">:</span>
+        <span class="n">assert_allclose</span><span class="p">(</span>
+            <span class="n">metric</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">recommendations</span><span class="o">=</span><span class="n">duplicate_recs</span><span class="p">,</span> <span class="n">ground_truth</span><span class="o">=</span><span class="n">true</span><span class="p">),</span>
+            <span class="n">metric</span><span class="p">(</span><span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">recommendations</span><span class="o">=</span><span class="n">recs</span><span class="p">,</span> <span class="n">ground_truth</span><span class="o">=</span><span class="n">true</span><span class="p">),</span>
+            <span class="n">err_msg</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">metric</span><span class="p">),</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_sorter</span><span class="p">():</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">sorter</span><span class="p">(((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">test_sorter_index</span><span class="p">():</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">sorter</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">)],</span> <span class="n">index</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">result</span> <span class="o">==</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">.</span><span class="ansi-green-fg">                                                                          [100%]</span>
+<span class="ansi-green-intense-fg ansi-bold">19 passed</span><span class="ansi-green-fg"> in 24.13s</span>
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/23/eval-replay.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

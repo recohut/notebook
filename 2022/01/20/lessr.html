@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>LESSR Session-based Recommendations on Sample data in PyTorch | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="LESSR Session-based Recommendations on Sample data in PyTorch" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/20/lessr.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/20/lessr.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-20T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="LESSR Session-based Recommendations on Sample data in PyTorch" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-20T00:00:00-06:00","datePublished":"2022-01-20T00:00:00-06:00","description":"Jupyter notebook database.","headline":"LESSR Session-based Recommendations on Sample data in PyTorch","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/20/lessr.html"},"url":"https://nb.recohut.com/2022/01/20/lessr.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">LESSR Session-based Recommendations on Sample data in PyTorch</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-20T00:00:00-06:00" itemprop="datePublished">
+        Jan 20, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      12 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-20-lessr.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-20-lessr.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-20-lessr.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-20-lessr.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-20-lessr.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">__version__</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;1.10.0+cu111&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">dgl</span><span class="o">-</span><span class="n">cu111</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">Args</span><span class="p">:</span>
+    <span class="n">dataset_dir</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+    <span class="n">embedding_dim</span> <span class="o">=</span> <span class="mi">32</span>
+    <span class="n">num_layers</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">feat_drop</span> <span class="o">=</span> <span class="mf">0.2</span>
+    <span class="n">lr</span> <span class="o">=</span> <span class="mf">1e-3</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">512</span>
+    <span class="n">epochs</span> <span class="o">=</span> <span class="mi">30</span>
+    <span class="n">weight_decay</span> <span class="o">=</span> <span class="mf">1e-4</span>
+    <span class="n">Ks</span> <span class="o">=</span> <span class="s1">&#39;10,20&#39;</span> <span class="c1"># the values of K in evaluation metrics, separated by commas</span>
+    <span class="n">patience</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">num_workers</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">valid_split</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">log_interval</span> <span class="o">=</span> <span class="mi">100</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Dataset">Dataset<a class="anchor-link" href="#Dataset"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">stanza</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">S969796</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">sample</span><span class="o">/</span><span class="n">num_items</span><span class="o">.</span><span class="n">txt</span>
+<span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">stanza</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">S969796</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">sample</span><span class="o">/</span><span class="n">train</span><span class="o">.</span><span class="n">txt</span>
+<span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">stanza</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">S969796</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">sample</span><span class="o">/</span><span class="n">test</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>num_items.txt       100%[===================&gt;]       4  --.-KB/s    in 0s      
+train.txt           100%[===================&gt;] 172.87K  --.-KB/s    in 0.01s   
+test.txt            100%[===================&gt;]  22.89K  --.-KB/s    in 0s      
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Collate">Collate<a class="anchor-link" href="#Collate"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">th</span>
+<span class="kn">import</span> <span class="nn">dgl</span>
+
+
+<span class="k">def</span> <span class="nf">label_last</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">last_nid</span><span class="p">):</span>
+    <span class="n">is_last</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">number_of_nodes</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">th</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">is_last</span><span class="p">[</span><span class="n">last_nid</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">g</span><span class="o">.</span><span class="n">ndata</span><span class="p">[</span><span class="s1">&#39;last&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">is_last</span>
+    <span class="k">return</span> <span class="n">g</span>
+
+
+<span class="k">def</span> <span class="nf">seq_to_eop_multigraph</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+    <span class="n">iid2nid</span> <span class="o">=</span> <span class="p">{</span><span class="n">iid</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">iid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">)}</span>
+    <span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">seq_nid</span> <span class="o">=</span> <span class="p">[</span><span class="n">iid2nid</span><span class="p">[</span><span class="n">iid</span><span class="p">]</span> <span class="k">for</span> <span class="n">iid</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">seq_nid</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">seq_nid</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">([])</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">([])</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">graph</span><span class="p">((</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">),</span> <span class="n">num_nodes</span><span class="o">=</span><span class="n">num_nodes</span><span class="p">)</span>
+    <span class="n">g</span><span class="o">.</span><span class="n">ndata</span><span class="p">[</span><span class="s1">&#39;iid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+    <span class="n">label_last</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">iid2nid</span><span class="p">[</span><span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="k">return</span> <span class="n">g</span>
+
+
+<span class="k">def</span> <span class="nf">seq_to_shortcut_graph</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+    <span class="n">iid2nid</span> <span class="o">=</span> <span class="p">{</span><span class="n">iid</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">iid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">items</span><span class="p">)}</span>
+    <span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+
+    <span class="n">seq_nid</span> <span class="o">=</span> <span class="p">[</span><span class="n">iid2nid</span><span class="p">[</span><span class="n">iid</span><span class="p">]</span> <span class="k">for</span> <span class="n">iid</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">]</span>
+    <span class="n">counter</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span>
+        <span class="p">[(</span><span class="n">seq_nid</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">seq_nid</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">))]</span>
+    <span class="p">)</span>
+    <span class="n">edges</span> <span class="o">=</span> <span class="n">counter</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">src</span><span class="p">,</span> <span class="n">dst</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">edges</span><span class="p">)</span>
+
+    <span class="n">g</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">graph</span><span class="p">((</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">),</span> <span class="n">num_nodes</span><span class="o">=</span><span class="n">num_nodes</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">g</span>
+
+
+<span class="k">def</span> <span class="nf">collate_fn_factory</span><span class="p">(</span><span class="o">*</span><span class="n">seq_to_graph_fns</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">collate_fn</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+        <span class="n">seqs</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">samples</span><span class="p">)</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">seq_to_graph</span> <span class="ow">in</span> <span class="n">seq_to_graph_fns</span><span class="p">:</span>
+            <span class="n">graphs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">seq_to_graph</span><span class="p">,</span> <span class="n">seqs</span><span class="p">))</span>
+            <span class="n">bg</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">graphs</span><span class="p">)</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bg</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">LongTensor</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">labels</span>
+
+    <span class="k">return</span> <span class="n">collate_fn</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Using backend: pytorch
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Augment">Augment<a class="anchor-link" href="#Augment"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+
+<span class="k">def</span> <span class="nf">create_index</span><span class="p">(</span><span class="n">sessions</span><span class="p">):</span>
+    <span class="n">lens</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">sessions</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="n">session_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">sessions</span><span class="p">)),</span> <span class="n">lens</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">label_idx</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">l</span><span class="p">),</span> <span class="n">lens</span><span class="p">)</span>
+    <span class="n">label_idx</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">label_idx</span><span class="p">)</span>
+    <span class="n">label_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fromiter</span><span class="p">(</span><span class="n">label_idx</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">column_stack</span><span class="p">((</span><span class="n">session_idx</span><span class="p">,</span> <span class="n">label_idx</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">idx</span>
+
+
+<span class="k">def</span> <span class="nf">read_sessions</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+    <span class="n">sessions</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">squeeze</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">sessions</span> <span class="o">=</span> <span class="n">sessions</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">))))</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">return</span> <span class="n">sessions</span>
+
+
+<span class="k">def</span> <span class="nf">read_dataset</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">):</span>
+    <span class="n">train_sessions</span> <span class="o">=</span> <span class="n">read_sessions</span><span class="p">(</span><span class="n">dataset_dir</span> <span class="o">/</span> <span class="s1">&#39;train.txt&#39;</span><span class="p">)</span>
+    <span class="n">test_sessions</span> <span class="o">=</span> <span class="n">read_sessions</span><span class="p">(</span><span class="n">dataset_dir</span> <span class="o">/</span> <span class="s1">&#39;test.txt&#39;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">dataset_dir</span> <span class="o">/</span> <span class="s1">&#39;num_items.txt&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">num_items</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">train_sessions</span><span class="p">,</span> <span class="n">test_sessions</span><span class="p">,</span> <span class="n">num_items</span>
+
+
+<span class="k">class</span> <span class="nc">AugmentedDataset</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sessions</span><span class="p">,</span> <span class="n">sort_by_length</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span> <span class="o">=</span> <span class="n">sessions</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="n">create_index</span><span class="p">(</span><span class="n">sessions</span><span class="p">)</span>  <span class="c1"># columns: sessionId, labelIndex</span>
+        <span class="k">if</span> <span class="n">sort_by_length</span><span class="p">:</span>
+            <span class="c1"># sort by labelIndex in descending order</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">index</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="n">index</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="n">sid</span><span class="p">,</span> <span class="n">lidx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">sid</span><span class="p">][:</span><span class="n">lidx</span><span class="p">]</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sessions</span><span class="p">[</span><span class="n">sid</span><span class="p">][</span><span class="n">lidx</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">seq</span><span class="p">,</span> <span class="n">label</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Utils">Utils<a class="anchor-link" href="#Utils"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">th</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">optim</span>
+
+
+<span class="c1"># ignore weight decay for parameters in bias, batch norm and activation</span>
+<span class="k">def</span> <span class="nf">fix_weight_decay</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">decay</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">no_decay</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">param</span><span class="o">.</span><span class="n">requires_grad</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">name</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;bias&#39;</span><span class="p">,</span> <span class="s1">&#39;batch_norm&#39;</span><span class="p">,</span> <span class="s1">&#39;activation&#39;</span><span class="p">])):</span>
+            <span class="n">no_decay</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">decay</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">[{</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">decay</span><span class="p">},</span> <span class="p">{</span><span class="s1">&#39;params&#39;</span><span class="p">:</span> <span class="n">no_decay</span><span class="p">,</span> <span class="s1">&#39;weight_decay&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}]</span>
+    <span class="k">return</span> <span class="n">params</span>
+
+
+<span class="k">def</span> <span class="nf">prepare_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">device</span><span class="p">):</span>
+    <span class="n">inputs</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">batch</span>
+    <span class="n">inputs_gpu</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">]</span>
+    <span class="n">labels_gpu</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">inputs_gpu</span><span class="p">,</span> <span class="n">labels_gpu</span>
+
+
+<span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data_loader</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">Ks</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">]):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+    <span class="n">num_samples</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">max_K</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">Ks</span><span class="p">)</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">th</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">data_loader</span><span class="p">:</span>
+            <span class="n">inputs</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">prepare_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">device</span><span class="p">)</span>
+            <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="o">*</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="n">logits</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">num_samples</span> <span class="o">+=</span> <span class="n">batch_size</span>
+            <span class="n">topk</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">topk</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">max_K</span><span class="p">,</span> <span class="nb">sorted</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">K</span> <span class="ow">in</span> <span class="n">Ks</span><span class="p">:</span>
+                <span class="n">hit_ranks</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">topk</span><span class="p">[:,</span> <span class="p">:</span><span class="n">K</span><span class="p">]</span> <span class="o">==</span> <span class="n">labels</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="n">hit_ranks</span> <span class="o">=</span> <span class="n">hit_ranks</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;HR@</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">hit_ranks</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+                <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;MRR@</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">hit_ranks</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="n">results</span><span class="p">[</span><span class="sa">f</span><span class="s1">&#39;NDCG@</span><span class="si">{</span><span class="n">K</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">th</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">hit_ranks</span><span class="p">)</span><span class="o">.</span><span class="n">reciprocal</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+        <span class="n">results</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">/=</span> <span class="n">num_samples</span>
+    <span class="k">return</span> <span class="n">results</span>
+
+
+<span class="k">def</span> <span class="nf">print_results</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Metric</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+    <span class="nb">print</span><span class="p">(</span>
+        <span class="s1">&#39;Value</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span>
+        <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">round</span><span class="p">(</span><span class="n">val</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Epoch</span><span class="se">\t</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">epochs</span><span class="p">[</span><span class="n">metric</span><span class="p">])</span> <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]))</span>
+
+
+<span class="k">class</span> <span class="nc">TrainRunner</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">train_loader</span><span class="p">,</span>
+        <span class="n">test_loader</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">,</span>
+        <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">weight_decay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">patience</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+        <span class="n">Ks</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="k">if</span> <span class="n">weight_decay</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">fix_weight_decay</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="n">lr</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="n">weight_decay</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_loader</span> <span class="o">=</span> <span class="n">train_loader</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test_loader</span> <span class="o">=</span> <span class="n">test_loader</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patience</span> <span class="o">=</span> <span class="n">patience</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Ks</span> <span class="o">=</span> <span class="n">Ks</span>
+
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">log_interval</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+        <span class="n">max_results</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">max_epochs</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">bad_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">mean_loss</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_loader</span><span class="p">:</span>
+                <span class="n">inputs</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">prepare_batch</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+                <span class="n">logits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="o">*</span><span class="n">inputs</span><span class="p">)</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">cross_entropy</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+                <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+                <span class="n">mean_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">/</span> <span class="n">log_interval</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch</span> <span class="o">%</span> <span class="n">log_interval</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;Batch </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">batch</span><span class="si">}</span><span class="s1">: Loss = </span><span class="si">{</span><span class="n">mean_loss</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">, Time Elapsed = </span><span class="si">{</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">s&#39;</span>
+                    <span class="p">)</span>
+                    <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="n">mean_loss</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">batch</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">curr_results</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_loader</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">Ks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">Ks</span>
+            <span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Epoch </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">epoch</span><span class="si">}</span><span class="s1">:&#39;</span><span class="p">)</span>
+            <span class="n">print_results</span><span class="p">(</span><span class="n">curr_results</span><span class="p">)</span>
+
+            <span class="n">any_better_result</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">curr_results</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">curr_results</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">max_results</span><span class="p">[</span><span class="n">metric</span><span class="p">]:</span>
+                    <span class="n">max_results</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">curr_results</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span>
+                    <span class="n">max_epochs</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span>
+                    <span class="n">any_better_result</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="n">any_better_result</span><span class="p">:</span>
+                <span class="n">bad_counter</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bad_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">bad_counter</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">patience</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">epoch</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Best results&#39;</span><span class="p">)</span>
+        <span class="n">print_results</span><span class="p">(</span><span class="n">max_results</span><span class="p">,</span> <span class="n">max_epochs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">max_results</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Model">Model<a class="anchor-link" href="#Model"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">th</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">import</span> <span class="nn">dgl</span>
+<span class="kn">import</span> <span class="nn">dgl.ops</span> <span class="k">as</span> <span class="nn">F</span>
+<span class="kn">import</span> <span class="nn">dgl.function</span> <span class="k">as</span> <span class="nn">fn</span>
+
+
+<span class="k">class</span> <span class="nc">EOPA</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">batch_norm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">feat_drop</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">input_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">batch_norm</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feat_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">feat_drop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gru</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">GRU</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">input_dim</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_self</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_neigh</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
+
+    <span class="k">def</span> <span class="nf">reducer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">nodes</span><span class="o">.</span><span class="n">mailbox</span><span class="p">[</span><span class="s1">&#39;m&#39;</span><span class="p">]</span>  <span class="c1"># (num_nodes, deg, d)</span>
+        <span class="c1"># m[i]: the messages passed to the i-th node with in-degree equal to &#39;deg&#39;</span>
+        <span class="c1"># the order of messages follows the order of incoming edges</span>
+        <span class="c1"># since the edges are sorted by occurrence time when the EOP multigraph is built</span>
+        <span class="c1"># the messages are in the order required by EOPA</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">hn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gru</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>  <span class="c1"># hn: (1, num_nodes, d)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;neigh&#39;</span><span class="p">:</span> <span class="n">hn</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)}</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mg</span><span class="p">,</span> <span class="n">feat</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">mg</span><span class="o">.</span><span class="n">local_scope</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+            <span class="n">mg</span><span class="o">.</span><span class="n">ndata</span><span class="p">[</span><span class="s1">&#39;ft&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feat_drop</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mg</span><span class="o">.</span><span class="n">number_of_edges</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">mg</span><span class="o">.</span><span class="n">update_all</span><span class="p">(</span><span class="n">fn</span><span class="o">.</span><span class="n">copy_u</span><span class="p">(</span><span class="s1">&#39;ft&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">reducer</span><span class="p">)</span>
+                <span class="n">neigh</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">ndata</span><span class="p">[</span><span class="s1">&#39;neigh&#39;</span><span class="p">]</span>
+                <span class="n">rst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_self</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_neigh</span><span class="p">(</span><span class="n">neigh</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">rst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_self</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">rst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">rst</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">rst</span>
+
+
+<span class="k">class</span> <span class="nc">SGAT</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">,</span>
+        <span class="n">output_dim</span><span class="p">,</span>
+        <span class="n">batch_norm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">feat_drop</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">input_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">batch_norm</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feat_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">feat_drop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_q</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_k</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_v</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_e</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sg</span><span class="p">,</span> <span class="n">feat</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feat_drop</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_q</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_k</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_v</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">u_add_v</span><span class="p">(</span><span class="n">sg</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_e</span><span class="p">(</span><span class="n">th</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">edge_softmax</span><span class="p">(</span><span class="n">sg</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="n">rst</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">u_mul_e_sum</span><span class="p">(</span><span class="n">sg</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">rst</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rst</span>
+
+
+<span class="k">class</span> <span class="nc">AttnReadout</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="p">,</span>
+        <span class="n">hidden_dim</span><span class="p">,</span>
+        <span class="n">output_dim</span><span class="p">,</span>
+        <span class="n">batch_norm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">feat_drop</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">activation</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">input_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">batch_norm</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feat_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">feat_drop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_u</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_v</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_e</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_out</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">output_dim</span> <span class="o">!=</span> <span class="n">input_dim</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="o">=</span> <span class="n">activation</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">feat</span><span class="p">,</span> <span class="n">last_nodes</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feat_drop</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="n">feat_u</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_u</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+        <span class="n">feat_v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_v</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="n">last_nodes</span><span class="p">])</span>
+        <span class="n">feat_v</span> <span class="o">=</span> <span class="n">dgl</span><span class="o">.</span><span class="n">broadcast_nodes</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">feat_v</span><span class="p">)</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_e</span><span class="p">(</span><span class="n">th</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">feat_u</span> <span class="o">+</span> <span class="n">feat_v</span><span class="p">))</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">segment_softmax</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">batch_num_nodes</span><span class="p">(),</span> <span class="n">e</span><span class="p">)</span>
+        <span class="n">feat_norm</span> <span class="o">=</span> <span class="n">feat</span> <span class="o">*</span> <span class="n">alpha</span>
+        <span class="n">rst</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">segment</span><span class="o">.</span><span class="n">segment_reduce</span><span class="p">(</span><span class="n">g</span><span class="o">.</span><span class="n">batch_num_nodes</span><span class="p">(),</span> <span class="n">feat_norm</span><span class="p">,</span> <span class="s1">&#39;sum&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_out</span><span class="p">(</span><span class="n">rst</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">activation</span><span class="p">(</span><span class="n">rst</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rst</span>
+
+
+<span class="k">class</span> <span class="nc">LESSR</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">num_items</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">,</span> <span class="n">num_layers</span><span class="p">,</span> <span class="n">batch_norm</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">feat_drop</span><span class="o">=</span><span class="mf">0.0</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">num_items</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">,</span> <span class="n">max_norm</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span>
+            <span class="n">th</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_items</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">th</span><span class="o">.</span><span class="n">long</span><span class="p">),</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">=</span> <span class="n">num_layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">()</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="n">embedding_dim</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_layers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">layer</span> <span class="o">=</span> <span class="n">EOPA</span><span class="p">(</span>
+                    <span class="n">input_dim</span><span class="p">,</span>
+                    <span class="n">embedding_dim</span><span class="p">,</span>
+                    <span class="n">batch_norm</span><span class="o">=</span><span class="n">batch_norm</span><span class="p">,</span>
+                    <span class="n">feat_drop</span><span class="o">=</span><span class="n">feat_drop</span><span class="p">,</span>
+                    <span class="n">activation</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">PReLU</span><span class="p">(</span><span class="n">embedding_dim</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">layer</span> <span class="o">=</span> <span class="n">SGAT</span><span class="p">(</span>
+                    <span class="n">input_dim</span><span class="p">,</span>
+                    <span class="n">embedding_dim</span><span class="p">,</span>
+                    <span class="n">embedding_dim</span><span class="p">,</span>
+                    <span class="n">batch_norm</span><span class="o">=</span><span class="n">batch_norm</span><span class="p">,</span>
+                    <span class="n">feat_drop</span><span class="o">=</span><span class="n">feat_drop</span><span class="p">,</span>
+                    <span class="n">activation</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">PReLU</span><span class="p">(</span><span class="n">embedding_dim</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="n">input_dim</span> <span class="o">+=</span> <span class="n">embedding_dim</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readout</span> <span class="o">=</span> <span class="n">AttnReadout</span><span class="p">(</span>
+            <span class="n">input_dim</span><span class="p">,</span>
+            <span class="n">embedding_dim</span><span class="p">,</span>
+            <span class="n">embedding_dim</span><span class="p">,</span>
+            <span class="n">batch_norm</span><span class="o">=</span><span class="n">batch_norm</span><span class="p">,</span>
+            <span class="n">feat_drop</span><span class="o">=</span><span class="n">feat_drop</span><span class="p">,</span>
+            <span class="n">activation</span><span class="o">=</span><span class="n">nn</span><span class="o">.</span><span class="n">PReLU</span><span class="p">(</span><span class="n">embedding_dim</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">input_dim</span> <span class="o">+=</span> <span class="n">embedding_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BatchNorm1d</span><span class="p">(</span><span class="n">input_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">batch_norm</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">feat_drop</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">feat_drop</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fc_sr</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mg</span><span class="p">,</span> <span class="n">sg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">iid</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">ndata</span><span class="p">[</span><span class="s1">&#39;iid&#39;</span><span class="p">]</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">iid</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">mg</span><span class="p">,</span> <span class="n">feat</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">sg</span><span class="p">,</span> <span class="n">feat</span><span class="p">)</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">out</span><span class="p">,</span> <span class="n">feat</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">last_nodes</span> <span class="o">=</span> <span class="n">mg</span><span class="o">.</span><span class="n">filter_nodes</span><span class="p">(</span><span class="k">lambda</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">nodes</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;last&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">sr_g</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout</span><span class="p">(</span><span class="n">mg</span><span class="p">,</span> <span class="n">feat</span><span class="p">,</span> <span class="n">last_nodes</span><span class="p">)</span>
+        <span class="n">sr_l</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="n">last_nodes</span><span class="p">]</span>
+        <span class="n">sr</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">sr_l</span><span class="p">,</span> <span class="n">sr_g</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_norm</span><span class="p">(</span><span class="n">sr</span><span class="p">)</span>
+        <span class="n">sr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fc_sr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feat_drop</span><span class="p">(</span><span class="n">sr</span><span class="p">))</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">sr</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">logits</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Main">Main<a class="anchor-link" href="#Main"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">torch</span> <span class="k">as</span> <span class="nn">th</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+
+
+<span class="n">args</span> <span class="o">=</span> <span class="n">Args</span><span class="p">()</span>
+
+
+<span class="n">dataset_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset_dir</span><span class="p">)</span>
+<span class="n">args</span><span class="o">.</span><span class="n">Ks</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">K</span><span class="p">)</span> <span class="k">for</span> <span class="n">K</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">Ks</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;reading dataset&#39;</span><span class="p">)</span>
+<span class="n">train_sessions</span><span class="p">,</span> <span class="n">test_sessions</span><span class="p">,</span> <span class="n">num_items</span> <span class="o">=</span> <span class="n">read_dataset</span><span class="p">(</span><span class="n">dataset_dir</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">valid_split</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">num_valid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_sessions</span><span class="p">)</span> <span class="o">*</span> <span class="n">args</span><span class="o">.</span><span class="n">valid_split</span><span class="p">)</span>
+    <span class="n">test_sessions</span> <span class="o">=</span> <span class="n">train_sessions</span><span class="p">[</span><span class="o">-</span><span class="n">num_valid</span><span class="p">:]</span>
+    <span class="n">train_sessions</span> <span class="o">=</span> <span class="n">train_sessions</span><span class="p">[:</span><span class="o">-</span><span class="n">num_valid</span><span class="p">]</span>
+
+
+<span class="n">train_set</span> <span class="o">=</span> <span class="n">AugmentedDataset</span><span class="p">(</span><span class="n">train_sessions</span><span class="p">)</span>
+<span class="n">test_set</span> <span class="o">=</span> <span class="n">AugmentedDataset</span><span class="p">(</span><span class="n">test_sessions</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">num_layers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">collate_fn</span> <span class="o">=</span> <span class="n">collate_fn_factory</span><span class="p">(</span><span class="n">seq_to_eop_multigraph</span><span class="p">,</span> <span class="n">seq_to_shortcut_graph</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">collate_fn</span> <span class="o">=</span> <span class="n">collate_fn_factory</span><span class="p">(</span><span class="n">seq_to_eop_multigraph</span><span class="p">)</span>
+
+
+<span class="n">train_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+    <span class="n">train_set</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">drop_last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+    <span class="n">collate_fn</span><span class="o">=</span><span class="n">collate_fn</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">test_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+    <span class="n">test_set</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">num_workers</span><span class="p">,</span>
+    <span class="n">collate_fn</span><span class="o">=</span><span class="n">collate_fn</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">LESSR</span><span class="p">(</span><span class="n">num_items</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">embedding_dim</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">num_layers</span><span class="p">,</span> <span class="n">feat_drop</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">feat_drop</span><span class="p">)</span>
+<span class="n">device</span> <span class="o">=</span> <span class="n">th</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">th</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+
+<span class="n">runner</span> <span class="o">=</span> <span class="n">TrainRunner</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">train_loader</span><span class="p">,</span>
+    <span class="n">test_loader</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="n">device</span><span class="p">,</span>
+    <span class="n">lr</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span>
+    <span class="n">weight_decay</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">weight_decay</span><span class="p">,</span>
+    <span class="n">patience</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">patience</span><span class="p">,</span>
+    <span class="n">Ks</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">Ks</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;start training&#39;</span><span class="p">)</span>
+<span class="n">runner</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">epochs</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">log_interval</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>reading dataset
+LESSR(
+  (embedding): Embedding(3429, 32, max_norm=1)
+  (layers): ModuleList(
+    (0): EOPA(
+      (batch_norm): BatchNorm1d(32, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (feat_drop): Dropout(p=0.2, inplace=False)
+      (gru): GRU(32, 32, batch_first=True)
+      (fc_self): Linear(in_features=32, out_features=32, bias=False)
+      (fc_neigh): Linear(in_features=32, out_features=32, bias=False)
+      (activation): PReLU(num_parameters=32)
+    )
+    (1): SGAT(
+      (batch_norm): BatchNorm1d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (feat_drop): Dropout(p=0.2, inplace=False)
+      (fc_q): Linear(in_features=64, out_features=32, bias=True)
+      (fc_k): Linear(in_features=64, out_features=32, bias=False)
+      (fc_v): Linear(in_features=64, out_features=32, bias=False)
+      (fc_e): Linear(in_features=32, out_features=1, bias=False)
+      (activation): PReLU(num_parameters=32)
+    )
+    (2): EOPA(
+      (batch_norm): BatchNorm1d(96, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+      (feat_drop): Dropout(p=0.2, inplace=False)
+      (gru): GRU(96, 96, batch_first=True)
+      (fc_self): Linear(in_features=96, out_features=32, bias=False)
+      (fc_neigh): Linear(in_features=96, out_features=32, bias=False)
+      (activation): PReLU(num_parameters=32)
+    )
+  )
+  (readout): AttnReadout(
+    (batch_norm): BatchNorm1d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (feat_drop): Dropout(p=0.2, inplace=False)
+    (fc_u): Linear(in_features=128, out_features=32, bias=False)
+    (fc_v): Linear(in_features=128, out_features=32, bias=True)
+    (fc_e): Linear(in_features=32, out_features=1, bias=False)
+    (fc_out): Linear(in_features=128, out_features=32, bias=False)
+    (activation): PReLU(num_parameters=32)
+  )
+  (batch_norm): BatchNorm1d(160, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (feat_drop): Dropout(p=0.2, inplace=False)
+  (fc_sr): Linear(in_features=160, out_features=32, bias=False)
+)
+start training
+
+Epoch 0:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	18.90	14.54	15.58	20.79	14.67	16.05
+Batch 100: Loss = 7.7529, Time Elapsed = 38.81s
+
+Epoch 1:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	23.18	18.23	19.43	25.22	18.37	19.95
+
+Epoch 2:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	27.36	20.51	22.17	29.28	20.65	22.66
+Batch 200: Loss = 6.6354, Time Elapsed = 41.06s
+
+Epoch 3:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	30.62	22.00	24.11	33.01	22.16	24.71
+
+Epoch 4:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	34.04	23.61	26.15	36.85	23.81	26.87
+Batch 300: Loss = 5.7573, Time Elapsed = 40.80s
+
+Epoch 5:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	37.66	24.79	27.92	41.61	25.06	28.91
+
+Epoch 6:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	41.16	26.51	30.06	45.56	26.81	31.16
+Batch 400: Loss = 5.0562, Time Elapsed = 41.00s
+
+Epoch 7:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	43.58	27.66	31.51	48.65	28.01	32.80
+Batch 500: Loss = 4.4297, Time Elapsed = 38.31s
+
+Epoch 8:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	45.45	28.36	32.49	51.27	28.77	33.98
+
+Epoch 9:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	47.09	28.83	33.24	53.05	29.24	34.75
+Batch 600: Loss = 3.9828, Time Elapsed = 40.68s
+
+Epoch 10:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	47.98	29.44	33.91	53.66	29.84	35.36
+
+Epoch 11:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	48.82	30.07	34.58	55.08	30.50	36.17
+Batch 700: Loss = 3.6589, Time Elapsed = 40.59s
+
+Epoch 12:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	49.15	30.41	34.91	56.25	30.90	36.71
+
+Epoch 13:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	49.90	30.91	35.47	56.36	31.36	37.11
+Batch 800: Loss = 3.4623, Time Elapsed = 43.01s
+
+Epoch 14:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	50.40	31.16	35.78	56.67	31.61	37.38
+
+Epoch 15:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	50.49	31.22	35.84	57.33	31.71	37.58
+Batch 900: Loss = 3.3167, Time Elapsed = 43.44s
+
+Epoch 16:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	50.74	31.21	35.89	57.83	31.70	37.69
+Batch 1000: Loss = 3.1853, Time Elapsed = 40.49s
+
+Epoch 17:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	51.10	31.54	36.23	58.11	32.04	38.02
+
+Epoch 18:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	51.13	31.56	36.25	58.34	32.08	38.09
+Batch 1100: Loss = 3.0797, Time Elapsed = 42.92s
+
+Epoch 19:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	51.21	31.78	36.43	57.70	32.23	38.07
+
+Epoch 20:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	51.16	31.45	36.17	57.97	31.93	37.90
+Batch 1200: Loss = 2.9932, Time Elapsed = 43.07s
+
+Epoch 21:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	51.18	31.71	36.38	57.97	32.19	38.11
+
+Epoch 22:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	51.43	31.62	36.36	58.28	32.09	38.09
+Batch 1300: Loss = 2.9322, Time Elapsed = 40.85s
+
+Epoch 23:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	50.79	31.37	36.03	58.03	31.88	37.87
+
+Epoch 24:
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	50.65	31.49	36.09	58.31	32.03	38.03
+
+Best results
+Metric	HR@10	MRR@10	NDCG@10	HR@20	MRR@20	NDCG@20
+Value	51.43	31.78	36.43	58.34	32.23	38.11
+Epoch	22	19	19	18	19	21
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>defaultdict(float,
+            {&#39;HR@10&#39;: 0.5143334261063178,
+             &#39;HR@20&#39;: 0.58335652657946,
+             &#39;MRR@10&#39;: 0.3178392481478748,
+             &#39;MRR@20&#39;: 0.3223134756353683,
+             &#39;NDCG@10&#39;: 0.36433385989807326,
+             &#39;NDCG@20&#39;: 0.38109836749568676})</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="o">-</span><span class="n">qq</span> <span class="n">install</span> <span class="n">tree</span>
+<span class="err">!</span><span class="n">rm</span> <span class="o">-</span><span class="n">r</span> <span class="n">sample_data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Selecting previously unselected package tree.
+(Reading database ... 155222 files and directories currently installed.)
+Preparing to unpack .../tree_1.7.0-5_amd64.deb ...
+Unpacking tree (1.7.0-5) ...
+Setting up tree (1.7.0-5) ...
+Processing triggers for man-db (2.8.3-2ubuntu0.1) ...
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">tree</span> <span class="o">-</span><span class="n">h</span> <span class="o">--</span><span class="n">du</span> <span class="o">.</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>.
+├── [   4]  num_items.txt
+├── [ 23K]  test.txt
+└── [173K]  train.txt
+
+ 200K used in 0 directories, 3 files
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">reload_ext</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">watermark</span> <span class="o">-</span><span class="n">a</span> <span class="s2">&quot;Sparsh A.&quot;</span> <span class="o">-</span><span class="n">m</span> <span class="o">-</span><span class="n">iv</span> <span class="o">-</span><span class="n">u</span> <span class="o">-</span><span class="n">t</span> <span class="o">-</span><span class="n">d</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Author: Sparsh A.
+
+Last updated: 2021-11-27 12:09:36
+
+Compiler    : GCC 7.5.0
+OS          : Linux
+Release     : 5.4.104+
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 2
+Architecture: 64bit
+
+numpy  : 1.19.5
+pandas : 1.1.5
+torch  : 1.10.0+cu111
+dgl    : 0.6.1
+IPython: 5.5.0
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>END</strong></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/20/lessr.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

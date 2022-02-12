@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>BPR on ML-1m in Tensorflow | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="BPR on ML-1m in Tensorflow" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/23/bpr-movie.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/23/bpr-movie.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-23T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="BPR on ML-1m in Tensorflow" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-23T00:00:00-06:00","datePublished":"2022-01-23T00:00:00-06:00","description":"Jupyter notebook database.","headline":"BPR on ML-1m in Tensorflow","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/23/bpr-movie.html"},"url":"https://nb.recohut.com/2022/01/23/bpr-movie.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">BPR on ML-1m in Tensorflow</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-23T00:00:00-06:00" itemprop="datePublished">
+        Jan 23, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      6 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-23-bpr-movie.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-23-bpr-movie.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-23-bpr-movie.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-23-bpr-movie.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-23-bpr-movie.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">tensorflow</span><span class="o">==</span><span class="mf">2.5</span><span class="o">.</span><span class="mi">0</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">files</span><span class="o">.</span><span class="n">grouplens</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">datasets</span><span class="o">/</span><span class="n">movielens</span><span class="o">/</span><span class="n">ml</span><span class="o">-</span><span class="mi">1</span><span class="n">m</span><span class="o">.</span><span class="n">zip</span>
+<span class="err">!</span><span class="n">unzip</span> <span class="n">ml</span><span class="o">-</span><span class="mi">1</span><span class="n">m</span><span class="o">.</span><span class="n">zip</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>ml-1m.zip           100%[===================&gt;]   5.64M  16.7MB/s    in 0.3s    
+Archive:  ml-1m.zip
+   creating: ml-1m/
+  inflating: ml-1m/movies.dat        
+  inflating: ml-1m/ratings.dat       
+  inflating: ml-1m/README            
+  inflating: ml-1m/users.dat         
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">time</span>
+<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.optimizers</span> <span class="kn">import</span> <span class="n">Adam</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.layers</span> <span class="kn">import</span> <span class="n">Embedding</span><span class="p">,</span> <span class="n">Input</span>
+<span class="kn">from</span> <span class="nn">tensorflow.keras.regularizers</span> <span class="kn">import</span> <span class="n">l2</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">reload_ext</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">watermark</span> <span class="o">-</span><span class="n">m</span> <span class="o">-</span><span class="n">iv</span> <span class="o">-</span><span class="n">u</span> <span class="o">-</span><span class="n">t</span> <span class="o">-</span><span class="n">d</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;TF_CPP_MIN_LOG_LEVEL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;2&#39;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;CUDA_VISIBLE_DEVICES&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+
+<span class="n">file</span> <span class="o">=</span> <span class="s1">&#39;ml-1m/ratings.dat&#39;</span>
+<span class="n">trans_score</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">test_neg_num</span> <span class="o">=</span> <span class="mi">100</span>
+
+<span class="n">embed_dim</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;inner&#39;</span>  <span class="c1"># dist</span>
+<span class="n">embed_reg</span> <span class="o">=</span> <span class="mf">1e-6</span>  <span class="c1"># 1e-6</span>
+<span class="n">K</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1"># top-k</span>
+
+<span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="n">epochs</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">512</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">sparseFeature</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">feat_num</span><span class="p">,</span> <span class="n">embed_dim</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    create dictionary for sparse feature</span>
+<span class="sd">    :param feat: feature name</span>
+<span class="sd">    :param feat_num: the total number of sparse features that do not repeat</span>
+<span class="sd">    :param embed_dim: embedding dimension</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;feat&#39;</span><span class="p">:</span> <span class="n">feat</span><span class="p">,</span> <span class="s1">&#39;feat_num&#39;</span><span class="p">:</span> <span class="n">feat_num</span><span class="p">,</span> <span class="s1">&#39;embed_dim&#39;</span><span class="p">:</span> <span class="n">embed_dim</span><span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">create_ml_1m_dataset</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">trans_score</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">embed_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">test_neg_num</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param file: A string. dataset path.</span>
+<span class="sd">    :param trans_score: A scalar. Greater than it is 1, and less than it is 0.</span>
+<span class="sd">    :param embed_dim: A scalar. latent factor.</span>
+<span class="sd">    :param test_neg_num: A scalar. The number of test negative samples</span>
+<span class="sd">    :return: user_num, item_num, train_df, test_df</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;==========Data Preprocess Start=============&#39;</span><span class="p">)</span>
+    <span class="n">data_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;::&quot;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">,</span>
+                          <span class="n">names</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;item_id&#39;</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">])</span>
+    <span class="c1"># filtering</span>
+    <span class="n">data_df</span><span class="p">[</span><span class="s1">&#39;item_count&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;item_id&#39;</span><span class="p">)[</span><span class="s1">&#39;item_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="s1">&#39;count&#39;</span><span class="p">)</span>
+    <span class="n">data_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="p">[</span><span class="n">data_df</span><span class="o">.</span><span class="n">item_count</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">]</span>
+    <span class="c1"># trans score</span>
+    <span class="n">data_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="p">[</span><span class="n">data_df</span><span class="o">.</span><span class="n">label</span> <span class="o">&gt;=</span> <span class="n">trans_score</span><span class="p">]</span>
+    <span class="c1"># sort</span>
+    <span class="n">data_df</span> <span class="o">=</span> <span class="n">data_df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;Timestamp&#39;</span><span class="p">])</span>
+    <span class="c1"># split dataset and negative sampling</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;============Negative Sampling===============&#39;</span><span class="p">)</span>
+    <span class="n">train_data</span><span class="p">,</span> <span class="n">val_data</span><span class="p">,</span> <span class="n">test_data</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">),</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">),</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">item_id_max</span> <span class="o">=</span> <span class="n">data_df</span><span class="p">[</span><span class="s1">&#39;item_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">data_df</span><span class="p">[[</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;item_id&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;user_id&#39;</span><span class="p">)):</span>
+        <span class="n">pos_list</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;item_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">gen_neg</span><span class="p">():</span>
+            <span class="n">neg</span> <span class="o">=</span> <span class="n">pos_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">while</span> <span class="n">neg</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">pos_list</span><span class="p">):</span>
+                <span class="n">neg</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">item_id_max</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">neg</span>
+
+        <span class="n">neg_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">gen_neg</span><span class="p">()</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pos_list</span><span class="p">)</span> <span class="o">+</span> <span class="n">test_neg_num</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_list</span><span class="p">)):</span>
+            <span class="n">hist_i</span> <span class="o">=</span> <span class="n">pos_list</span><span class="p">[:</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_list</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+                <span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;pos_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pos_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;neg_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neg_list</span><span class="p">[</span><span class="n">i</span><span class="p">:])</span>
+            <span class="k">elif</span> <span class="n">i</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">pos_list</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">val_data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+                <span class="n">val_data</span><span class="p">[</span><span class="s1">&#39;pos_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pos_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">val_data</span><span class="p">[</span><span class="s1">&#39;neg_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neg_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span>
+                <span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;pos_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pos_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;neg_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neg_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="c1"># feature columns</span>
+    <span class="n">user_num</span><span class="p">,</span> <span class="n">item_num</span> <span class="o">=</span> <span class="n">data_df</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">data_df</span><span class="p">[</span><span class="s1">&#39;item_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">feat_col</span> <span class="o">=</span> <span class="p">[</span><span class="n">sparseFeature</span><span class="p">(</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="n">user_num</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">),</span>
+                <span class="n">sparseFeature</span><span class="p">(</span><span class="s1">&#39;item_id&#39;</span><span class="p">,</span> <span class="n">item_num</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">)]</span>
+    <span class="c1"># shuffle</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
+    <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">val_data</span><span class="p">)</span>
+    <span class="n">train</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;pos_id&#39;</span><span class="p">]),</span>
+               <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">train_data</span><span class="p">[</span><span class="s1">&#39;neg_id&#39;</span><span class="p">])]</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">val_data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">val_data</span><span class="p">[</span><span class="s1">&#39;pos_id&#39;</span><span class="p">]),</span>
+             <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">val_data</span><span class="p">[</span><span class="s1">&#39;neg_id&#39;</span><span class="p">])]</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;pos_id&#39;</span><span class="p">]),</span>
+              <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;neg_id&#39;</span><span class="p">])]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;============Data Preprocess End=============&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">feat_col</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">test</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">BPR</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature_columns</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">embed_reg</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        BPR</span>
+<span class="sd">        :param feature_columns: A list. user feature columns + item feature columns</span>
+<span class="sd">        :mode: A string. &#39;inner&#39; or &#39;dist&#39;.</span>
+<span class="sd">        :param embed_reg: A scalar.  The regularizer of embedding.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BPR</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># feature columns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_fea_col</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_fea_col</span> <span class="o">=</span> <span class="n">feature_columns</span>
+        <span class="c1"># mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="c1"># user embedding</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_embedding</span> <span class="o">=</span> <span class="n">Embedding</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user_fea_col</span><span class="p">[</span><span class="s1">&#39;feat_num&#39;</span><span class="p">],</span>
+                                        <span class="n">input_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                        <span class="n">output_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">user_fea_col</span><span class="p">[</span><span class="s1">&#39;embed_dim&#39;</span><span class="p">],</span>
+                                        <span class="n">mask_zero</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                        <span class="n">embeddings_initializer</span><span class="o">=</span><span class="s1">&#39;random_normal&#39;</span><span class="p">,</span>
+                                        <span class="n">embeddings_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">embed_reg</span><span class="p">))</span>
+        <span class="c1"># item embedding</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item_embedding</span> <span class="o">=</span> <span class="n">Embedding</span><span class="p">(</span><span class="n">input_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">item_fea_col</span><span class="p">[</span><span class="s1">&#39;feat_num&#39;</span><span class="p">],</span>
+                                        <span class="n">input_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                        <span class="n">output_dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">item_fea_col</span><span class="p">[</span><span class="s1">&#39;embed_dim&#39;</span><span class="p">],</span>
+                                        <span class="n">mask_zero</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                        <span class="n">embeddings_initializer</span><span class="o">=</span><span class="s1">&#39;random_normal&#39;</span><span class="p">,</span>
+                                        <span class="n">embeddings_regularizer</span><span class="o">=</span><span class="n">l2</span><span class="p">(</span><span class="n">embed_reg</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="n">user_inputs</span><span class="p">,</span> <span class="n">pos_inputs</span><span class="p">,</span> <span class="n">neg_inputs</span> <span class="o">=</span> <span class="n">inputs</span>  <span class="c1"># (None, 1), (None, 1)</span>
+        <span class="c1"># user info</span>
+        <span class="n">user_embed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_embedding</span><span class="p">(</span><span class="n">user_inputs</span><span class="p">)</span>  <span class="c1"># (None, 1, dim)</span>
+        <span class="c1"># item</span>
+        <span class="n">pos_embed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_embedding</span><span class="p">(</span><span class="n">pos_inputs</span><span class="p">)</span>  <span class="c1"># (None, 1, dim)</span>
+        <span class="n">neg_embed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_embedding</span><span class="p">(</span><span class="n">neg_inputs</span><span class="p">)</span>  <span class="c1"># (None, 1, dim)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;inner&#39;</span><span class="p">:</span>
+            <span class="c1"># calculate positive item scores and negative item scores</span>
+            <span class="n">pos_scores</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">user_embed</span><span class="p">,</span> <span class="n">pos_embed</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (None, 1)</span>
+            <span class="n">neg_scores</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">user_embed</span><span class="p">,</span> <span class="n">neg_embed</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (None, 1)</span>
+            <span class="c1"># add loss. Computes softplus: log(exp(features) + 1)</span>
+            <span class="c1"># self.add_loss(tf.reduce_mean(tf.math.softplus(neg_scores - pos_scores)))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_loss</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="o">-</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">pos_scores</span> <span class="o">-</span> <span class="n">neg_scores</span><span class="p">))))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># clip by norm</span>
+            <span class="c1"># user_embed = tf.clip_by_norm(user_embed, 1, -1)</span>
+            <span class="c1"># pos_embed = tf.clip_by_norm(pos_embed, 1, -1)</span>
+            <span class="c1"># neg_embed = tf.clip_by_norm(neg_embed, 1, -1)</span>
+            <span class="n">pos_scores</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">user_embed</span> <span class="o">-</span> <span class="n">pos_embed</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">neg_scores</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">user_embed</span> <span class="o">-</span> <span class="n">neg_embed</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_loss</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">pos_scores</span> <span class="o">-</span> <span class="n">neg_scores</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)))</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">pos_scores</span><span class="p">,</span> <span class="n">neg_scores</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">logits</span>
+
+    <span class="k">def</span> <span class="nf">summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">user_inputs</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">pos_inputs</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">neg_inputs</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">Model</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">user_inputs</span><span class="p">,</span> <span class="n">pos_inputs</span><span class="p">,</span> <span class="n">neg_inputs</span><span class="p">],</span>
+            <span class="n">outputs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="n">user_inputs</span><span class="p">,</span> <span class="n">pos_inputs</span><span class="p">,</span> <span class="n">neg_inputs</span><span class="p">]))</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">test_model</span><span class="p">():</span>
+    <span class="n">user_features</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;feat&#39;</span><span class="p">:</span> <span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;feat_num&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;embed_dim&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">}</span>
+    <span class="n">item_features</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;feat&#39;</span><span class="p">:</span> <span class="s1">&#39;item_id&#39;</span><span class="p">,</span> <span class="s1">&#39;feat_num&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;embed_dim&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">}</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="n">user_features</span><span class="p">,</span> <span class="n">item_features</span><span class="p">]</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">BPR</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">evaluate_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">K</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    evaluate model</span>
+<span class="sd">    :param model: model</span>
+<span class="sd">    :param test: test set</span>
+<span class="sd">    :param K: top K</span>
+<span class="sd">    :return: hit rate, ndcg</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">model</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;inner&#39;</span><span class="p">:</span>
+        <span class="n">pred_y</span> <span class="o">=</span> <span class="o">-</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">pred_y</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="n">pred_y</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[:,</span> <span class="mi">0</span><span class="p">]</span>
+    <span class="n">hr</span><span class="p">,</span> <span class="n">ndcg</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rank</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">K</span><span class="p">:</span>
+            <span class="n">hr</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">ndcg</span> <span class="o">+=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hr</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">rank</span><span class="p">),</span> <span class="n">ndcg</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">rank</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">feature_columns</span><span class="p">,</span> <span class="n">train</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">create_ml_1m_dataset</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">trans_score</span><span class="p">,</span> <span class="n">embed_dim</span><span class="p">,</span> <span class="n">test_neg_num</span><span class="p">)</span>
+
+<span class="c1"># ============================Build Model==========================</span>
+<span class="n">mirrored_strategy</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">distribute</span><span class="o">.</span><span class="n">MirroredStrategy</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">mirrored_strategy</span><span class="o">.</span><span class="n">scope</span><span class="p">():</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">BPR</span><span class="p">(</span><span class="n">feature_columns</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">embed_reg</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+    <span class="c1"># =========================Compile============================</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">Adam</span><span class="p">(</span><span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">))</span>
+
+<span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">epochs</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="c1"># ===========================Fit==============================</span>
+    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
+        <span class="n">train</span><span class="p">,</span>
+        <span class="kc">None</span><span class="p">,</span>
+        <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># ===========================Test==============================</span>
+    <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">epoch</span> <span class="o">%</span> <span class="mi">5</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">hit_rate</span><span class="p">,</span> <span class="n">ndcg</span> <span class="o">=</span> <span class="n">evaluate_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">test</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Iteration </span><span class="si">%d</span><span class="s1"> Fit [</span><span class="si">%.1f</span><span class="s1"> s], Evaluate [</span><span class="si">%.1f</span><span class="s1"> s]: HR = </span><span class="si">%.4f</span><span class="s1">, NDCG = </span><span class="si">%.4f</span><span class="s1">&#39;</span>
+                <span class="o">%</span> <span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t2</span><span class="p">,</span> <span class="n">hit_rate</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">))</span>
+        <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">epoch</span><span class="p">,</span> <span class="n">t2</span> <span class="o">-</span> <span class="n">t1</span><span class="p">,</span> <span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">t2</span><span class="p">,</span> <span class="n">hit_rate</span><span class="p">,</span> <span class="n">ndcg</span><span class="p">])</span>
+<span class="c1"># ========================== Write Log ===========================</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Iteration&#39;</span><span class="p">,</span> <span class="s1">&#39;fit_time&#39;</span><span class="p">,</span> <span class="s1">&#39;evaluate_time&#39;</span><span class="p">,</span> <span class="s1">&#39;hit_rate&#39;</span><span class="p">,</span> <span class="s1">&#39;ndcg&#39;</span><span class="p">])</span>\
+    <span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;BPR_log_dim_</span><span class="si">{}</span><span class="s1">_mode_</span><span class="si">{}</span><span class="s1">_K_</span><span class="si">{}</span><span class="s1">.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">embed_dim</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">K</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>==========Data Preprocess Start=============
+============Negative Sampling===============
+============Data Preprocess End=============
+WARNING:tensorflow:There are non-GPU devices in `tf.distribute.Strategy`, not using nccl allreduce.
+WARNING:tensorflow:Collective ops is not configured at program startup. Some performance features may not be enabled.
+INFO:tensorflow:Using MirroredStrategy with devices (&#39;/job:localhost/replica:0/task:0/device:CPU:0&#39;,)
+Model: &#34;model&#34;
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to                     
+==================================================================================================
+input_1 (InputLayer)            [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+input_2 (InputLayer)            [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+input_3 (InputLayer)            [(None, 1)]          0                                            
+__________________________________________________________________________________________________
+embedding (Embedding)           (None, 1, 64)        386624      input_1[0][0]                    
+__________________________________________________________________________________________________
+embedding_1 (Embedding)         (None, 1, 64)        252992      input_2[0][0]                    
+                                                                 input_3[0][0]                    
+__________________________________________________________________________________________________
+tf.math.multiply (TFOpLambda)   (None, 1, 64)        0           embedding[0][0]                  
+                                                                 embedding_1[0][0]                
+__________________________________________________________________________________________________
+tf.math.multiply_1 (TFOpLambda) (None, 1, 64)        0           embedding[0][0]                  
+                                                                 embedding_1[1][0]                
+__________________________________________________________________________________________________
+tf.math.reduce_sum (TFOpLambda) (None, 1)            0           tf.math.multiply[0][0]           
+__________________________________________________________________________________________________
+tf.math.reduce_sum_1 (TFOpLambd (None, 1)            0           tf.math.multiply_1[0][0]         
+__________________________________________________________________________________________________
+tf.concat (TFOpLambda)          (None, 2)            0           tf.math.reduce_sum[0][0]         
+                                                                 tf.math.reduce_sum_1[0][0]       
+==================================================================================================
+Total params: 639,616
+Trainable params: 639,616
+Non-trainable params: 0
+__________________________________________________________________________________________________
+1917/1917 [==============================] - 17s 8ms/step - loss: 0.4905 - val_loss: 0.3937
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.2871 - val_loss: 0.3402
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.2403 - val_loss: 0.3168
+1917/1917 [==============================] - 17s 9ms/step - loss: 0.2172 - val_loss: 0.3061
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.2023 - val_loss: 0.3021
+Iteration 5 Fit [14.2 s], Evaluate [1.7 s]: HR = 0.6086, NDCG = 0.3500
+1917/1917 [==============================] - 15s 8ms/step - loss: 0.1904 - val_loss: 0.2998
+1917/1917 [==============================] - 15s 8ms/step - loss: 0.1801 - val_loss: 0.3008
+1917/1917 [==============================] - 15s 8ms/step - loss: 0.1711 - val_loss: 0.3025
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1630 - val_loss: 0.3048
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1558 - val_loss: 0.3087
+Iteration 10 Fit [14.5 s], Evaluate [0.8 s]: HR = 0.6368, NDCG = 0.3701
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1496 - val_loss: 0.3123
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1443 - val_loss: 0.3164
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1400 - val_loss: 0.3213
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1364 - val_loss: 0.3246
+1917/1917 [==============================] - 14s 8ms/step - loss: 0.1335 - val_loss: 0.3284
+Iteration 15 Fit [14.6 s], Evaluate [0.5 s]: HR = 0.6394, NDCG = 0.3714
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1312 - val_loss: 0.3322
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1294 - val_loss: 0.3357
+1917/1917 [==============================] - 14s 8ms/step - loss: 0.1279 - val_loss: 0.3372
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1267 - val_loss: 0.3396
+1917/1917 [==============================] - 14s 7ms/step - loss: 0.1258 - val_loss: 0.3420
+Iteration 20 Fit [20.6 s], Evaluate [0.5 s]: HR = 0.6359, NDCG = 0.3704
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+<script type="application/vnd.jupyter.widget-state+json">
+{"61aaba58d3324661b52a90a48a6946ba": {"model_module": "@jupyter-widgets/controls", "model_name": "HBoxModel", "model_module_version": "1.5.0", "state": {"_view_name": "HBoxView", "_dom_classes": [], "_model_name": "HBoxModel", "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.5.0", "box_style": "", "layout": "IPY_MODEL_2ff544deb2e44e0d959271097e9c44af", "_model_module": "@jupyter-widgets/controls", "children": ["IPY_MODEL_db1d007657c6485f9cc738ca12e8ac8a", "IPY_MODEL_9ce1de0d27714039b59ab7b1255abc29", "IPY_MODEL_9df995714bd341059e85b779506fecb5"]}}, "2ff544deb2e44e0d959271097e9c44af": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}, "db1d007657c6485f9cc738ca12e8ac8a": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_view_name": "HTMLView", "style": "IPY_MODEL_9c47c25edd844ad88d695c4da097b565", "_dom_classes": [], "description": "", "_model_name": "HTMLModel", "placeholder": "\u200b", "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "value": "100%", "_view_count": null, "_view_module_version": "1.5.0", "description_tooltip": null, "_model_module": "@jupyter-widgets/controls", "layout": "IPY_MODEL_33cffb5d3c124b69b77c7ddb9fdb6e7a"}}, "9ce1de0d27714039b59ab7b1255abc29": {"model_module": "@jupyter-widgets/controls", "model_name": "FloatProgressModel", "model_module_version": "1.5.0", "state": {"_view_name": "ProgressView", "style": "IPY_MODEL_0e8dcaee6ec14dd9a548807282865f64", "_dom_classes": [], "description": "", "_model_name": "FloatProgressModel", "bar_style": "success", "max": 6040, "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "value": 6040, "_view_count": null, "_view_module_version": "1.5.0", "orientation": "horizontal", "min": 0, "description_tooltip": null, "_model_module": "@jupyter-widgets/controls", "layout": "IPY_MODEL_bf828936d7a84a0fa093ac6ac4463090"}}, "9df995714bd341059e85b779506fecb5": {"model_module": "@jupyter-widgets/controls", "model_name": "HTMLModel", "model_module_version": "1.5.0", "state": {"_view_name": "HTMLView", "style": "IPY_MODEL_e12e386149c14075b2d2362a6982298c", "_dom_classes": [], "description": "", "_model_name": "HTMLModel", "placeholder": "\u200b", "_view_module": "@jupyter-widgets/controls", "_model_module_version": "1.5.0", "value": " 6040/6040 [00:34&lt;00:00, 208.71it/s]", "_view_count": null, "_view_module_version": "1.5.0", "description_tooltip": null, "_model_module": "@jupyter-widgets/controls", "layout": "IPY_MODEL_5ded68d3108f4f6c9155677c7db4fd99"}}, "9c47c25edd844ad88d695c4da097b565": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_view_name": "StyleView", "_model_name": "DescriptionStyleModel", "description_width": "", "_view_module": "@jupyter-widgets/base", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.2.0", "_model_module": "@jupyter-widgets/controls"}}, "33cffb5d3c124b69b77c7ddb9fdb6e7a": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}, "0e8dcaee6ec14dd9a548807282865f64": {"model_module": "@jupyter-widgets/controls", "model_name": "ProgressStyleModel", "model_module_version": "1.5.0", "state": {"_view_name": "StyleView", "_model_name": "ProgressStyleModel", "description_width": "", "_view_module": "@jupyter-widgets/base", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.2.0", "bar_color": null, "_model_module": "@jupyter-widgets/controls"}}, "bf828936d7a84a0fa093ac6ac4463090": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}, "e12e386149c14075b2d2362a6982298c": {"model_module": "@jupyter-widgets/controls", "model_name": "DescriptionStyleModel", "model_module_version": "1.5.0", "state": {"_view_name": "StyleView", "_model_name": "DescriptionStyleModel", "description_width": "", "_view_module": "@jupyter-widgets/base", "_model_module_version": "1.5.0", "_view_count": null, "_view_module_version": "1.2.0", "_model_module": "@jupyter-widgets/controls"}}, "5ded68d3108f4f6c9155677c7db4fd99": {"model_module": "@jupyter-widgets/base", "model_name": "LayoutModel", "model_module_version": "1.2.0", "state": {"_view_name": "LayoutView", "grid_template_rows": null, "right": null, "justify_content": null, "_view_module": "@jupyter-widgets/base", "overflow": null, "_model_module_version": "1.2.0", "_view_count": null, "flex_flow": null, "width": null, "min_width": null, "border": null, "align_items": null, "bottom": null, "_model_module": "@jupyter-widgets/base", "top": null, "grid_column": null, "overflow_y": null, "overflow_x": null, "grid_auto_flow": null, "grid_area": null, "grid_template_columns": null, "flex": null, "_model_name": "LayoutModel", "justify_items": null, "grid_row": null, "max_height": null, "align_content": null, "visibility": null, "align_self": null, "height": null, "min_height": null, "padding": null, "grid_auto_rows": null, "grid_gap": null, "max_width": null, "order": null, "_view_module_version": "1.2.0", "grid_template_areas": null, "object_position": null, "object_fit": null, "grid_auto_columns": null, "margin": null, "display": null, "left": null}}}
+</script>
+
+
+
+  </div><a class="u-url" href="/2022/01/23/bpr-movie.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

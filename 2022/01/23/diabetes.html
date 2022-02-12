@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Building a Simple Classifier in Keras to Detect Diabetes in Patients | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Building a Simple Classifier in Keras to Detect Diabetes in Patients" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/23/diabetes.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/23/diabetes.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-23T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Building a Simple Classifier in Keras to Detect Diabetes in Patients" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-23T00:00:00-06:00","datePublished":"2022-01-23T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Building a Simple Classifier in Keras to Detect Diabetes in Patients","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/23/diabetes.html"},"url":"https://nb.recohut.com/2022/01/23/diabetes.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Building a Simple Classifier in Keras to Detect Diabetes in Patients</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-23T00:00:00-06:00" itemprop="datePublished">
+        Jan 23, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      37 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-23-diabetes.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-23-diabetes.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-23-diabetes.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-23-diabetes.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-23-diabetes.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">keras</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="kn">import</span> <span class="n">Sequential</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="kn">import</span> <span class="n">Dense</span>
+<span class="kn">from</span> <span class="nn">keras.callbacks</span> <span class="kn">import</span> <span class="n">ModelCheckpoint</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">StratifiedKFold</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">FutureWarning</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">seed</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="s2">&quot;https://github.com/sparsh-ai/general-ml/raw/S142234/Hand-On%2BKeras%2B-%2BCase%2BStudy%2BPima%2BIndians%2Bdataset/pima.csv&quot;</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(768, 9)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">dataset</span><span class="p">[:</span><span class="mi">10</span><span class="p">,:]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([[6.000e+00, 1.480e+02, 7.200e+01, 3.500e+01, 0.000e+00, 3.360e+01,
+        6.270e-01, 5.000e+01, 1.000e+00],
+       [1.000e+00, 8.500e+01, 6.600e+01, 2.900e+01, 0.000e+00, 2.660e+01,
+        3.510e-01, 3.100e+01, 0.000e+00],
+       [8.000e+00, 1.830e+02, 6.400e+01, 0.000e+00, 0.000e+00, 2.330e+01,
+        6.720e-01, 3.200e+01, 1.000e+00],
+       [1.000e+00, 8.900e+01, 6.600e+01, 2.300e+01, 9.400e+01, 2.810e+01,
+        1.670e-01, 2.100e+01, 0.000e+00],
+       [0.000e+00, 1.370e+02, 4.000e+01, 3.500e+01, 1.680e+02, 4.310e+01,
+        2.288e+00, 3.300e+01, 1.000e+00],
+       [5.000e+00, 1.160e+02, 7.400e+01, 0.000e+00, 0.000e+00, 2.560e+01,
+        2.010e-01, 3.000e+01, 0.000e+00],
+       [3.000e+00, 7.800e+01, 5.000e+01, 3.200e+01, 8.800e+01, 3.100e+01,
+        2.480e-01, 2.600e+01, 1.000e+00],
+       [1.000e+01, 1.150e+02, 0.000e+00, 0.000e+00, 0.000e+00, 3.530e+01,
+        1.340e-01, 2.900e+01, 0.000e+00],
+       [2.000e+00, 1.970e+02, 7.000e+01, 4.500e+01, 5.430e+02, 3.050e+01,
+        1.580e-01, 5.300e+01, 1.000e+00],
+       [8.000e+00, 1.250e+02, 9.600e+01, 0.000e+00, 0.000e+00, 0.000e+00,
+        2.320e-01, 5.400e+01, 1.000e+00]])</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Simple-Classifier">Simple Classifier<a class="anchor-link" href="#Simple-Classifier"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:,</span><span class="mi">8</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+<span class="n">model</span><span class="o">.</span><span class="n">summary</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Model: &#34;sequential_5&#34;
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense_3 (Dense)             (None, 12)                108       
+                                                                 
+ dense_4 (Dense)             (None, 8)                 104       
+                                                                 
+ dense_5 (Dense)             (None, 1)                 9         
+                                                                 
+=================================================================
+Total params: 221
+Trainable params: 221
+Non-trainable params: 0
+_________________________________________________________________
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p><div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+</p>
+    </details>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Epoch 1/150
+77/77 [==============================] - 1s 2ms/step - loss: 0.6794 - accuracy: 0.6510
+Epoch 2/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6616 - accuracy: 0.6510
+Epoch 3/150
+77/77 [==============================] - 0s 1ms/step - loss: 0.6574 - accuracy: 0.6510
+Epoch 4/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6474 - accuracy: 0.6510
+Epoch 5/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6354 - accuracy: 0.6510
+Epoch 6/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6299 - accuracy: 0.6510
+Epoch 7/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6174 - accuracy: 0.6510
+Epoch 8/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6147 - accuracy: 0.6510
+Epoch 9/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6087 - accuracy: 0.6510
+Epoch 10/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6089 - accuracy: 0.6510
+Epoch 11/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6079 - accuracy: 0.6510
+Epoch 12/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6057 - accuracy: 0.6510
+Epoch 13/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6007 - accuracy: 0.6510
+Epoch 14/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6023 - accuracy: 0.6510
+Epoch 15/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6028 - accuracy: 0.6510
+Epoch 16/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5980 - accuracy: 0.6510
+Epoch 17/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.6018 - accuracy: 0.6510
+Epoch 18/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5972 - accuracy: 0.6510
+Epoch 19/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5943 - accuracy: 0.6510
+Epoch 20/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5927 - accuracy: 0.6510
+Epoch 21/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5932 - accuracy: 0.6510
+Epoch 22/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5930 - accuracy: 0.6510
+Epoch 23/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5944 - accuracy: 0.6510
+Epoch 24/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5942 - accuracy: 0.6510
+Epoch 25/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5906 - accuracy: 0.6510
+Epoch 26/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5882 - accuracy: 0.6510
+Epoch 27/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5897 - accuracy: 0.6510
+Epoch 28/150
+77/77 [==============================] - 0s 1ms/step - loss: 0.5925 - accuracy: 0.6510
+Epoch 29/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5897 - accuracy: 0.6510
+Epoch 30/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5876 - accuracy: 0.6510
+Epoch 31/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5898 - accuracy: 0.6589
+Epoch 32/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5907 - accuracy: 0.6836
+Epoch 33/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5871 - accuracy: 0.6966
+Epoch 34/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5893 - accuracy: 0.7096
+Epoch 35/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5864 - accuracy: 0.7005
+Epoch 36/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5853 - accuracy: 0.7031
+Epoch 37/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5841 - accuracy: 0.7018
+Epoch 38/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5870 - accuracy: 0.6992
+Epoch 39/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5826 - accuracy: 0.7148
+Epoch 40/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5838 - accuracy: 0.7109
+Epoch 41/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5892 - accuracy: 0.6979
+Epoch 42/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5837 - accuracy: 0.7005
+Epoch 43/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5806 - accuracy: 0.7070
+Epoch 44/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5801 - accuracy: 0.7161
+Epoch 45/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5795 - accuracy: 0.7070
+Epoch 46/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5781 - accuracy: 0.7070
+Epoch 47/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5770 - accuracy: 0.7057
+Epoch 48/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5767 - accuracy: 0.7227
+Epoch 49/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5775 - accuracy: 0.7044
+Epoch 50/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5759 - accuracy: 0.7174
+Epoch 51/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5766 - accuracy: 0.7070
+Epoch 52/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5743 - accuracy: 0.7109
+Epoch 53/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5730 - accuracy: 0.7148
+Epoch 54/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5693 - accuracy: 0.7070
+Epoch 55/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5724 - accuracy: 0.7148
+Epoch 56/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5644 - accuracy: 0.7161
+Epoch 57/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5697 - accuracy: 0.7148
+Epoch 58/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5638 - accuracy: 0.7161
+Epoch 59/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5663 - accuracy: 0.7174
+Epoch 60/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5665 - accuracy: 0.7109
+Epoch 61/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5639 - accuracy: 0.7135
+Epoch 62/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5718 - accuracy: 0.6992
+Epoch 63/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5636 - accuracy: 0.7161
+Epoch 64/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5662 - accuracy: 0.7214
+Epoch 65/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5650 - accuracy: 0.7083
+Epoch 66/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5648 - accuracy: 0.7096
+Epoch 67/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5630 - accuracy: 0.7161
+Epoch 68/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5620 - accuracy: 0.7253
+Epoch 69/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5569 - accuracy: 0.7227
+Epoch 70/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5603 - accuracy: 0.7227
+Epoch 71/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5569 - accuracy: 0.7253
+Epoch 72/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5512 - accuracy: 0.7318
+Epoch 73/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5509 - accuracy: 0.7396
+Epoch 74/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5502 - accuracy: 0.7357
+Epoch 75/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5420 - accuracy: 0.7474
+Epoch 76/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5485 - accuracy: 0.7396
+Epoch 77/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5440 - accuracy: 0.7474
+Epoch 78/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5413 - accuracy: 0.7370
+Epoch 79/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5451 - accuracy: 0.7383
+Epoch 80/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5419 - accuracy: 0.7474
+Epoch 81/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5366 - accuracy: 0.7500
+Epoch 82/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5396 - accuracy: 0.7552
+Epoch 83/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5499 - accuracy: 0.7305
+Epoch 84/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5356 - accuracy: 0.7617
+Epoch 85/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5377 - accuracy: 0.7448
+Epoch 86/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5346 - accuracy: 0.7539
+Epoch 87/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5320 - accuracy: 0.7487
+Epoch 88/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5340 - accuracy: 0.7539
+Epoch 89/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5303 - accuracy: 0.7578
+Epoch 90/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5270 - accuracy: 0.7565
+Epoch 91/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5283 - accuracy: 0.7604
+Epoch 92/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5322 - accuracy: 0.7409
+Epoch 93/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5285 - accuracy: 0.7552
+Epoch 94/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5273 - accuracy: 0.7513
+Epoch 95/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5231 - accuracy: 0.7604
+Epoch 96/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5262 - accuracy: 0.7630
+Epoch 97/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5190 - accuracy: 0.7643
+Epoch 98/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5209 - accuracy: 0.7591
+Epoch 99/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5257 - accuracy: 0.7526
+Epoch 100/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5196 - accuracy: 0.7604
+Epoch 101/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5211 - accuracy: 0.7643
+Epoch 102/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5190 - accuracy: 0.7617
+Epoch 103/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5142 - accuracy: 0.7461
+Epoch 104/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5169 - accuracy: 0.7578
+Epoch 105/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5125 - accuracy: 0.7643
+Epoch 106/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5191 - accuracy: 0.7461
+Epoch 107/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5139 - accuracy: 0.7630
+Epoch 108/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5111 - accuracy: 0.7682
+Epoch 109/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5065 - accuracy: 0.7682
+Epoch 110/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5102 - accuracy: 0.7604
+Epoch 111/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5032 - accuracy: 0.7682
+Epoch 112/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5108 - accuracy: 0.7617
+Epoch 113/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5014 - accuracy: 0.7669
+Epoch 114/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4979 - accuracy: 0.7682
+Epoch 115/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5061 - accuracy: 0.7591
+Epoch 116/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5010 - accuracy: 0.7578
+Epoch 117/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5023 - accuracy: 0.7617
+Epoch 118/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4942 - accuracy: 0.7695
+Epoch 119/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5028 - accuracy: 0.7617
+Epoch 120/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4969 - accuracy: 0.7604
+Epoch 121/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4982 - accuracy: 0.7734
+Epoch 122/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4967 - accuracy: 0.7695
+Epoch 123/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5012 - accuracy: 0.7669
+Epoch 124/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4915 - accuracy: 0.7734
+Epoch 125/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4928 - accuracy: 0.7617
+Epoch 126/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4920 - accuracy: 0.7721
+Epoch 127/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4916 - accuracy: 0.7591
+Epoch 128/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4951 - accuracy: 0.7786
+Epoch 129/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4933 - accuracy: 0.7656
+Epoch 130/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4974 - accuracy: 0.7708
+Epoch 131/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4918 - accuracy: 0.7591
+Epoch 132/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4898 - accuracy: 0.7669
+Epoch 133/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4912 - accuracy: 0.7656
+Epoch 134/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4850 - accuracy: 0.7682
+Epoch 135/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4877 - accuracy: 0.7839
+Epoch 136/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4875 - accuracy: 0.7630
+Epoch 137/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4835 - accuracy: 0.7760
+Epoch 138/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4924 - accuracy: 0.7656
+Epoch 139/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4855 - accuracy: 0.7695
+Epoch 140/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4866 - accuracy: 0.7865
+Epoch 141/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4942 - accuracy: 0.7721
+Epoch 142/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4881 - accuracy: 0.7734
+Epoch 143/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4769 - accuracy: 0.7904
+Epoch 144/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4932 - accuracy: 0.7786
+Epoch 145/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4852 - accuracy: 0.7799
+Epoch 146/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4855 - accuracy: 0.7786
+Epoch 147/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.5025 - accuracy: 0.7552
+Epoch 148/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4836 - accuracy: 0.7786
+Epoch 149/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4784 - accuracy: 0.7747
+Epoch 150/150
+77/77 [==============================] - 0s 2ms/step - loss: 0.4823 - accuracy: 0.7682
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;keras.callbacks.History at 0x7f27b4b2b250&gt;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">scores</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%.2f%%</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">metrics_names</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>24/24 [==============================] - 0s 1ms/step - loss: 0.4730 - accuracy: 0.7734
+accuracy: 77.34%
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Classifier-with-Train/Test-Split">Classifier with Train/Test Split<a class="anchor-link" href="#Classifier-with-Train/Test-Split"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<details class="description">
+      <summary class="btn btn-sm" data-open="Hide Code" data-close="Show Code"></summary>
+        <p><div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:,</span><span class="mi">8</span><span class="p">]</span>
+
+<span class="c1"># split into 67% for train and 33% for test</span>
+<span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">validation_data</span><span class="o">=</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span><span class="n">y_test</span><span class="p">),</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+</p>
+    </details>
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Epoch 1/150
+52/52 [==============================] - 1s 6ms/step - loss: 0.6880 - accuracy: 0.6401 - val_loss: 0.6790 - val_accuracy: 0.6378
+Epoch 2/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.6690 - accuracy: 0.6576 - val_loss: 0.6673 - val_accuracy: 0.6378
+Epoch 3/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.6569 - accuracy: 0.6576 - val_loss: 0.6598 - val_accuracy: 0.6378
+Epoch 4/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.6529 - accuracy: 0.6595 - val_loss: 0.6512 - val_accuracy: 0.6378
+Epoch 5/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.6440 - accuracy: 0.6693 - val_loss: 0.6426 - val_accuracy: 0.6299
+Epoch 6/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.6330 - accuracy: 0.6790 - val_loss: 0.6302 - val_accuracy: 0.6614
+Epoch 7/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.6278 - accuracy: 0.6693 - val_loss: 0.6225 - val_accuracy: 0.6575
+Epoch 8/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.6170 - accuracy: 0.6654 - val_loss: 0.6121 - val_accuracy: 0.6850
+Epoch 9/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.6067 - accuracy: 0.6693 - val_loss: 0.6200 - val_accuracy: 0.6575
+Epoch 10/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.6017 - accuracy: 0.6790 - val_loss: 0.6013 - val_accuracy: 0.6969
+Epoch 11/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5988 - accuracy: 0.6926 - val_loss: 0.6076 - val_accuracy: 0.6654
+Epoch 12/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5905 - accuracy: 0.7004 - val_loss: 0.5969 - val_accuracy: 0.6811
+Epoch 13/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5915 - accuracy: 0.6868 - val_loss: 0.5925 - val_accuracy: 0.7087
+Epoch 14/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5936 - accuracy: 0.7023 - val_loss: 0.5952 - val_accuracy: 0.6850
+Epoch 15/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5880 - accuracy: 0.6848 - val_loss: 0.5888 - val_accuracy: 0.7047
+Epoch 16/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5869 - accuracy: 0.6868 - val_loss: 0.5910 - val_accuracy: 0.6850
+Epoch 17/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5880 - accuracy: 0.7062 - val_loss: 0.6157 - val_accuracy: 0.6654
+Epoch 18/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5876 - accuracy: 0.6907 - val_loss: 0.5857 - val_accuracy: 0.6969
+Epoch 19/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5781 - accuracy: 0.7101 - val_loss: 0.5861 - val_accuracy: 0.6850
+Epoch 20/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5879 - accuracy: 0.7140 - val_loss: 0.5836 - val_accuracy: 0.7087
+Epoch 21/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5804 - accuracy: 0.7023 - val_loss: 0.5820 - val_accuracy: 0.7047
+Epoch 22/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5787 - accuracy: 0.6984 - val_loss: 0.5839 - val_accuracy: 0.6969
+Epoch 23/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5761 - accuracy: 0.6926 - val_loss: 0.5820 - val_accuracy: 0.6969
+Epoch 24/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5826 - accuracy: 0.7004 - val_loss: 0.5997 - val_accuracy: 0.6614
+Epoch 25/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5780 - accuracy: 0.7023 - val_loss: 0.5786 - val_accuracy: 0.7126
+Epoch 26/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5737 - accuracy: 0.6946 - val_loss: 0.5774 - val_accuracy: 0.6850
+Epoch 27/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5786 - accuracy: 0.7082 - val_loss: 0.5772 - val_accuracy: 0.7008
+Epoch 28/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5767 - accuracy: 0.6946 - val_loss: 0.5782 - val_accuracy: 0.6969
+Epoch 29/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5681 - accuracy: 0.7121 - val_loss: 0.5753 - val_accuracy: 0.7087
+Epoch 30/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5771 - accuracy: 0.7043 - val_loss: 0.5774 - val_accuracy: 0.7205
+Epoch 31/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5707 - accuracy: 0.7140 - val_loss: 0.5779 - val_accuracy: 0.6969
+Epoch 32/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5672 - accuracy: 0.7101 - val_loss: 0.5739 - val_accuracy: 0.7047
+Epoch 33/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5727 - accuracy: 0.7101 - val_loss: 0.5752 - val_accuracy: 0.7126
+Epoch 34/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5664 - accuracy: 0.7023 - val_loss: 0.5767 - val_accuracy: 0.7165
+Epoch 35/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5604 - accuracy: 0.7043 - val_loss: 0.5889 - val_accuracy: 0.6929
+Epoch 36/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5639 - accuracy: 0.7140 - val_loss: 0.5798 - val_accuracy: 0.7087
+Epoch 37/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5647 - accuracy: 0.7121 - val_loss: 0.5823 - val_accuracy: 0.6929
+Epoch 38/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5635 - accuracy: 0.7160 - val_loss: 0.5843 - val_accuracy: 0.6929
+Epoch 39/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5679 - accuracy: 0.6907 - val_loss: 0.5692 - val_accuracy: 0.7008
+Epoch 40/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5647 - accuracy: 0.7101 - val_loss: 0.5892 - val_accuracy: 0.6732
+Epoch 41/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5669 - accuracy: 0.7179 - val_loss: 0.5721 - val_accuracy: 0.7165
+Epoch 42/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5617 - accuracy: 0.7082 - val_loss: 0.5723 - val_accuracy: 0.7047
+Epoch 43/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5626 - accuracy: 0.7198 - val_loss: 0.5693 - val_accuracy: 0.7047
+Epoch 44/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5478 - accuracy: 0.7354 - val_loss: 0.5924 - val_accuracy: 0.6772
+Epoch 45/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5624 - accuracy: 0.7179 - val_loss: 0.5664 - val_accuracy: 0.7087
+Epoch 46/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5529 - accuracy: 0.7198 - val_loss: 0.5771 - val_accuracy: 0.6969
+Epoch 47/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5558 - accuracy: 0.7179 - val_loss: 0.5703 - val_accuracy: 0.7244
+Epoch 48/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5527 - accuracy: 0.7140 - val_loss: 0.5639 - val_accuracy: 0.7244
+Epoch 49/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5568 - accuracy: 0.7237 - val_loss: 0.5670 - val_accuracy: 0.7008
+Epoch 50/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5535 - accuracy: 0.7121 - val_loss: 0.5644 - val_accuracy: 0.7283
+Epoch 51/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5482 - accuracy: 0.7257 - val_loss: 0.5624 - val_accuracy: 0.7165
+Epoch 52/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5509 - accuracy: 0.7198 - val_loss: 0.5680 - val_accuracy: 0.7126
+Epoch 53/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5456 - accuracy: 0.7237 - val_loss: 0.5624 - val_accuracy: 0.7283
+Epoch 54/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5469 - accuracy: 0.7160 - val_loss: 0.5732 - val_accuracy: 0.7165
+Epoch 55/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5472 - accuracy: 0.7140 - val_loss: 0.5636 - val_accuracy: 0.7244
+Epoch 56/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5482 - accuracy: 0.7296 - val_loss: 0.5606 - val_accuracy: 0.7323
+Epoch 57/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5482 - accuracy: 0.7121 - val_loss: 0.5768 - val_accuracy: 0.7047
+Epoch 58/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5450 - accuracy: 0.7160 - val_loss: 0.5591 - val_accuracy: 0.7205
+Epoch 59/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5479 - accuracy: 0.7315 - val_loss: 0.5601 - val_accuracy: 0.7126
+Epoch 60/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5428 - accuracy: 0.7335 - val_loss: 0.5575 - val_accuracy: 0.7244
+Epoch 61/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5434 - accuracy: 0.7257 - val_loss: 0.5604 - val_accuracy: 0.7283
+Epoch 62/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5359 - accuracy: 0.7296 - val_loss: 0.5606 - val_accuracy: 0.7244
+Epoch 63/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5350 - accuracy: 0.7374 - val_loss: 0.5562 - val_accuracy: 0.7244
+Epoch 64/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5372 - accuracy: 0.7257 - val_loss: 0.5704 - val_accuracy: 0.7244
+Epoch 65/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5360 - accuracy: 0.7257 - val_loss: 0.5585 - val_accuracy: 0.7165
+Epoch 66/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5365 - accuracy: 0.7354 - val_loss: 0.5559 - val_accuracy: 0.7244
+Epoch 67/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5344 - accuracy: 0.7043 - val_loss: 0.5519 - val_accuracy: 0.7402
+Epoch 68/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5352 - accuracy: 0.7082 - val_loss: 0.5766 - val_accuracy: 0.7087
+Epoch 69/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5406 - accuracy: 0.7412 - val_loss: 0.5722 - val_accuracy: 0.7047
+Epoch 70/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5337 - accuracy: 0.7237 - val_loss: 0.5527 - val_accuracy: 0.7283
+Epoch 71/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5364 - accuracy: 0.7276 - val_loss: 0.5506 - val_accuracy: 0.7126
+Epoch 72/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5337 - accuracy: 0.7257 - val_loss: 0.5585 - val_accuracy: 0.7165
+Epoch 73/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5348 - accuracy: 0.7393 - val_loss: 0.5510 - val_accuracy: 0.7362
+Epoch 74/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5254 - accuracy: 0.7393 - val_loss: 0.5490 - val_accuracy: 0.7362
+Epoch 75/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5248 - accuracy: 0.7451 - val_loss: 0.5510 - val_accuracy: 0.7283
+Epoch 76/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5256 - accuracy: 0.7374 - val_loss: 0.5496 - val_accuracy: 0.7441
+Epoch 77/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5257 - accuracy: 0.7315 - val_loss: 0.5545 - val_accuracy: 0.7323
+Epoch 78/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5253 - accuracy: 0.7315 - val_loss: 0.5710 - val_accuracy: 0.7165
+Epoch 79/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5242 - accuracy: 0.7451 - val_loss: 0.5467 - val_accuracy: 0.7323
+Epoch 80/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5207 - accuracy: 0.7374 - val_loss: 0.5454 - val_accuracy: 0.7323
+Epoch 81/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5246 - accuracy: 0.7393 - val_loss: 0.5442 - val_accuracy: 0.7402
+Epoch 82/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5180 - accuracy: 0.7451 - val_loss: 0.5435 - val_accuracy: 0.7402
+Epoch 83/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5194 - accuracy: 0.7374 - val_loss: 0.5421 - val_accuracy: 0.7362
+Epoch 84/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5243 - accuracy: 0.7471 - val_loss: 0.5420 - val_accuracy: 0.7402
+Epoch 85/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5198 - accuracy: 0.7490 - val_loss: 0.5424 - val_accuracy: 0.7362
+Epoch 86/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5152 - accuracy: 0.7549 - val_loss: 0.5438 - val_accuracy: 0.7480
+Epoch 87/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5178 - accuracy: 0.7354 - val_loss: 0.5553 - val_accuracy: 0.7244
+Epoch 88/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5281 - accuracy: 0.7354 - val_loss: 0.5671 - val_accuracy: 0.7165
+Epoch 89/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5206 - accuracy: 0.7374 - val_loss: 0.5428 - val_accuracy: 0.7362
+Epoch 90/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5126 - accuracy: 0.7451 - val_loss: 0.5393 - val_accuracy: 0.7402
+Epoch 91/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5148 - accuracy: 0.7471 - val_loss: 0.5538 - val_accuracy: 0.7362
+Epoch 92/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5207 - accuracy: 0.7510 - val_loss: 0.5415 - val_accuracy: 0.7283
+Epoch 93/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5109 - accuracy: 0.7412 - val_loss: 0.5382 - val_accuracy: 0.7520
+Epoch 94/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5108 - accuracy: 0.7412 - val_loss: 0.5419 - val_accuracy: 0.7402
+Epoch 95/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5190 - accuracy: 0.7276 - val_loss: 0.5477 - val_accuracy: 0.7402
+Epoch 96/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5140 - accuracy: 0.7529 - val_loss: 0.5463 - val_accuracy: 0.7165
+Epoch 97/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5163 - accuracy: 0.7432 - val_loss: 0.5416 - val_accuracy: 0.7283
+Epoch 98/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5094 - accuracy: 0.7412 - val_loss: 0.5352 - val_accuracy: 0.7441
+Epoch 99/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5077 - accuracy: 0.7412 - val_loss: 0.5349 - val_accuracy: 0.7480
+Epoch 100/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5104 - accuracy: 0.7549 - val_loss: 0.5410 - val_accuracy: 0.7362
+Epoch 101/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5164 - accuracy: 0.7374 - val_loss: 0.5360 - val_accuracy: 0.7480
+Epoch 102/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5075 - accuracy: 0.7412 - val_loss: 0.5357 - val_accuracy: 0.7441
+Epoch 103/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5023 - accuracy: 0.7432 - val_loss: 0.5477 - val_accuracy: 0.7362
+Epoch 104/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5038 - accuracy: 0.7490 - val_loss: 0.5332 - val_accuracy: 0.7244
+Epoch 105/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5196 - accuracy: 0.7354 - val_loss: 0.5421 - val_accuracy: 0.7165
+Epoch 106/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5048 - accuracy: 0.7451 - val_loss: 0.5308 - val_accuracy: 0.7362
+Epoch 107/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5063 - accuracy: 0.7510 - val_loss: 0.5271 - val_accuracy: 0.7441
+Epoch 108/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5048 - accuracy: 0.7646 - val_loss: 0.5293 - val_accuracy: 0.7402
+Epoch 109/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4996 - accuracy: 0.7549 - val_loss: 0.5364 - val_accuracy: 0.7244
+Epoch 110/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5060 - accuracy: 0.7412 - val_loss: 0.5283 - val_accuracy: 0.7362
+Epoch 111/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4963 - accuracy: 0.7588 - val_loss: 0.5288 - val_accuracy: 0.7283
+Epoch 112/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4981 - accuracy: 0.7490 - val_loss: 0.5366 - val_accuracy: 0.7480
+Epoch 113/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5043 - accuracy: 0.7471 - val_loss: 0.5346 - val_accuracy: 0.7480
+Epoch 114/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4930 - accuracy: 0.7490 - val_loss: 0.5204 - val_accuracy: 0.7323
+Epoch 115/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4916 - accuracy: 0.7646 - val_loss: 0.5562 - val_accuracy: 0.7244
+Epoch 116/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4996 - accuracy: 0.7588 - val_loss: 0.5243 - val_accuracy: 0.7441
+Epoch 117/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5004 - accuracy: 0.7451 - val_loss: 0.5226 - val_accuracy: 0.7559
+Epoch 118/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4904 - accuracy: 0.7626 - val_loss: 0.5208 - val_accuracy: 0.7520
+Epoch 119/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4945 - accuracy: 0.7529 - val_loss: 0.5178 - val_accuracy: 0.7402
+Epoch 120/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4936 - accuracy: 0.7471 - val_loss: 0.5320 - val_accuracy: 0.7559
+Epoch 121/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4989 - accuracy: 0.7490 - val_loss: 0.5332 - val_accuracy: 0.7402
+Epoch 122/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.5016 - accuracy: 0.7588 - val_loss: 0.5206 - val_accuracy: 0.7520
+Epoch 123/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4918 - accuracy: 0.7646 - val_loss: 0.5309 - val_accuracy: 0.7362
+Epoch 124/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.5061 - accuracy: 0.7549 - val_loss: 0.5175 - val_accuracy: 0.7559
+Epoch 125/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4858 - accuracy: 0.7626 - val_loss: 0.5166 - val_accuracy: 0.7480
+Epoch 126/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4973 - accuracy: 0.7568 - val_loss: 0.5193 - val_accuracy: 0.7559
+Epoch 127/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4825 - accuracy: 0.7588 - val_loss: 0.5173 - val_accuracy: 0.7402
+Epoch 128/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4850 - accuracy: 0.7646 - val_loss: 0.5210 - val_accuracy: 0.7441
+Epoch 129/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4871 - accuracy: 0.7588 - val_loss: 0.5252 - val_accuracy: 0.7441
+Epoch 130/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4905 - accuracy: 0.7588 - val_loss: 0.5159 - val_accuracy: 0.7402
+Epoch 131/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4811 - accuracy: 0.7607 - val_loss: 0.5404 - val_accuracy: 0.7520
+Epoch 132/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4821 - accuracy: 0.7549 - val_loss: 0.5171 - val_accuracy: 0.7205
+Epoch 133/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4815 - accuracy: 0.7665 - val_loss: 0.5176 - val_accuracy: 0.7362
+Epoch 134/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4855 - accuracy: 0.7724 - val_loss: 0.5196 - val_accuracy: 0.7480
+Epoch 135/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4825 - accuracy: 0.7510 - val_loss: 0.5173 - val_accuracy: 0.7323
+Epoch 136/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4778 - accuracy: 0.7704 - val_loss: 0.5134 - val_accuracy: 0.7520
+Epoch 137/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4717 - accuracy: 0.7704 - val_loss: 0.5547 - val_accuracy: 0.7283
+Epoch 138/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4936 - accuracy: 0.7646 - val_loss: 0.5196 - val_accuracy: 0.7283
+Epoch 139/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4793 - accuracy: 0.7529 - val_loss: 0.5135 - val_accuracy: 0.7480
+Epoch 140/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4737 - accuracy: 0.7782 - val_loss: 0.5189 - val_accuracy: 0.7598
+Epoch 141/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4777 - accuracy: 0.7724 - val_loss: 0.5258 - val_accuracy: 0.7480
+Epoch 142/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4769 - accuracy: 0.7549 - val_loss: 0.5180 - val_accuracy: 0.7559
+Epoch 143/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4791 - accuracy: 0.7646 - val_loss: 0.5196 - val_accuracy: 0.7677
+Epoch 144/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4770 - accuracy: 0.7685 - val_loss: 0.5160 - val_accuracy: 0.7559
+Epoch 145/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4691 - accuracy: 0.7549 - val_loss: 0.5215 - val_accuracy: 0.7402
+Epoch 146/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4685 - accuracy: 0.7588 - val_loss: 0.5306 - val_accuracy: 0.7677
+Epoch 147/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4756 - accuracy: 0.7626 - val_loss: 0.5146 - val_accuracy: 0.7756
+Epoch 148/150
+52/52 [==============================] - 0s 2ms/step - loss: 0.4659 - accuracy: 0.7724 - val_loss: 0.5301 - val_accuracy: 0.7244
+Epoch 149/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4793 - accuracy: 0.7646 - val_loss: 0.5351 - val_accuracy: 0.7244
+Epoch 150/150
+52/52 [==============================] - 0s 3ms/step - loss: 0.4663 - accuracy: 0.7724 - val_loss: 0.5169 - val_accuracy: 0.7598
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;keras.callbacks.History at 0x7f649f0c1dd0&gt;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Classifier-with-K-fold-Cross-validation">Classifier with K-fold Cross-validation<a class="anchor-link" href="#Classifier-with-K-fold-Cross-validation"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:,</span><span class="mi">8</span><span class="p">]</span>
+
+<span class="c1"># define 10-fold cross validation test harness</span>
+<span class="n">kfold</span> <span class="o">=</span> <span class="n">StratifiedKFold</span><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+<span class="n">cvscores</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">for</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="ow">in</span> <span class="n">kfold</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+  <span class="c1"># create model</span>
+	<span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">))</span>
+	<span class="c1"># Compile model</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+	<span class="c1"># Fit the model</span>
+	<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">train</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">train</span><span class="p">],</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+	<span class="c1"># evaluate the model</span>
+	<span class="n">scores</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">test</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">test</span><span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%.2f%%</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">metrics_names</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+	<span class="n">cvscores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">scores</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mi">100</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%.2f%%</span><span class="s2"> (+/- </span><span class="si">%.2f%%</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvscores</span><span class="p">),</span> <span class="n">numpy</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">cvscores</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>accuracy: 68.83%
+accuracy: 77.92%
+accuracy: 75.32%
+WARNING:tensorflow:5 out of the last 3910 calls to &lt;function Model.make_test_function.&lt;locals&gt;.test_function at 0x7f64a22c55f0&gt; triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has experimental_relax_shapes=True option that relaxes argument shapes that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+accuracy: 81.82%
+WARNING:tensorflow:5 out of the last 13 calls to &lt;function Model.make_test_function.&lt;locals&gt;.test_function at 0x7f649e0bdc20&gt; triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has experimental_relax_shapes=True option that relaxes argument shapes that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+accuracy: 70.13%
+accuracy: 63.64%
+accuracy: 77.92%
+accuracy: 76.62%
+accuracy: 75.00%
+accuracy: 78.95%
+74.62% (+/- 5.21%)
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Training-with-checkpoints">Training with checkpoints<a class="anchor-link" href="#Training-with-checkpoints"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="mi">8</span><span class="p">]</span>
+<span class="n">Y</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:,</span><span class="mi">8</span><span class="p">]</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+
+<span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;weights.best.hdf5&quot;</span>
+<span class="n">checkpoint</span> <span class="o">=</span> <span class="n">ModelCheckpoint</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="s1">&#39;val_accuracy&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">save_best_only</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">)</span>
+<span class="n">callbacks_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">checkpoint</span><span class="p">]</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">validation_split</span><span class="o">=</span><span class="mf">0.33</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks_list</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>
+Epoch 00001: val_accuracy improved from -inf to 0.46063, saving model to weights.best.hdf5
+
+Epoch 00002: val_accuracy improved from 0.46063 to 0.66142, saving model to weights.best.hdf5
+
+Epoch 00003: val_accuracy did not improve from 0.66142
+
+Epoch 00004: val_accuracy did not improve from 0.66142
+
+Epoch 00005: val_accuracy improved from 0.66142 to 0.69291, saving model to weights.best.hdf5
+
+Epoch 00006: val_accuracy did not improve from 0.69291
+
+Epoch 00007: val_accuracy did not improve from 0.69291
+
+Epoch 00008: val_accuracy did not improve from 0.69291
+
+Epoch 00009: val_accuracy did not improve from 0.69291
+
+Epoch 00010: val_accuracy did not improve from 0.69291
+
+Epoch 00011: val_accuracy improved from 0.69291 to 0.70472, saving model to weights.best.hdf5
+
+Epoch 00012: val_accuracy did not improve from 0.70472
+
+Epoch 00013: val_accuracy did not improve from 0.70472
+
+Epoch 00014: val_accuracy did not improve from 0.70472
+
+Epoch 00015: val_accuracy improved from 0.70472 to 0.72835, saving model to weights.best.hdf5
+
+Epoch 00016: val_accuracy did not improve from 0.72835
+
+Epoch 00017: val_accuracy did not improve from 0.72835
+
+Epoch 00018: val_accuracy did not improve from 0.72835
+
+Epoch 00019: val_accuracy did not improve from 0.72835
+
+Epoch 00020: val_accuracy did not improve from 0.72835
+
+Epoch 00021: val_accuracy did not improve from 0.72835
+
+Epoch 00022: val_accuracy did not improve from 0.72835
+
+Epoch 00023: val_accuracy did not improve from 0.72835
+
+Epoch 00024: val_accuracy did not improve from 0.72835
+
+Epoch 00025: val_accuracy did not improve from 0.72835
+
+Epoch 00026: val_accuracy did not improve from 0.72835
+
+Epoch 00027: val_accuracy did not improve from 0.72835
+
+Epoch 00028: val_accuracy did not improve from 0.72835
+
+Epoch 00029: val_accuracy did not improve from 0.72835
+
+Epoch 00030: val_accuracy did not improve from 0.72835
+
+Epoch 00031: val_accuracy improved from 0.72835 to 0.73228, saving model to weights.best.hdf5
+
+Epoch 00032: val_accuracy did not improve from 0.73228
+
+Epoch 00033: val_accuracy did not improve from 0.73228
+
+Epoch 00034: val_accuracy did not improve from 0.73228
+
+Epoch 00035: val_accuracy did not improve from 0.73228
+
+Epoch 00036: val_accuracy did not improve from 0.73228
+
+Epoch 00037: val_accuracy did not improve from 0.73228
+
+Epoch 00038: val_accuracy did not improve from 0.73228
+
+Epoch 00039: val_accuracy did not improve from 0.73228
+
+Epoch 00040: val_accuracy did not improve from 0.73228
+
+Epoch 00041: val_accuracy did not improve from 0.73228
+
+Epoch 00042: val_accuracy did not improve from 0.73228
+
+Epoch 00043: val_accuracy did not improve from 0.73228
+
+Epoch 00044: val_accuracy did not improve from 0.73228
+
+Epoch 00045: val_accuracy did not improve from 0.73228
+
+Epoch 00046: val_accuracy did not improve from 0.73228
+
+Epoch 00047: val_accuracy did not improve from 0.73228
+
+Epoch 00048: val_accuracy did not improve from 0.73228
+
+Epoch 00049: val_accuracy did not improve from 0.73228
+
+Epoch 00050: val_accuracy did not improve from 0.73228
+
+Epoch 00051: val_accuracy improved from 0.73228 to 0.74803, saving model to weights.best.hdf5
+
+Epoch 00052: val_accuracy did not improve from 0.74803
+
+Epoch 00053: val_accuracy did not improve from 0.74803
+
+Epoch 00054: val_accuracy did not improve from 0.74803
+
+Epoch 00055: val_accuracy did not improve from 0.74803
+
+Epoch 00056: val_accuracy did not improve from 0.74803
+
+Epoch 00057: val_accuracy did not improve from 0.74803
+
+Epoch 00058: val_accuracy did not improve from 0.74803
+
+Epoch 00059: val_accuracy did not improve from 0.74803
+
+Epoch 00060: val_accuracy did not improve from 0.74803
+
+Epoch 00061: val_accuracy did not improve from 0.74803
+
+Epoch 00062: val_accuracy did not improve from 0.74803
+
+Epoch 00063: val_accuracy did not improve from 0.74803
+
+Epoch 00064: val_accuracy did not improve from 0.74803
+
+Epoch 00065: val_accuracy did not improve from 0.74803
+
+Epoch 00066: val_accuracy did not improve from 0.74803
+
+Epoch 00067: val_accuracy did not improve from 0.74803
+
+Epoch 00068: val_accuracy did not improve from 0.74803
+
+Epoch 00069: val_accuracy did not improve from 0.74803
+
+Epoch 00070: val_accuracy did not improve from 0.74803
+
+Epoch 00071: val_accuracy did not improve from 0.74803
+
+Epoch 00072: val_accuracy did not improve from 0.74803
+
+Epoch 00073: val_accuracy did not improve from 0.74803
+
+Epoch 00074: val_accuracy did not improve from 0.74803
+
+Epoch 00075: val_accuracy did not improve from 0.74803
+
+Epoch 00076: val_accuracy did not improve from 0.74803
+
+Epoch 00077: val_accuracy did not improve from 0.74803
+
+Epoch 00078: val_accuracy did not improve from 0.74803
+
+Epoch 00079: val_accuracy did not improve from 0.74803
+
+Epoch 00080: val_accuracy did not improve from 0.74803
+
+Epoch 00081: val_accuracy did not improve from 0.74803
+
+Epoch 00082: val_accuracy did not improve from 0.74803
+
+Epoch 00083: val_accuracy did not improve from 0.74803
+
+Epoch 00084: val_accuracy did not improve from 0.74803
+
+Epoch 00085: val_accuracy did not improve from 0.74803
+
+Epoch 00086: val_accuracy did not improve from 0.74803
+
+Epoch 00087: val_accuracy did not improve from 0.74803
+
+Epoch 00088: val_accuracy did not improve from 0.74803
+
+Epoch 00089: val_accuracy did not improve from 0.74803
+
+Epoch 00090: val_accuracy did not improve from 0.74803
+
+Epoch 00091: val_accuracy did not improve from 0.74803
+
+Epoch 00092: val_accuracy did not improve from 0.74803
+
+Epoch 00093: val_accuracy did not improve from 0.74803
+
+Epoch 00094: val_accuracy did not improve from 0.74803
+
+Epoch 00095: val_accuracy did not improve from 0.74803
+
+Epoch 00096: val_accuracy did not improve from 0.74803
+
+Epoch 00097: val_accuracy did not improve from 0.74803
+
+Epoch 00098: val_accuracy did not improve from 0.74803
+
+Epoch 00099: val_accuracy improved from 0.74803 to 0.75197, saving model to weights.best.hdf5
+
+Epoch 00100: val_accuracy did not improve from 0.75197
+
+Epoch 00101: val_accuracy did not improve from 0.75197
+
+Epoch 00102: val_accuracy did not improve from 0.75197
+
+Epoch 00103: val_accuracy did not improve from 0.75197
+
+Epoch 00104: val_accuracy did not improve from 0.75197
+
+Epoch 00105: val_accuracy did not improve from 0.75197
+
+Epoch 00106: val_accuracy did not improve from 0.75197
+
+Epoch 00107: val_accuracy did not improve from 0.75197
+
+Epoch 00108: val_accuracy did not improve from 0.75197
+
+Epoch 00109: val_accuracy did not improve from 0.75197
+
+Epoch 00110: val_accuracy did not improve from 0.75197
+
+Epoch 00111: val_accuracy did not improve from 0.75197
+
+Epoch 00112: val_accuracy did not improve from 0.75197
+
+Epoch 00113: val_accuracy did not improve from 0.75197
+
+Epoch 00114: val_accuracy did not improve from 0.75197
+
+Epoch 00115: val_accuracy did not improve from 0.75197
+
+Epoch 00116: val_accuracy did not improve from 0.75197
+
+Epoch 00117: val_accuracy did not improve from 0.75197
+
+Epoch 00118: val_accuracy did not improve from 0.75197
+
+Epoch 00119: val_accuracy did not improve from 0.75197
+
+Epoch 00120: val_accuracy did not improve from 0.75197
+
+Epoch 00121: val_accuracy did not improve from 0.75197
+
+Epoch 00122: val_accuracy did not improve from 0.75197
+
+Epoch 00123: val_accuracy did not improve from 0.75197
+
+Epoch 00124: val_accuracy did not improve from 0.75197
+
+Epoch 00125: val_accuracy did not improve from 0.75197
+
+Epoch 00126: val_accuracy did not improve from 0.75197
+
+Epoch 00127: val_accuracy did not improve from 0.75197
+
+Epoch 00128: val_accuracy did not improve from 0.75197
+
+Epoch 00129: val_accuracy did not improve from 0.75197
+
+Epoch 00130: val_accuracy did not improve from 0.75197
+
+Epoch 00131: val_accuracy did not improve from 0.75197
+
+Epoch 00132: val_accuracy did not improve from 0.75197
+
+Epoch 00133: val_accuracy did not improve from 0.75197
+
+Epoch 00134: val_accuracy did not improve from 0.75197
+
+Epoch 00135: val_accuracy did not improve from 0.75197
+
+Epoch 00136: val_accuracy did not improve from 0.75197
+
+Epoch 00137: val_accuracy did not improve from 0.75197
+
+Epoch 00138: val_accuracy did not improve from 0.75197
+
+Epoch 00139: val_accuracy did not improve from 0.75197
+
+Epoch 00140: val_accuracy did not improve from 0.75197
+
+Epoch 00141: val_accuracy did not improve from 0.75197
+
+Epoch 00142: val_accuracy did not improve from 0.75197
+
+Epoch 00143: val_accuracy did not improve from 0.75197
+
+Epoch 00144: val_accuracy did not improve from 0.75197
+
+Epoch 00145: val_accuracy did not improve from 0.75197
+
+Epoch 00146: val_accuracy did not improve from 0.75197
+
+Epoch 00147: val_accuracy did not improve from 0.75197
+
+Epoch 00148: val_accuracy did not improve from 0.75197
+
+Epoch 00149: val_accuracy did not improve from 0.75197
+
+Epoch 00150: val_accuracy did not improve from 0.75197
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&lt;keras.callbacks.History at 0x7f64a2359810&gt;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Loading-the-best-model-from-disk">Loading the best model from disk<a class="anchor-link" href="#Loading-the-best-model-from-disk"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">Sequential</span><span class="p">()</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">input_dim</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">))</span>
+<span class="n">model</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">))</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">load_weights</span><span class="p">(</span><span class="s2">&quot;weights.best.hdf5&quot;</span><span class="p">)</span>
+
+<span class="n">model</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">,</span> <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;accuracy&#39;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Created model and loaded weights from file&quot;</span><span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: </span><span class="si">%.2f%%</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">metrics_names</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">scores</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Created model and loaded weights from file
+accuracy: 74.35%
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">reload_ext</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">watermark</span> <span class="o">-</span><span class="n">a</span> <span class="s2">&quot;Sparsh A.&quot;</span> <span class="o">-</span><span class="n">m</span> <span class="o">-</span><span class="n">iv</span> <span class="o">-</span><span class="n">u</span> <span class="o">-</span><span class="n">t</span> <span class="o">-</span><span class="n">d</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Author: Sparsh A.
+
+Last updated: 2021-11-23 15:35:41
+
+Compiler    : GCC 7.5.0
+OS          : Linux
+Release     : 5.4.104+
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 2
+Architecture: 64bit
+
+IPython: 5.5.0
+keras  : 2.7.0
+numpy  : 1.19.5
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>END</strong></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/23/diabetes.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
