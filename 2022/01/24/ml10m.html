@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Random, Item Popularity, and Global Effects Recommender Models on ML-10m Dataset | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Random, Item Popularity, and Global Effects Recommender Models on ML-10m Dataset" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/24/ml10m.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/24/ml10m.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-24T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Random, Item Popularity, and Global Effects Recommender Models on ML-10m Dataset" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-24T00:00:00-06:00","datePublished":"2022-01-24T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Random, Item Popularity, and Global Effects Recommender Models on ML-10m Dataset","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/24/ml10m.html"},"url":"https://nb.recohut.com/2022/01/24/ml10m.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Random, Item Popularity, and Global Effects Recommender Models on ML-10m Dataset</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-24T00:00:00-06:00" itemprop="datePublished">
+        Jan 24, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      16 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-24-ml10m.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-24-ml10m.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-24-ml10m.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-24-ml10m.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-24-ml10m.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Setup">Setup<a class="anchor-link" href="#Setup"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Git">Git<a class="anchor-link" href="#Git"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="n">project_name</span> <span class="o">=</span> <span class="s2">&quot;general-recsys&quot;</span><span class="p">;</span> <span class="n">branch</span> <span class="o">=</span> <span class="s2">&quot;T434220&quot;</span><span class="p">;</span> <span class="n">account</span> <span class="o">=</span> <span class="s2">&quot;sparsh-ai&quot;</span>
+<span class="n">project_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;/content&#39;</span><span class="p">,</span> <span class="n">branch</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">project_path</span><span class="p">):</span>
+    <span class="err">!</span><span class="n">cp</span> <span class="o">-</span><span class="n">r</span> <span class="o">/</span><span class="n">content</span><span class="o">/</span><span class="n">drive</span><span class="o">/</span><span class="n">MyDrive</span><span class="o">/</span><span class="n">git_credentials</span><span class="o">/.</span> <span class="o">~</span>
+    <span class="err">!</span><span class="n">mkdir</span> <span class="s2">&quot;</span><span class="si">{project_path}</span><span class="s2">&quot;</span>
+    <span class="o">%</span><span class="n">cd</span> <span class="s2">&quot;</span><span class="si">{project_path}</span><span class="s2">&quot;</span>
+    <span class="err">!</span><span class="n">git</span> <span class="n">init</span>
+    <span class="err">!</span><span class="n">git</span> <span class="n">remote</span> <span class="n">add</span> <span class="n">origin</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="s2">&quot;</span><span class="si">{account}</span><span class="s2">&quot;</span><span class="o">/</span><span class="s2">&quot;</span><span class="si">{project_name}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">git</span>
+    <span class="err">!</span><span class="n">git</span> <span class="n">pull</span> <span class="n">origin</span> <span class="s2">&quot;</span><span class="si">{branch}</span><span class="s2">&quot;</span>
+    <span class="err">!</span><span class="n">git</span> <span class="n">checkout</span> <span class="o">-</span><span class="n">b</span> <span class="s2">&quot;</span><span class="si">{branch}</span><span class="s2">&quot;</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="o">%</span><span class="n">cd</span> <span class="s2">&quot;</span><span class="si">{project_path}</span><span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%</span><span class="n">cd</span> <span class="o">/</span><span class="n">content</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>/content
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">cd</span> <span class="o">/</span><span class="n">content</span><span class="o">/</span><span class="n">main</span> <span class="o">&amp;&amp;</span> <span class="n">git</span> <span class="n">add</span> <span class="o">.</span> <span class="o">&amp;&amp;</span> <span class="n">git</span> <span class="n">commit</span> <span class="o">-</span><span class="n">m</span> <span class="s1">&#39;commit&#39;</span> <span class="o">&amp;&amp;</span> <span class="n">git</span> <span class="n">push</span> <span class="n">origin</span> <span class="s2">&quot;</span><span class="si">{branch}</span><span class="s2">&quot;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Installations">Installations<a class="anchor-link" href="#Installations"> </a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Imports">Imports<a class="anchor-link" href="#Imports"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span> <span class="k">as</span> <span class="n">osp</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">urllib.request</span> <span class="kn">import</span> <span class="n">urlretrieve</span>
+<span class="kn">import</span> <span class="nn">zipfile</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scipy.sparse</span> <span class="k">as</span> <span class="nn">sps</span>
+
+<span class="kn">import</span> <span class="nn">bz2</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">_pickle</span> <span class="k">as</span> <span class="nn">cPickle</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Params">Params<a class="anchor-link" href="#Params"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">Args</span><span class="p">:</span>
+    <span class="n">datapath_bronze</span> <span class="o">=</span> <span class="s1">&#39;/content&#39;</span>
+    <span class="n">datapath_silver</span> <span class="o">=</span> <span class="s1">&#39;/content&#39;</span>
+
+    <span class="n">URM_train</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">URM_test</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">top_k</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="n">args</span> <span class="o">=</span> <span class="n">Args</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Logger">Logger<a class="anchor-link" href="#Logger"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">stream</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span>
+                    <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
+                    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> [</span><span class="si">%(levelname)s</span><span class="s1">] : </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+                    <span class="n">datefmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1">-%b-%y %H:%M:%S&#39;</span><span class="p">)</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;Logger&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Modules">Modules<a class="anchor-link" href="#Modules"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Utils">Utils<a class="anchor-link" href="#Utils"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">save_pickle</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+ <span class="k">with</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">path</span> <span class="o">+</span> <span class="s1">&#39;.pbz2&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span> 
+    <span class="n">cPickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">load_pickle</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">bz2</span><span class="o">.</span><span class="n">BZ2File</span><span class="p">(</span><span class="n">path</span><span class="o">+</span><span class="s1">&#39;.pbz2&#39;</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">cPickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Dataset">Dataset<a class="anchor-link" href="#Dataset"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">download_dataset</span><span class="p">():</span>
+    <span class="c1"># If file exists, skip the download</span>
+    <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">datapath_bronze</span> <span class="o">+</span> <span class="s2">&quot;movielens_10m.zip&quot;</span>
+
+    <span class="c1"># If directory does not exist, create</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_bronze</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_bronze</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">data_file_name</span><span class="p">):</span>
+        <span class="n">url_path</span> <span class="o">=</span> <span class="s1">&#39;http://files.grouplens.org/datasets/movielens/ml-10m.zip&#39;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Download ml-10m.zip file from </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">url_path</span><span class="p">))</span>
+        <span class="n">urlretrieve</span><span class="p">(</span><span class="n">url_path</span><span class="p">,</span> <span class="n">data_file_name</span><span class="p">)</span>
+
+    <span class="n">dataFile</span> <span class="o">=</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_bronze</span> <span class="o">+</span> <span class="s2">&quot;movielens_10m.zip&quot;</span><span class="p">)</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">ratings_path</span> <span class="o">=</span> <span class="n">dataFile</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">&quot;ml-10M100K/ratings.dat&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_bronze</span><span class="p">)</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">tags_path</span> <span class="o">=</span> <span class="n">dataFile</span><span class="o">.</span><span class="n">extract</span><span class="p">(</span><span class="s2">&quot;ml-10M100K/tags.dat&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_bronze</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Dataset downloaded in </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_bronze</span><span class="p">,</span><span class="s1">&#39;ml-10M100K&#39;</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">preprocess_dataset</span><span class="p">():</span>
+    <span class="n">URM_all_dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filepath_or_buffer</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">ratings_path</span><span class="p">,</span> 
+                                    <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;::&quot;</span><span class="p">,</span> 
+                                    <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                                    <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="nb">float</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="nb">int</span><span class="p">},</span>
+                                    <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">)</span>
+
+    <span class="n">URM_all_dataframe</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">,</span> <span class="s2">&quot;ItemID&quot;</span><span class="p">,</span> <span class="s2">&quot;Interaction&quot;</span><span class="p">,</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">URM_all_dataframe</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The number of interactions is </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">URM_all_dataframe</span><span class="p">)))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We can use this data to create a sparse matrix, notice that we have red UserID and ItemID as int&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;This is not always possible if the IDs are alphanumeric&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Now we can extract the list of unique user id and item id and display some statistics&quot;</span><span class="p">)</span>
+
+    <span class="n">userID_unique</span> <span class="o">=</span> <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="n">itemID_unique</span> <span class="o">=</span> <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+    <span class="n">n_users</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">userID_unique</span><span class="p">)</span>
+    <span class="n">n_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">itemID_unique</span><span class="p">)</span>
+    <span class="n">n_interactions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">URM_all_dataframe</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of items</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="s2">, Number of users</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">n_users</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max ID items</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="s2">, Max Id users</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">itemID_unique</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">userID_unique</span><span class="p">)))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;See that the max ID of items and users is higher than the number of unique values -&gt; empty profiles&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We should remove empty indices, to do so we create a new mapping&quot;</span><span class="p">)</span>
+
+    <span class="n">user_original_ID_to_index_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">userID_unique</span><span class="p">:</span>
+        <span class="n">user_original_ID_to_index_dict</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_original_ID_to_index_dict</span><span class="p">)</span>
+    <span class="n">item_original_ID_to_index_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">itemID_unique</span><span class="p">:</span>
+        <span class="n">item_original_ID_to_index_dict</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">item_original_ID_to_index_dict</span><span class="p">)</span>
+    <span class="n">original_item_ID</span> <span class="o">=</span> <span class="mi">292</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;New index for item </span><span class="si">{}</span><span class="s2"> is </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">original_item_ID</span><span class="p">,</span> <span class="n">item_original_ID_to_index_dict</span><span class="p">[</span><span class="n">original_item_ID</span><span class="p">]))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We now replace the IDs in the dataframe and we are ready to use the data&quot;</span><span class="p">)</span>
+
+    <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">user_original_ID_to_index_dict</span><span class="p">[</span><span class="n">user_original</span><span class="p">]</span> <span class="k">for</span> <span class="n">user_original</span> <span class="ow">in</span>
+                                        <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+
+    <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">item_original_ID_to_index_dict</span><span class="p">[</span><span class="n">item_original</span><span class="p">]</span> <span class="k">for</span> <span class="n">item_original</span> <span class="ow">in</span> 
+                                        <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">URM_all_dataframe</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+
+    <span class="n">userID_unique</span> <span class="o">=</span> <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+    <span class="n">itemID_unique</span> <span class="o">=</span> <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+    <span class="n">n_users</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">userID_unique</span><span class="p">)</span>
+    <span class="n">n_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">itemID_unique</span><span class="p">)</span>
+    <span class="n">n_interactions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">URM_all_dataframe</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of items</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="s2">, Number of users</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">n_users</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max ID items</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="s2">, Max Id users</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">itemID_unique</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">userID_unique</span><span class="p">)))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average interactions per user </span><span class="si">{:.2f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_interactions</span><span class="o">/</span><span class="n">n_users</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average interactions per item </span><span class="si">{:.2f}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_interactions</span><span class="o">/</span><span class="n">n_items</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Sparsity </span><span class="si">{:.2f}</span><span class="s2"> %&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="n">n_interactions</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">n_items</span><span class="o">*</span><span class="n">n_users</span><span class="p">))</span><span class="o">*</span><span class="mi">100</span><span class="p">))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;To store the data we use a sparse matrix. We build it as a COO matrix and then change its format&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The COO constructor expects (data, (row, column))&quot;</span><span class="p">)</span>
+
+    <span class="n">URM_all</span> <span class="o">=</span> <span class="n">sps</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">((</span><span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;Interaction&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> 
+                            <span class="p">(</span><span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">URM_all</span><span class="p">)</span>
+
+    <span class="n">URM_all</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We compute the item popularity as the number of interaction in each column&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We can use the properties of sparse matrices in CSC format&quot;</span><span class="p">)</span>
+
+    <span class="n">item_popularity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ediff1d</span><span class="p">(</span><span class="n">URM_all</span><span class="o">.</span><span class="n">tocsc</span><span class="p">()</span><span class="o">.</span><span class="n">indptr</span><span class="p">)</span>
+    <span class="n">item_popularity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">item_popularity</span><span class="p">)</span>
+
+    <span class="n">ten_percent</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_items</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average per-item interactions over the whole dataset </span><span class="si">{:.2f}</span><span class="s2">&quot;</span><span class="o">.</span>
+        <span class="nb">format</span><span class="p">(</span><span class="n">item_popularity</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average per-item interactions for the top 10% popular items </span><span class="si">{:.2f}</span><span class="s2">&quot;</span><span class="o">.</span>
+        <span class="nb">format</span><span class="p">(</span><span class="n">item_popularity</span><span class="p">[</span><span class="o">-</span><span class="n">ten_percent</span><span class="p">:]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average per-item interactions for the least 10% popular items </span><span class="si">{:.2f}</span><span class="s2">&quot;</span><span class="o">.</span>
+        <span class="nb">format</span><span class="p">(</span><span class="n">item_popularity</span><span class="p">[:</span><span class="n">ten_percent</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average per-item interactions for the median 10% popular items </span><span class="si">{:.2f}</span><span class="s2">&quot;</span><span class="o">.</span>
+        <span class="nb">format</span><span class="p">(</span><span class="n">item_popularity</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n_items</span><span class="o">*</span><span class="mf">0.45</span><span class="p">):</span><span class="nb">int</span><span class="p">(</span><span class="n">n_items</span><span class="o">*</span><span class="mf">0.55</span><span class="p">)]</span><span class="o">.</span><span class="n">mean</span><span class="p">()))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Number of items with zero interactions </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span>
+        <span class="nb">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">item_popularity</span><span class="o">==</span><span class="mi">0</span><span class="p">)))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We compute the user activity (profile length) as the number of interaction in each row&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We can use the properties of sparse matrices in CSR format&quot;</span><span class="p">)</span>
+
+    <span class="n">user_activity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ediff1d</span><span class="p">(</span><span class="n">URM_all</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span><span class="o">.</span><span class="n">indptr</span><span class="p">)</span>
+    <span class="n">user_activity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">user_activity</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The splitting of the data is very important to ensure your algorithm is evaluated in a realistic scenario by using test it has never seen&quot;</span><span class="p">)</span>
+
+    <span class="n">train_test_split</span> <span class="o">=</span> <span class="mf">0.80</span>
+    <span class="n">n_interactions</span> <span class="o">=</span> <span class="n">URM_all</span><span class="o">.</span><span class="n">nnz</span>
+    <span class="n">train_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="kc">True</span><span class="p">,</span><span class="kc">False</span><span class="p">],</span> <span class="n">n_interactions</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="p">[</span><span class="n">train_test_split</span><span class="p">,</span> <span class="mi">1</span><span class="o">-</span><span class="n">train_test_split</span><span class="p">])</span>
+    <span class="n">URM_train</span> <span class="o">=</span> <span class="n">sps</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="n">URM_all</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">train_mask</span><span class="p">],</span>
+                                <span class="p">(</span><span class="n">URM_all</span><span class="o">.</span><span class="n">row</span><span class="p">[</span><span class="n">train_mask</span><span class="p">],</span> <span class="n">URM_all</span><span class="o">.</span><span class="n">col</span><span class="p">[</span><span class="n">train_mask</span><span class="p">])))</span>
+    <span class="n">test_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">train_mask</span><span class="p">)</span>
+    <span class="n">URM_test</span> <span class="o">=</span> <span class="n">sps</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="n">URM_all</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">test_mask</span><span class="p">],</span>
+                                <span class="p">(</span><span class="n">URM_all</span><span class="o">.</span><span class="n">row</span><span class="p">[</span><span class="n">test_mask</span><span class="p">],</span> <span class="n">URM_all</span><span class="o">.</span><span class="n">col</span><span class="p">[</span><span class="n">test_mask</span><span class="p">])))</span>
+
+    <span class="n">save_pickle</span><span class="p">(</span><span class="n">URM_train</span><span class="p">,</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_silver</span><span class="p">,</span><span class="s1">&#39;URM_train&#39;</span><span class="p">))</span>
+    <span class="n">save_pickle</span><span class="p">(</span><span class="n">URM_test</span><span class="p">,</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_silver</span><span class="p">,</span><span class="s1">&#39;URM_test&#39;</span><span class="p">))</span>
+
+
+    <span class="n">ICM_dataframe</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filepath_or_buffer</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tags_path</span><span class="p">,</span> 
+                                <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;::&quot;</span><span class="p">,</span> 
+                                <span class="n">header</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                                <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span><span class="nb">int</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="nb">str</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span><span class="nb">int</span><span class="p">},</span>
+                                <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">)</span>
+
+    <span class="n">ICM_dataframe</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">,</span> <span class="s2">&quot;ItemID&quot;</span><span class="p">,</span> <span class="s2">&quot;FeatureID&quot;</span><span class="p">,</span> <span class="s2">&quot;Timestamp&quot;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">ICM_dataframe</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We can see that most users and items have no data associated to them&quot;</span><span class="p">)</span>
+
+    <span class="n">n_features</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;FeatureID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+    <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;Number of tags</span><span class="se">\t</span><span class="s2"> </span><span class="si">{}</span><span class="s2">, Number of item-tag tuples </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n_features</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ICM_dataframe</span><span class="p">)))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We now build the sparse ICM matrices&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;The tags are strings, we should traslate them into numbers so we can use them as indices in the ICM.&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We should also ensure that the item and user indices we use in ICM and URM are consistent. To do so we use the same mapper, first we populate it with the URM and then we add the new ids that appear only in the ICM&quot;</span><span class="p">)</span>
+
+    <span class="n">user_original_ID_to_index_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+        <span class="n">user_original_ID_to_index_dict</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_original_ID_to_index_dict</span><span class="p">)</span>  
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unique user_id in the URM are </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">user_original_ID_to_index_dict</span><span class="p">)))</span>
+        
+    <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">user_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">user_original_ID_to_index_dict</span><span class="p">:</span>
+            <span class="n">user_original_ID_to_index_dict</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">user_original_ID_to_index_dict</span><span class="p">)</span>
+            
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unique user_id in the URM and ICM are </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">user_original_ID_to_index_dict</span><span class="p">)))</span>
+
+    <span class="n">item_original_ID_to_index_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+        <span class="n">item_original_ID_to_index_dict</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">item_original_ID_to_index_dict</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unique item_id in the URM are </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">item_original_ID_to_index_dict</span><span class="p">)))</span>
+        
+    <span class="k">for</span> <span class="n">item_id</span> <span class="ow">in</span> <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">item_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">item_original_ID_to_index_dict</span><span class="p">:</span>
+            <span class="n">item_original_ID_to_index_dict</span><span class="p">[</span><span class="n">item_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">item_original_ID_to_index_dict</span><span class="p">)</span>
+            
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unique item_id in the URM and ICM are </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">item_original_ID_to_index_dict</span><span class="p">)))</span>
+
+    <span class="n">feature_original_ID_to_index_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">feature_id</span> <span class="ow">in</span> <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;FeatureID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+        <span class="n">feature_original_ID_to_index_dict</span><span class="p">[</span><span class="n">feature_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_original_ID_to_index_dict</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Unique feature_id in the URM are </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">feature_original_ID_to_index_dict</span><span class="p">)))</span>
+
+    <span class="n">original_feature_ID</span> <span class="o">=</span> <span class="s2">&quot;star wars&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;New index for feature &#39;</span><span class="si">{}</span><span class="s2">&#39; is </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">original_feature_ID</span><span class="p">,</span> <span class="n">feature_original_ID_to_index_dict</span><span class="p">[</span><span class="n">original_feature_ID</span><span class="p">]))</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;We can now build the ICM using the new indices&quot;</span><span class="p">)</span>
+
+    <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">user_original_ID_to_index_dict</span><span class="p">[</span><span class="n">user_original</span><span class="p">]</span> <span class="k">for</span> <span class="n">user_original</span> <span class="ow">in</span>
+                                        <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+
+    <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">item_original_ID_to_index_dict</span><span class="p">[</span><span class="n">item_original</span><span class="p">]</span> <span class="k">for</span> <span class="n">item_original</span> <span class="ow">in</span> 
+                                        <span class="n">URM_all_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+
+    <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">user_original_ID_to_index_dict</span><span class="p">[</span><span class="n">user_original</span><span class="p">]</span> <span class="k">for</span> <span class="n">user_original</span> <span class="ow">in</span>
+                                        <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;UserID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+
+    <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">item_original_ID_to_index_dict</span><span class="p">[</span><span class="n">item_original</span><span class="p">]</span> <span class="k">for</span> <span class="n">item_original</span> <span class="ow">in</span> 
+                                        <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+
+    <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;FeatureID&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature_original_ID_to_index_dict</span><span class="p">[</span><span class="n">feature_original</span><span class="p">]</span> <span class="k">for</span> <span class="n">feature_original</span> <span class="ow">in</span> 
+                                        <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;FeatureID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+
+    <span class="n">ICM_all</span> <span class="o">=</span> <span class="n">sps</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span> 
+                            <span class="p">(</span><span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;ItemID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">ICM_dataframe</span><span class="p">[</span><span class="s2">&quot;FeatureID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)),</span>
+                            <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_items</span><span class="p">,</span> <span class="n">n_features</span><span class="p">))</span>
+
+    <span class="n">ICM_all</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">ICM_all</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="n">ICM_all</span> <span class="o">=</span> <span class="n">sps</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">ICM_all</span><span class="p">)</span>
+    <span class="n">features_per_item</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ediff1d</span><span class="p">(</span><span class="n">ICM_all</span><span class="o">.</span><span class="n">indptr</span><span class="p">)</span>
+
+    <span class="n">ICM_all</span> <span class="o">=</span> <span class="n">sps</span><span class="o">.</span><span class="n">csc_matrix</span><span class="p">(</span><span class="n">ICM_all</span><span class="p">)</span>
+    <span class="n">items_per_feature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ediff1d</span><span class="p">(</span><span class="n">ICM_all</span><span class="o">.</span><span class="n">indptr</span><span class="p">)</span>
+
+    <span class="n">ICM_all</span> <span class="o">=</span> <span class="n">sps</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">ICM_all</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">features_per_item</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">items_per_feature</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="n">features_per_item</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">features_per_item</span><span class="p">)</span>
+    <span class="n">items_per_feature</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">items_per_feature</span><span class="p">)</span>
+
+    <span class="n">save_pickle</span><span class="p">(</span><span class="n">ICM_all</span><span class="p">,</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_silver</span><span class="p">,</span><span class="s1">&#39;ICM_all&#39;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">load_processed_datasets</span><span class="p">():</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">URM_train</span> <span class="o">=</span> <span class="n">load_pickle</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_silver</span><span class="p">,</span><span class="s1">&#39;URM_train&#39;</span><span class="p">))</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">URM_test</span> <span class="o">=</span> <span class="n">load_pickle</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_silver</span><span class="p">,</span><span class="s1">&#39;URM_test&#39;</span><span class="p">))</span>
+    <span class="n">args</span><span class="o">.</span><span class="n">ICM_all</span> <span class="o">=</span> <span class="n">load_pickle</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">datapath_silver</span><span class="p">,</span><span class="s1">&#39;ICM_all&#39;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Metrics">Metrics<a class="anchor-link" href="#Metrics"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">precision</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">):</span>
+    <span class="n">is_relevant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">,</span> <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">precision_score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">is_relevant</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">is_relevant</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">precision_score</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">recall</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">):</span>
+    <span class="n">is_relevant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">,</span> <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">recall_score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">is_relevant</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="n">relevant_items</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">recall_score</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">MAP</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">):</span>
+    <span class="n">is_relevant</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">,</span> <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># Cumulative sum: precision at 1, at 2, at 3 ...</span>
+    <span class="n">p_at_k</span> <span class="o">=</span> <span class="n">is_relevant</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">is_relevant</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">is_relevant</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="n">map_score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">p_at_k</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">relevant_items</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">is_relevant</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+    <span class="k">return</span> <span class="n">map_score</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Evaluation">Evaluation<a class="anchor-link" href="#Evaluation"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">evaluate_algorithm</span><span class="p">(</span><span class="n">recommender_object</span><span class="p">):</span>
+    <span class="n">cumulative_precision</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">cumulative_recall</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">cumulative_MAP</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">num_eval</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">URM_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">relevant_items</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">URM_test</span><span class="o">.</span><span class="n">indices</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">URM_test</span><span class="o">.</span><span class="n">indptr</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span><span class="n">args</span><span class="o">.</span><span class="n">URM_test</span><span class="o">.</span><span class="n">indptr</span><span class="p">[</span><span class="n">user_id</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">relevant_items</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">recommended_items</span> <span class="o">=</span> <span class="n">recommender_object</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">at</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">top_k</span><span class="p">)</span>
+            <span class="n">num_eval</span><span class="o">+=</span><span class="mi">1</span>
+            <span class="n">cumulative_precision</span> <span class="o">+=</span> <span class="n">precision</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">)</span>
+            <span class="n">cumulative_recall</span> <span class="o">+=</span> <span class="n">recall</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">)</span>
+            <span class="n">cumulative_MAP</span> <span class="o">+=</span> <span class="n">MAP</span><span class="p">(</span><span class="n">recommended_items</span><span class="p">,</span> <span class="n">relevant_items</span><span class="p">)</span>
+            
+    <span class="n">cumulative_precision</span> <span class="o">/=</span> <span class="n">num_eval</span>
+    <span class="n">cumulative_recall</span> <span class="o">/=</span> <span class="n">num_eval</span>
+    <span class="n">cumulative_MAP</span> <span class="o">/=</span> <span class="n">num_eval</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Recommender results are: Precision = </span><span class="si">{:.4f}</span><span class="s2">, Recall = </span><span class="si">{:.4f}</span><span class="s2">, MAP = </span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">cumulative_precision</span><span class="p">,</span> <span class="n">cumulative_recall</span><span class="p">,</span> <span class="n">cumulative_MAP</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Models">Models<a class="anchor-link" href="#Models"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">RandomRecommender</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;In a random recommend we don&#39;t have anything to learn from the data&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">URM_train</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_items</span> <span class="o">=</span> <span class="n">URM_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">at</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="n">recommended_items</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_items</span><span class="p">,</span> <span class="n">at</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">recommended_items</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">TopPopRecommender</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;We recommend to all users the most popular items, </span>
+<span class="sd">    that is those with the highest number of interactions</span>
+<span class="sd">    In this case our model is the item popularity</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">URM_train</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">URM_train</span> <span class="o">=</span> <span class="n">URM_train</span>
+        <span class="n">item_popularity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ediff1d</span><span class="p">(</span><span class="n">URM_train</span><span class="o">.</span><span class="n">tocsc</span><span class="p">()</span><span class="o">.</span><span class="n">indptr</span><span class="p">)</span>
+        <span class="c1"># We are not interested in sorting the popularity value,</span>
+        <span class="c1"># but to order the items according to it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">popular_items</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">item_popularity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">popular_items</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">popular_items</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">at</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">remove_seen</span><span class="p">:</span>
+            <span class="sd">&quot;&quot;&quot;remove items already seen by the user. We can either remove them from the</span>
+<span class="sd">            recommended item list or we can set them to a score so low that it will cause </span>
+<span class="sd">            them to end at the very bottom of all the available items&quot;&quot;&quot;</span>
+            <span class="n">seen_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">URM_train</span><span class="o">.</span><span class="n">indices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">URM_train</span><span class="o">.</span><span class="n">indptr</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span><span class="bp">self</span><span class="o">.</span><span class="n">URM_train</span><span class="o">.</span><span class="n">indptr</span><span class="p">[</span><span class="n">user_id</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">unseen_items_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">popular_items</span><span class="p">,</span> <span class="n">seen_items</span><span class="p">,</span>
+                                        <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="n">unseen_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">popular_items</span><span class="p">[</span><span class="n">unseen_items_mask</span><span class="p">]</span>
+            <span class="n">recommended_items</span> <span class="o">=</span> <span class="n">unseen_items</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">at</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">recommended_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">popular_items</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">at</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">recommended_items</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">GlobalEffectsRecommender</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;We recommend to all users the highest rated items.</span>
+<span class="sd">    First we compute the average of all ratings, or global average</span>
+<span class="sd">    We subtract the bias to all ratings</span>
+<span class="sd">    Then we compute the average rating for each item, or itemBias</span>
+<span class="sd">    We cannot use the mean function because it would include also the zero values,</span>
+<span class="sd">    which we want to exclude since they mean &quot;missing data&quot;</span>
+<span class="sd">    The mean should be computed only on existing ratings. Unfortunately this </span>
+<span class="sd">    requires to do several operations to change the data classes so the code </span>
+<span class="sd">    is quite long. Also remember to exclude items with no ratings to avoid a </span>
+<span class="sd">    division by zero.</span>
+<span class="sd">    And the average rating for each user, or userBias</span>
+<span class="sd">    Now we can sort the items by their itemBias and use the same recommendation </span>
+<span class="sd">    principle as in TopPop.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">URM_train</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">URM_train</span> <span class="o">=</span> <span class="n">URM_train</span>
+        <span class="n">globalAverage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">URM_train</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">URM_train_unbiased</span> <span class="o">=</span> <span class="n">URM_train</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">URM_train_unbiased</span><span class="o">.</span><span class="n">data</span> <span class="o">-=</span> <span class="n">globalAverage</span>
+        <span class="c1"># User Bias</span>
+        <span class="n">user_mean_rating</span> <span class="o">=</span> <span class="n">URM_train_unbiased</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">user_mean_rating</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">user_mean_rating</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+        
+        <span class="c1"># In order to apply the user bias we have to change the rating value </span>
+        <span class="c1"># in the URM_train_unbiased inner data structures</span>
+        <span class="c1"># If we were to write:</span>
+        <span class="c1"># URM_train_unbiased[user_id].data -= user_mean_rating[user_id]</span>
+        <span class="c1"># we would change the value of a new matrix with no effect on the original data structure</span>
+        <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">user_mean_rating</span><span class="p">)):</span>
+            <span class="n">start_position</span> <span class="o">=</span> <span class="n">URM_train_unbiased</span><span class="o">.</span><span class="n">indptr</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span>
+            <span class="n">end_position</span> <span class="o">=</span> <span class="n">URM_train_unbiased</span><span class="o">.</span><span class="n">indptr</span><span class="p">[</span><span class="n">user_id</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">URM_train_unbiased</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">start_position</span><span class="p">:</span><span class="n">end_position</span><span class="p">]</span> <span class="o">-=</span> <span class="n">user_mean_rating</span><span class="p">[</span><span class="n">user_id</span><span class="p">]</span>
+        <span class="c1"># Item Bias</span>
+        <span class="n">item_mean_rating</span> <span class="o">=</span> <span class="n">URM_train_unbiased</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">item_mean_rating</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">item_mean_rating</span><span class="p">)</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bestRatedItems</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">item_mean_rating</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bestRatedItems</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">flip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bestRatedItems</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">recommend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">at</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">remove_seen</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">remove_seen</span><span class="p">:</span>
+            <span class="n">seen_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">URM_train</span><span class="o">.</span><span class="n">indices</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">URM_train</span><span class="o">.</span><span class="n">indptr</span><span class="p">[</span><span class="n">user_id</span><span class="p">]:</span><span class="bp">self</span><span class="o">.</span><span class="n">URM_train</span><span class="o">.</span><span class="n">indptr</span><span class="p">[</span><span class="n">user_id</span><span class="o">+</span><span class="mi">1</span><span class="p">]]</span>
+            <span class="n">unseen_items_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bestRatedItems</span><span class="p">,</span> <span class="n">seen_items</span><span class="p">,</span>
+                                        <span class="n">assume_unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">invert</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="n">unseen_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestRatedItems</span><span class="p">[</span><span class="n">unseen_items_mask</span><span class="p">]</span>
+            <span class="n">recommended_items</span> <span class="o">=</span> <span class="n">unseen_items</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">at</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">recommended_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bestRatedItems</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">at</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">recommended_items</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">train_model</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">URM_train</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">load_processed_datasets</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">model_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;Random&#39;</span><span class="p">,</span><span class="s1">&#39;ItemPopularity&#39;</span><span class="p">,</span><span class="s1">&#39;GlobalEffects&#39;</span><span class="p">]:</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;Random&#39;</span><span class="p">:</span><span class="n">RandomRecommender</span><span class="p">(),</span>
+            <span class="s1">&#39;ItemPopularity&#39;</span><span class="p">:</span><span class="n">TopPopRecommender</span><span class="p">(),</span>
+            <span class="s1">&#39;GlobalEffects&#39;</span><span class="p">:</span><span class="n">GlobalEffectsRecommender</span><span class="p">(),</span>
+        <span class="p">}</span>
+    
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model_dict</span><span class="p">[</span><span class="n">args</span><span class="o">.</span><span class="n">model_name</span><span class="p">]</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">URM_train</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">user_id</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;As per </span><span class="si">{}</span><span class="s1"> model, User </span><span class="si">{}</span><span class="s1"> would prefer these </span><span class="si">{}</span><span class="s1"> items: </span><span class="si">{}</span><span class="s1">&#39;</span>
+            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">model_name</span><span class="p">,</span>
+                    <span class="n">user_id</span><span class="p">,</span>
+                    <span class="n">args</span><span class="o">.</span><span class="n">top_k</span><span class="p">,</span>
+                    <span class="n">model</span><span class="o">.</span><span class="n">recommend</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">at</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">top_k</span><span class="p">)</span>
+            <span class="p">))</span>
+        <span class="n">evaluate_algorithm</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Jobs">Jobs<a class="anchor-link" href="#Jobs"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB START: DOWNLOAD_RAW_DATASET&#39;</span><span class="p">)</span>
+<span class="n">download_dataset</span><span class="p">()</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB END: DOWNLOAD_RAW_DATASET&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>13-Nov-21 12:51:54 [INFO] : JOB START: DOWNLOAD_RAW_DATASET
+13-Nov-21 12:51:56 [INFO] : Dataset downloaded in /content/ml-10M100K
+13-Nov-21 12:51:56 [INFO] : JOB END: DOWNLOAD_RAW_DATASET
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB START: PREPROCESSING_MOVIELENS_10M&#39;</span><span class="p">)</span>
+<span class="n">preprocess_dataset</span><span class="p">()</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB END: PREPROCESSING_MOVIELENS_10M&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>13-Nov-21 12:52:03 [INFO] : JOB START: DATASET_CONVERSION_PARQUET_TO_CSV
+   UserID  ItemID  Interaction  Timestamp
+0       1     122          5.0  838985046
+1       1     185          5.0  838983525
+2       1     231          5.0  838983392
+3       1     292          5.0  838983421
+4       1     316          5.0  838983392
+The number of interactions is 10000054
+We can use this data to create a sparse matrix, notice that we have red UserID and ItemID as int
+This is not always possible if the IDs are alphanumeric
+Now we can extract the list of unique user id and item id and display some statistics
+Number of items	 10677, Number of users	 69878
+Max ID items	 65133, Max Id users	 71567
+
+See that the max ID of items and users is higher than the number of unique values -&gt; empty profiles
+We should remove empty indices, to do so we create a new mapping
+New index for item 292 is 3
+We now replace the IDs in the dataframe and we are ready to use the data
+   UserID  ItemID  Interaction  Timestamp
+0       0       0          5.0  838985046
+1       0       1          5.0  838983525
+2       0       2          5.0  838983392
+3       0       3          5.0  838983421
+4       0       4          5.0  838983392
+Number of items	 10677, Number of users	 69878
+Max ID items	 10676, Max Id users	 69877
+
+Average interactions per user 143.11
+Average interactions per item 936.60
+
+Sparsity 98.66 %
+To store the data we use a sparse matrix. We build it as a COO matrix and then change its format
+The COO constructor expects (data, (row, column))
+  (0, 0)	5.0
+  (0, 1)	5.0
+  (0, 2)	5.0
+  (0, 3)	5.0
+  (0, 4)	5.0
+  (0, 5)	5.0
+  (0, 6)	5.0
+  (0, 7)	5.0
+  (0, 8)	5.0
+  (0, 9)	5.0
+  (0, 10)	5.0
+  (0, 11)	5.0
+  (0, 12)	5.0
+  (0, 13)	5.0
+  (0, 14)	5.0
+  (0, 15)	5.0
+  (0, 16)	5.0
+  (0, 17)	5.0
+  (0, 18)	5.0
+  (0, 19)	5.0
+  (0, 20)	5.0
+  (0, 21)	5.0
+  (1, 22)	5.0
+  (1, 23)	3.0
+  (1, 24)	5.0
+  :	:
+  (69877, 445)	2.0
+  (69877, 463)	3.0
+  (69877, 467)	1.0
+  (69877, 468)	4.0
+  (69877, 191)	3.0
+  (69877, 3386)	3.0
+  (69877, 475)	2.0
+  (69877, 246)	4.0
+  (69877, 1646)	3.0
+  (69877, 481)	3.0
+  (69877, 1081)	2.0
+  (69877, 248)	4.0
+  (69877, 486)	4.0
+  (69877, 2941)	1.0
+  (69877, 3448)	1.0
+  (69877, 3066)	1.0
+  (69877, 5330)	1.0
+  (69877, 2065)	1.0
+  (69877, 505)	3.0
+  (69877, 192)	5.0
+  (69877, 518)	1.0
+  (69877, 1660)	2.0
+  (69877, 537)	5.0
+  (69877, 541)	2.0
+  (69877, 1671)	2.0
+We compute the item popularity as the number of interaction in each column
+We can use the properties of sparse matrices in CSC format
+Average per-item interactions over the whole dataset 936.60
+Average per-item interactions for the top 10% popular items 6479.52
+Average per-item interactions for the least 10% popular items 5.23
+Average per-item interactions for the median 10% popular items 136.45
+Number of items with zero interactions 0
+We compute the user activity (profile length) as the number of interaction in each row
+We can use the properties of sparse matrices in CSR format
+The splitting of the data is very important to ensure your algorithm is evaluated in a realistic scenario by using test it has never seen
+13-Nov-21 12:53:24 [INFO] : JOB END: DATASET_CONVERSION_PARQUET_TO_CSV
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB START: TRAINING_RANDOM_RECOMMENDER_MODEL&#39;</span><span class="p">)</span>
+<span class="n">args</span><span class="o">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="s1">&#39;Random&#39;</span>
+<span class="n">train_model</span><span class="p">()</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB END: TRAINING_RANDOM_RECOMMENDER_MODEL&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>13-Nov-21 13:21:13 [INFO] : JOB START: TRAINING_RANDOM_RECOMMENDER_MODEL
+As per Random model, User 0 would prefer these 5 items: [6823 8976 2753 5195  235]
+As per Random model, User 1 would prefer these 5 items: [ 2633  9861 10003  4393  5093]
+As per Random model, User 2 would prefer these 5 items: [1696  346 8495 1385 2402]
+As per Random model, User 3 would prefer these 5 items: [8465 2700 5098 6802 4291]
+As per Random model, User 4 would prefer these 5 items: [4559 4637 4954 8351 9438]
+As per Random model, User 5 would prefer these 5 items: [8178 1158 2202 7470 8215]
+As per Random model, User 6 would prefer these 5 items: [9464 8398 3497 4266 5924]
+As per Random model, User 7 would prefer these 5 items: [6223 6330 4248   52  696]
+As per Random model, User 8 would prefer these 5 items: [6742 3685 2953 9405 2831]
+As per Random model, User 9 would prefer these 5 items: [2901 7799 7278  847 9579]
+Recommender results are: Precision = 0.0028, Recall = 0.0005, MAP = 0.0013
+13-Nov-21 13:21:23 [INFO] : JOB END: TRAINING_RANDOM_RECOMMENDER_MODEL
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB START: ITEM_POP_RECOMMENDER_MODEL&#39;</span><span class="p">)</span>
+<span class="n">args</span><span class="o">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="s1">&#39;ItemPopularity&#39;</span>
+<span class="n">args</span><span class="o">.</span><span class="n">remove_seen</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="n">train_model</span><span class="p">()</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB END: ITEM_POP_RECOMMENDER_MODEL&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>13-Nov-21 13:26:08 [INFO] : JOB START: ITEM_POP_RECOMMENDER_MODEL
+As per ItemPopularity model, User 0 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 1 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 2 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 3 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 4 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 5 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 6 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 7 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 8 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 9 would prefer these 5 items: [1008    7  139   14 1293]
+Recommender results are: Precision = 0.0954, Recall = 0.0305, MAP = 0.0527
+13-Nov-21 13:26:17 [INFO] : JOB END: ITEM_POP_RECOMMENDER_MODEL
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB START: ITEM_POP_WITH_FILTER_RECOMMENDER_MODEL&#39;</span><span class="p">)</span>
+<span class="n">args</span><span class="o">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="s1">&#39;ItemPopularity&#39;</span>
+<span class="n">args</span><span class="o">.</span><span class="n">remove_seen</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">train_model</span><span class="p">()</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB END: ITEM_POP_WITH_FILTER_RECOMMENDER_MODEL&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>13-Nov-21 13:26:49 [INFO] : JOB START: ITEM_POP_WITH_FILTER_RECOMMENDER_MODEL
+As per ItemPopularity model, User 0 would prefer these 5 items: [1008  139 1293   22   19]
+As per ItemPopularity model, User 1 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 2 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 3 would prefer these 5 items: [1008    7  139 1293  175]
+As per ItemPopularity model, User 4 would prefer these 5 items: [1008    7   14 1293   22]
+As per ItemPopularity model, User 5 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 6 would prefer these 5 items: [1008    7   14 1293   22]
+As per ItemPopularity model, User 7 would prefer these 5 items: [1008    7 1293   22   19]
+As per ItemPopularity model, User 8 would prefer these 5 items: [1008    7  139   14 1293]
+As per ItemPopularity model, User 9 would prefer these 5 items: [  14 1293   22   19  175]
+Recommender results are: Precision = 0.1980, Recall = 0.0529, MAP = 0.1468
+13-Nov-21 13:27:44 [INFO] : JOB END: ITEM_POP_WITH_FILTER_RECOMMENDER_MODEL
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB START: GLOBAL_EFFECTS_RECOMMENDER_MODEL&#39;</span><span class="p">)</span>
+<span class="n">args</span><span class="o">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="s1">&#39;GlobalEffects&#39;</span>
+<span class="n">args</span><span class="o">.</span><span class="n">remove_seen</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">train_model</span><span class="p">()</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;JOB END: GLOBAL_EFFECTS_RECOMMENDER_MODEL&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>13-Nov-21 13:57:52 [INFO] : JOB START: GLOBAL_EFFECTS_RECOMMENDER_MODEL
+As per GlobalEffects model, User 0 would prefer these 5 items: [1293  139 1008  133  213]
+As per GlobalEffects model, User 1 would prefer these 5 items: [1293  139 1008  133  213]
+As per GlobalEffects model, User 2 would prefer these 5 items: [1293  139 1008  133  213]
+As per GlobalEffects model, User 3 would prefer these 5 items: [1293  139 1008  133  213]
+As per GlobalEffects model, User 4 would prefer these 5 items: [1293 1008  213   24    7]
+As per GlobalEffects model, User 5 would prefer these 5 items: [1293  139 1008  133  213]
+As per GlobalEffects model, User 6 would prefer these 5 items: [1293 1008  133   34    7]
+As per GlobalEffects model, User 7 would prefer these 5 items: [1293 1008  133   34    7]
+As per GlobalEffects model, User 8 would prefer these 5 items: [1293  139 1008  133   24]
+As per GlobalEffects model, User 9 would prefer these 5 items: [1293  213   24   34   22]
+Recommender results are: Precision = 0.1684, Recall = 0.0387, MAP = 0.1220
+13-Nov-21 13:58:42 [INFO] : JOB END: GLOBAL_EFFECTS_RECOMMENDER_MODEL
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/24/ml10m.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

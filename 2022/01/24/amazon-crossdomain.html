@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Amazon Dataset Cross-domain Data Preparation | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Amazon Dataset Cross-domain Data Preparation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/24/amazon-crossdomain.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/24/amazon-crossdomain.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-24T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Amazon Dataset Cross-domain Data Preparation" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-24T00:00:00-06:00","datePublished":"2022-01-24T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Amazon Dataset Cross-domain Data Preparation","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/24/amazon-crossdomain.html"},"url":"https://nb.recohut.com/2022/01/24/amazon-crossdomain.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Amazon Dataset Cross-domain Data Preparation</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-24T00:00:00-06:00" itemprop="datePublished">
+        Jan 24, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      7 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-24-amazon-crossdomain.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-24-amazon-crossdomain.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-24-amazon-crossdomain.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-24-amazon-crossdomain.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-24-amazon-crossdomain.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Dataset">Dataset<a class="anchor-link" href="#Dataset"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">_pickle</span> <span class="k">as</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">gc</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>wget -q --show-progress http://deepyeti.ucsd.edu/jianmo/amazon/categoryFilesSmall/Movies_and_TV_5.json.gz
+<span class="o">!</span>wget -q --show-progress http://deepyeti.ucsd.edu/jianmo/amazon/categoryFilesSmall/Sports_and_Outdoors_5.json.gz
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Movies_and_TV_5.jso 100%[===================&gt;] 754.66M  44.5MB/s    in 17s     
+Sports_and_Outdoors 100%[===================&gt;] 395.12M  42.2MB/s    in 9.7s    
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">load_pickle</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="n">path_tmp</span><span class="p">):</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="n">gzip</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">path_tmp</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">getDF</span><span class="p">(</span><span class="n">path_tmp</span><span class="p">):</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">parse</span><span class="p">(</span><span class="n">path_tmp</span><span class="p">):</span>
+        <span class="n">df</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s1">&#39;index&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">generate_k_core</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="c1"># on users</span>
+    <span class="c1"># tmp1 = df.groupby([&#39;reviewerID&#39;], as_index=False)[&#39;asin&#39;].count()</span>
+    <span class="c1"># tmp1.rename(columns={&#39;asin&#39;: &#39;cnt_item&#39;}, inplace=True)</span>
+    <span class="c1"># on items</span>
+    <span class="n">tmp2</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;asin&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">tmp2</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">:</span> <span class="s1">&#39;cnt_user&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">tmp2</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;asin&#39;</span><span class="p">])</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;cnt_user &gt;= </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">k</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;cnt_user&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">tmp2</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; num of user, item, max/min uid/itemID, total interaction&quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="n">item</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;asin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of user: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">user</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;max user ID: &quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">user</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Min user ID: &quot;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">user</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of Item: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Max item ID: &quot;</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Min item ID: &quot;</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Interactions: &quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">user_limit</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+    <span class="c1"># select users with more than (include) k interacted items</span>
+    <span class="n">tmp1</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">],</span> <span class="n">as_index</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="s1">&#39;asin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+    <span class="n">tmp1</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;asin&#39;</span><span class="p">:</span> <span class="s1">&#39;cnt_item&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">tmp1</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">])</span>
+    <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;cnt_item &gt;= </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">k</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;cnt_item&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">tmp1</span>
+    <span class="n">gc</span><span class="o">.</span><span class="n">collect</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">category</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="c1"># reid users and items from 0-N</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">uid</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;asin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">asin</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">([</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">,</span> <span class="s1">&#39;unixReviewTime&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<span class="k">def</span> <span class="nf">clean</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="c1"># pre-processing on the original dataset TODO: change parameters accordingly.</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;======================Information of Original dataset:&quot;</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="c1"># clean with overall verified value. And selected time span.</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">overall</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">]</span>                 <span class="c1"># select positive interactions.</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">verified</span><span class="p">]</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="o">.</span><span class="n">unixReviewTime</span> <span class="o">&gt;</span> <span class="mi">1506816000</span><span class="p">]</span>  <span class="c1"># interactions after 2017, 10, 1, 0, 0, 0</span>
+    <span class="c1"># earliest --&gt; 2016, 10, 1, 0, 0, 0; 1506816000 --&gt; 2017, 10, 1, 0, 0, 0</span>
+
+    <span class="c1"># drop redundant columns</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s2">&quot;overall&quot;</span><span class="p">,</span> <span class="s2">&quot;verified&quot;</span><span class="p">,</span> <span class="s1">&#39;reviewerName&#39;</span><span class="p">,</span> <span class="s1">&#39;reviewText&#39;</span><span class="p">,</span> <span class="s1">&#39;summary&#39;</span><span class="p">,</span> <span class="s1">&#39;vote&#39;</span><span class="p">,</span> <span class="s1">&#39;style&#39;</span><span class="p">,</span> <span class="s1">&#39;image&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;======================Information of cleaned dataset:&quot;</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="c1"># k-core</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">generate_k_core</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>  <span class="c1"># item</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;======================Information of </span><span class="si">%d</span><span class="s2">-core dataset:&quot;</span> <span class="o">%</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">user_limit</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>   <span class="c1"># user</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;======================Information of dataset where all users have at least </span><span class="si">%d</span><span class="s2"> interaction:&quot;</span> <span class="o">%</span> <span class="mi">5</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="c1"># Convert User_ID and Item_ID and sort by reviewerID and time</span>
+    <span class="c1"># df[&#39;reviewerID&#39;] = pd.Categorical(df.reviewerID).codes</span>
+    <span class="c1"># df[&#39;reviewerID&#39;] = df[&quot;reviewerID&quot;] + 1</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;asin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Categorical</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">asin</span><span class="p">)</span><span class="o">.</span><span class="n">codes</span>
+    <span class="n">df</span><span class="p">[</span><span class="s1">&#39;asin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;asin&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">,</span> <span class="s2">&quot;unixReviewTime&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;======================final single-domain data convert to categorical data&quot;</span><span class="p">)</span>
+    <span class="n">info</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+    <span class="c1"># to list</span>
+    <span class="n">item_list</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">)[</span><span class="s1">&#39;asin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;asin_list&#39;</span><span class="p">)</span>
+    <span class="c1"># ts_list = df.groupby(&#39;reviewerID&#39;)[&#39;unixReviewTime&#39;].apply(list).reset_index(name=&#39;ts_list&#39;)</span>
+
+    <span class="k">return</span> <span class="n">item_list</span>
+
+
+<span class="k">def</span> <span class="nf">main_process</span><span class="p">(</span><span class="n">source_file</span><span class="p">,</span> <span class="n">outfile</span><span class="p">):</span>
+    <span class="n">a_df</span> <span class="o">=</span> <span class="n">getDF</span><span class="p">(</span><span class="n">source_file</span><span class="p">)</span>
+    <span class="n">a_df_cleaned_list</span> <span class="o">=</span> <span class="n">clean</span><span class="p">(</span><span class="n">a_df</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">a_df_cleaned_list</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+    <span class="n">a_df_cleaned_list</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># generate_tfrecord(a_df_cleaned_list, out_tf, in_type=&quot;df&quot;)</span>
+
+
+<span class="k">def</span> <span class="nf">find_overlap</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">):</span>
+    <span class="n">a_users</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">b_users</span> <span class="o">=</span> <span class="n">df2</span><span class="p">[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">overlap_users</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">a_users</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">b_users</span><span class="p">:</span>
+            <span class="n">overlap_users</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a_users</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b_users</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">overlap_users</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;saving overlap data&quot;</span><span class="p">)</span>
+    <span class="n">overlap_data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">data_line</span> <span class="ow">in</span> <span class="n">df1</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">overlap_users</span><span class="p">:</span>
+            <span class="n">overlap_data</span><span class="p">[</span><span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;asin_list&quot;</span><span class="p">]]</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">data_line</span> <span class="ow">in</span> <span class="n">df2</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">overlap_users</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">overlap_data</span><span class="p">:</span>
+                <span class="n">overlap_data</span><span class="p">[</span><span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;asin_list&quot;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;wrong user&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">overlap_data</span>
+
+
+<span class="k">def</span> <span class="nf">statistic_pub</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">):</span>
+    <span class="n">a_users</span> <span class="o">=</span> <span class="n">df1</span><span class="p">[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">b_users</span> <span class="o">=</span> <span class="n">df2</span><span class="p">[</span><span class="s1">&#39;reviewerID&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">overlap_users</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">a_only</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">b_only</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">a_users</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">b_users</span><span class="p">:</span>
+            <span class="n">overlap_users</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">a_only</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">b_users</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">overlap_users</span><span class="p">:</span>
+            <span class="n">b_only</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;number of users in domain a: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">a_users</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b_users</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a_only</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b_only</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">overlap_users</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;saving overlap data&quot;</span><span class="p">)</span>
+    <span class="c1"># a_only: users with interactions only in a domain</span>
+    <span class="c1"># b_only: users with interactions only in b domain</span>
+    <span class="c1"># x_user: overlapped users.</span>
+    <span class="n">data_info</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;a_only&quot;</span><span class="p">:</span> <span class="n">a_only</span><span class="p">,</span> <span class="s2">&quot;b_only&quot;</span><span class="p">:</span> <span class="n">b_only</span><span class="p">,</span> <span class="s2">&quot;x_user&quot;</span><span class="p">:</span> <span class="n">overlap_users</span><span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">data_info</span>
+
+
+<span class="k">def</span> <span class="nf">str2int</span><span class="p">(</span><span class="n">in_str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    input sample: &#39;[11506, 10463, 34296, 15541]&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data_list</span> <span class="o">=</span> <span class="n">in_str</span><span class="o">.</span><span class="n">strip</span><span class="p">()[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>  <span class="c1"># remove &quot;[]&quot; and split</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">data_list</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">pf2pickle_over</span><span class="p">(</span><span class="n">overlap_dict</span><span class="p">,</span> <span class="n">outfile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    save overlapped data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data_pickle</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;seq_a&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;len_a&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;val_a&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;test_a&quot;</span><span class="p">:</span> <span class="p">[],</span>
+                   <span class="s2">&quot;seq_b&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;len_b&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;val_b&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;test_b&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">overlap_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="n">num_recorded</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span><span class="p">:</span>
+        <span class="n">a_behavior</span><span class="p">,</span> <span class="n">b_behavior</span> <span class="o">=</span> <span class="n">overlap_dict</span><span class="p">[</span><span class="n">user</span><span class="p">]</span>
+        <span class="n">a_behavior</span> <span class="o">=</span> <span class="n">str2int</span><span class="p">(</span><span class="n">a_behavior</span><span class="p">)</span>
+        <span class="n">b_behavior</span> <span class="o">=</span> <span class="n">str2int</span><span class="p">(</span><span class="n">b_behavior</span><span class="p">)</span>
+
+        <span class="c1"># if len(a_behavior) &lt; 5 or len(b_behavior) &lt; 5:</span>
+        <span class="c1">#   continue</span>
+
+        <span class="n">val</span> <span class="o">=</span> <span class="n">a_behavior</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">a_behavior</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">behavior</span> <span class="o">=</span> <span class="n">a_behavior</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">val_b</span> <span class="o">=</span> <span class="n">b_behavior</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">test_b</span> <span class="o">=</span> <span class="n">b_behavior</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">behavior_b</span> <span class="o">=</span> <span class="n">b_behavior</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">num_recorded</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;seq_a&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">behavior</span><span class="p">)</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;len_a&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">behavior</span><span class="p">))</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;val_a&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;test_a&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;seq_b&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">behavior_b</span><span class="p">)</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;len_b&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">behavior_b</span><span class="p">))</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;val_b&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val_b</span><span class="p">)</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;test_b&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test_b</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;save number of samples: &quot;</span><span class="p">,</span> <span class="n">num_recorded</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data_pickle</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">df2pickle</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">in_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    train, valid, and test split and store all results into pickle files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">in_type</span> <span class="o">==</span> <span class="s2">&quot;pickle&quot;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">in_type</span> <span class="o">==</span> <span class="s2">&quot;txt&quot;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">in_type</span> <span class="o">==</span> <span class="s2">&quot;df&quot;</span><span class="p">:</span>
+        <span class="c1"># data = pd.read_csv(infile)  # if input a filename</span>
+        <span class="c1"># data = data.iterrows()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">infile</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">infile</span>
+    <span class="c1"># result pickle file</span>
+    <span class="n">data_pickle</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;seq&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;len&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;val&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;test&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+
+    <span class="k">for</span> <span class="n">data_line</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">in_type</span> <span class="o">==</span> <span class="s2">&quot;txt&quot;</span><span class="p">:</span>
+            <span class="n">line_splits</span> <span class="o">=</span> <span class="n">data_line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">)</span>
+            <span class="n">user</span><span class="p">,</span> <span class="n">behavior</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="n">line_splits</span>
+            <span class="n">behavior</span> <span class="o">=</span> <span class="n">behavior</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+            <span class="n">behavior</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">behavior</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">in_type</span> <span class="o">==</span> <span class="s2">&quot;pickle&quot;</span><span class="p">:</span>  <span class="c1"># pickle data</span>
+            <span class="n">user</span><span class="p">,</span> <span class="n">behavior</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="n">data_line</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data_line</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">data_line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">in_type</span> <span class="o">==</span> <span class="s2">&quot;df&quot;</span> <span class="ow">or</span> <span class="n">in_type</span> <span class="o">==</span> <span class="s2">&quot;csv&quot;</span><span class="p">:</span>
+            <span class="n">user</span><span class="p">,</span> <span class="n">behavior</span><span class="p">,</span> <span class="n">timestamp</span> <span class="o">=</span> <span class="n">data_line</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">],</span> <span class="n">data_line</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;asin_list&quot;</span><span class="p">],</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">behavior</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+                <span class="n">behavior</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">behavior</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">behavior</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">data_line</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+        <span class="c1"># if len(behavior) &lt; 3:  # already 5-cores.</span>
+        <span class="c1">#    continue</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">behavior</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">behavior</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">behavior</span> <span class="o">=</span> <span class="n">behavior</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;seq&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">behavior</span><span class="p">)</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;len&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">behavior</span><span class="p">))</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;val&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">data_pickle</span><span class="p">[</span><span class="s2">&quot;test&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;saving&quot;</span><span class="p">,</span> <span class="n">outfile</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data_pickle</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">cross_data</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">data_info</span><span class="p">,</span> <span class="n">a_name</span><span class="p">,</span> <span class="n">b_name</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        df1: dataframe in domain a</span>
+<span class="sd">        df2: dataframe in domain b</span>
+<span class="sd">        data_info: which {&quot;a_only&quot;: [], &quot;b_only&quot;: [], &quot;x_users&quot;: []}</span>
+<span class="sd">        a_name: name of domain a</span>
+<span class="sd">        b_name: name of domain b</span>
+<span class="sd">        path: out path.</span>
+<span class="sd">    Returns:</span>
+<span class="sd">        a_name.pickle</span>
+<span class="sd">        a_name_only.pickle</span>
+<span class="sd">        b_name.pickle</span>
+<span class="sd">        b_name_only.pickle</span>
+<span class="sd">        &quot;a_name&quot;_&quot;b_name&quot;.pickle</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Out put config</span>
+    <span class="n">a_all_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">a_name</span> <span class="o">+</span> <span class="s2">&quot;.pickle&quot;</span><span class="p">)</span>
+    <span class="n">b_all_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">b_name</span> <span class="o">+</span> <span class="s2">&quot;.pickle&quot;</span><span class="p">)</span>
+    <span class="n">a_only_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">a_name</span> <span class="o">+</span> <span class="s2">&quot;_only.pickle&quot;</span><span class="p">)</span>
+    <span class="n">b_only_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">b_name</span> <span class="o">+</span> <span class="s2">&quot;_only.pickle&quot;</span><span class="p">)</span>
+    <span class="n">overlap_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">a_name</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">b_name</span> <span class="o">+</span> <span class="s2">&quot;.pickle&quot;</span><span class="p">)</span>
+
+    <span class="c1"># all users in each domain.</span>
+    <span class="n">df2pickle</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">a_all_name</span><span class="p">,</span> <span class="n">in_type</span><span class="o">=</span><span class="s2">&quot;df&quot;</span><span class="p">)</span>
+    <span class="n">df2pickle</span><span class="p">(</span><span class="n">df2</span><span class="p">,</span> <span class="n">b_all_name</span><span class="p">,</span> <span class="n">in_type</span><span class="o">=</span><span class="s2">&quot;df&quot;</span><span class="p">)</span>
+
+    <span class="c1"># overlap data</span>
+    <span class="n">overlap_users</span> <span class="o">=</span> <span class="n">data_info</span><span class="p">[</span><span class="s2">&quot;x_user&quot;</span><span class="p">]</span>
+    <span class="n">overlap_data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">data_line</span> <span class="ow">in</span> <span class="n">df1</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">overlap_users</span><span class="p">:</span>
+            <span class="n">overlap_data</span><span class="p">[</span><span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[</span><span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;asin_list&quot;</span><span class="p">]]</span>
+
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">data_line</span> <span class="ow">in</span> <span class="n">df2</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">overlap_users</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">overlap_data</span><span class="p">:</span>
+                <span class="n">overlap_data</span><span class="p">[</span><span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_line</span><span class="p">[</span><span class="s2">&quot;asin_list&quot;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;wrong user&quot;</span><span class="p">)</span>
+    <span class="n">pf2pickle_over</span><span class="p">(</span><span class="n">overlap_data</span><span class="p">,</span> <span class="n">overlap_name</span><span class="p">)</span>
+
+    <span class="c1"># domain-specific users</span>
+    <span class="n">a_only_data</span> <span class="o">=</span> <span class="n">find_domain_only_data</span><span class="p">(</span><span class="n">df1</span><span class="p">,</span> <span class="n">overlap_users</span><span class="p">)</span>
+    <span class="n">b_only_data</span> <span class="o">=</span> <span class="n">find_domain_only_data</span><span class="p">(</span><span class="n">df2</span><span class="p">,</span> <span class="n">overlap_users</span><span class="p">)</span>
+
+    <span class="n">df2pickle</span><span class="p">(</span><span class="n">a_only_data</span><span class="p">,</span> <span class="n">a_only_name</span><span class="p">,</span> <span class="n">in_type</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">)</span>
+    <span class="n">df2pickle</span><span class="p">(</span><span class="n">b_only_data</span><span class="p">,</span> <span class="n">b_only_name</span><span class="p">,</span> <span class="n">in_type</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">find_domain_only_data</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">overlap_user</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">d_row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">d_row</span><span class="p">[</span><span class="s2">&quot;reviewerID&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">overlap_user</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_row</span><span class="p">[</span><span class="s2">&quot;asin_list&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<span class="k">def</span> <span class="nf">data_frequency</span><span class="p">(</span><span class="n">infile</span><span class="p">,</span> <span class="n">outfile</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">load_pickle</span><span class="p">(</span><span class="n">infile</span><span class="p">)</span>
+    <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">total</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;val&quot;</span><span class="p">])):</span>
+        <span class="n">seq</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;seq&quot;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;val&quot;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">&quot;test&quot;</span><span class="p">][</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">seq</span> <span class="o">+</span> <span class="p">[</span><span class="n">val</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">test</span><span class="p">]:</span>
+            <span class="n">freq</span><span class="p">[</span><span class="n">item</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="c1"># check if there are items with 0 frequency. (which is incorrect.)</span>
+    <span class="n">zero_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">freq</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">zero_index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">zero_index</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># add 0 at the beginning, for pad_index.</span>
+        <span class="n">freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">outfile</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fid</span><span class="p">:</span>
+            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">freq_main</span><span class="p">():</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;book&quot;</span><span class="p">,</span> <span class="s2">&quot;movie&quot;</span><span class="p">,</span> <span class="s2">&quot;sport&quot;</span><span class="p">,</span> <span class="s2">&quot;cloth&quot;</span><span class="p">]</span>
+    <span class="c1"># in</span>
+    <span class="n">movie</span> <span class="o">=</span> <span class="s2">&quot;movie.pickle&quot;</span>
+    <span class="n">book</span> <span class="o">=</span> <span class="s2">&quot;book.pickle&quot;</span>
+    <span class="n">clothing</span> <span class="o">=</span> <span class="s2">&quot;cloth.pickle&quot;</span>
+    <span class="n">sport</span> <span class="o">=</span> <span class="s2">&quot;sport.pickle&quot;</span>
+    <span class="c1"># out</span>
+    <span class="n">movie_o</span> <span class="o">=</span> <span class="s2">&quot;movie_freq.pickle&quot;</span>
+    <span class="n">book_o</span> <span class="o">=</span> <span class="s2">&quot;book_freq.pickle&quot;</span>
+    <span class="n">clothing_o</span> <span class="o">=</span> <span class="s2">&quot;cloth_freq.pickle&quot;</span>
+    <span class="n">sport_o</span> <span class="o">=</span> <span class="s2">&quot;sport_freq.pickle&quot;</span>
+    <span class="n">org_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;book&quot;</span><span class="p">:</span> <span class="n">book</span><span class="p">,</span> <span class="s2">&quot;movie&quot;</span><span class="p">:</span> <span class="n">movie</span><span class="p">,</span> <span class="s2">&quot;sport&quot;</span><span class="p">:</span> <span class="n">sport</span><span class="p">,</span> <span class="s2">&quot;cloth&quot;</span><span class="p">:</span> <span class="n">clothing</span><span class="p">}</span>
+    <span class="n">output_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;book&quot;</span><span class="p">:</span> <span class="n">book_o</span><span class="p">,</span> <span class="s2">&quot;movie&quot;</span><span class="p">:</span> <span class="n">movie_o</span><span class="p">,</span> <span class="s2">&quot;sport&quot;</span><span class="p">:</span> <span class="n">sport_o</span><span class="p">,</span> <span class="s2">&quot;cloth&quot;</span><span class="p">:</span> <span class="n">clothing_o</span><span class="p">}</span>
+    <span class="c1"># total_all = [53014, 5637, 12790, 44512]    # [1, n]</span>
+    <span class="n">total_all</span> <span class="o">=</span> <span class="p">[</span><span class="mi">51366</span><span class="p">,</span> <span class="mi">5536</span><span class="p">,</span> <span class="mi">11835</span><span class="p">,</span> <span class="mi">42139</span><span class="p">]</span>      <span class="c1"># [1, n]</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">)):</span>
+        <span class="n">data_frequency</span><span class="p">(</span><span class="n">org_data</span><span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">idx</span><span class="p">]],</span> <span class="n">output_data</span><span class="p">[</span><span class="n">names</span><span class="p">[</span><span class="n">idx</span><span class="p">]],</span> <span class="n">total</span><span class="o">=</span><span class="n">total_all</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">form_cross_domain_sets</span><span class="p">(</span><span class="n">file_a</span><span class="p">,</span> <span class="n">file_b</span><span class="p">,</span> <span class="n">a_name</span><span class="p">,</span> <span class="n">b_name</span><span class="p">,</span> <span class="n">out_path</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">out_path</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">out_path</span><span class="p">)</span>
+    <span class="n">a_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_a</span><span class="p">)</span>
+    <span class="n">b_data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_b</span><span class="p">)</span>
+    <span class="n">data_info</span> <span class="o">=</span> <span class="n">statistic_pub</span><span class="p">(</span><span class="n">a_data</span><span class="p">,</span> <span class="n">b_data</span><span class="p">)</span>
+    <span class="c1"># print(len(data_info[0]))</span>
+    <span class="c1"># cross_data(a_data, b_data, data_info, a_name, b_name, out_path, rate=0)</span>
+    <span class="n">cross_data</span><span class="p">(</span><span class="n">a_data</span><span class="p">,</span> <span class="n">b_data</span><span class="p">,</span> <span class="n">data_info</span><span class="p">,</span> <span class="n">a_name</span><span class="p">,</span> <span class="n">b_name</span><span class="p">,</span> <span class="n">out_path</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>mkdir -p /content/guru/movie_sport
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">data_dir</span> <span class="o">=</span> <span class="s2">&quot;/content&quot;</span>
+<span class="n">out_dir</span> <span class="o">=</span> <span class="s2">&quot;/content/guru&quot;</span>
+
+<span class="n">movie_source</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="s2">&quot;Movies_and_TV_5.json.gz&quot;</span><span class="p">)</span>
+<span class="n">sport_source</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="s2">&quot;Sports_and_Outdoors_5.json.gz&quot;</span><span class="p">)</span>
+
+<span class="c1"># preprocessed dataset</span>
+<span class="n">movie_out</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s2">&quot;movie.csv&quot;</span><span class="p">)</span>
+<span class="n">sport_out</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s2">&quot;sport.csv&quot;</span><span class="p">)</span>
+
+<span class="n">main_process</span><span class="p">(</span><span class="n">movie_source</span><span class="p">,</span> <span class="n">movie_out</span><span class="p">)</span>
+<span class="n">main_process</span><span class="p">(</span><span class="n">sport_source</span><span class="p">,</span> <span class="n">sport_out</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">form_cross_domain_sets</span><span class="p">(</span><span class="n">movie_out</span><span class="p">,</span> <span class="n">sport_out</span><span class="p">,</span> <span class="s1">&#39;movie&#39;</span><span class="p">,</span> <span class="s1">&#39;sport&#39;</span><span class="p">,</span>
+                        <span class="n">out_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s2">&quot;movie_sport&quot;</span><span class="p">))</span>
+
+<span class="c1"># calculate item frequency in each domain.</span>
+<span class="c1"># freq_main()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>number of users in domain a: 4261
+9024
+4156
+8919
+105
+saving overlap data
+saving /content/guru/movie_sport/movie.pickle
+saving /content/guru/movie_sport/sport.pickle
+save number of samples:  105
+saving /content/guru/movie_sport/movie_only.pickle
+saving /content/guru/movie_sport/sport_only.pickle
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+
+<pre><code>."a_domain"-"b_domain"
+├── a_only.pickle         # users in domain a only
+├── b_only.pickle         # users in domain b only
+├── a.pickle              # all users in domain a
+├── b.pickle              # all users in domain b
+├── a_b.pickle            # overlapped users of domain a and b</code></pre>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>git clone https://github.com/Chain123/RecGURU.git
+<span class="o">%</span><span class="k">cd</span> RecGURU
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Cloning into &#39;RecGURU&#39;...
+remote: Enumerating objects: 48, done.
+remote: Counting objects: 100% (48/48), done.
+remote: Compressing objects: 100% (43/43), done.
+remote: Total 48 (delta 8), reused 40 (delta 4), pack-reused 0
+Unpacking objects: 100% (48/48), done.
+/content/RecGURU
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/24/amazon-crossdomain.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

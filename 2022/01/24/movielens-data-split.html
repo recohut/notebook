@@ -1,0 +1,1685 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MovieLens Data Splitting | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="MovieLens Data Splitting" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/24/movielens-data-split.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/24/movielens-data-split.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-24T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MovieLens Data Splitting" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-24T00:00:00-06:00","datePublished":"2022-01-24T00:00:00-06:00","description":"Jupyter notebook database.","headline":"MovieLens Data Splitting","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/24/movielens-data-split.html"},"url":"https://nb.recohut.com/2022/01/24/movielens-data-split.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">MovieLens Data Splitting</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-24T00:00:00-06:00" itemprop="datePublished">
+        Jan 24, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      7 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-24-movielens-data-split.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-24-movielens-data-split.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-24-movielens-data-split.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-24-movielens-data-split.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-24-movielens-data-split.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Data-Split">Data Split<a class="anchor-link" href="#Data-Split"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">_check_and_convert_ratio</span><span class="p">(</span><span class="n">test_size</span><span class="p">,</span> <span class="n">multi_ratios</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">test_size</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">multi_ratios</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;must provide either &#39;test_size&#39; or &#39;multi_ratios&#39;&quot;</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">test_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">test_size</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span> <span class="s2">&quot;test_size must be float value&quot;</span>
+        <span class="k">assert</span> <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">test_size</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">&quot;test_size must be in (0.0, 1.0)&quot;</span>
+        <span class="n">ratios</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">-</span> <span class="n">test_size</span><span class="p">,</span> <span class="n">test_size</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">ratios</span><span class="p">,</span> <span class="mi">2</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">multi_ratios</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">multi_ratios</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+            <span class="s2">&quot;multi_ratios must at least have two elements&quot;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span><span class="n">r</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">multi_ratios</span><span class="p">]),</span> <span class="p">(</span>
+            <span class="s2">&quot;ratios should be positive values&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">fsum</span><span class="p">(</span><span class="n">multi_ratios</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="n">ratios</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">fsum</span><span class="p">(</span><span class="n">multi_ratios</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">multi_ratios</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ratios</span> <span class="o">=</span> <span class="n">multi_ratios</span>
+        <span class="k">return</span> <span class="n">ratios</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ratios</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;multi_ratios should be list or tuple&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_filter_unknown_user_item</span><span class="p">(</span><span class="n">data_list</span><span class="p">):</span>
+    <span class="n">train_data</span> <span class="o">=</span> <span class="n">data_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">unique_values</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">train_data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">tolist</span><span class="p">()),</span>
+                         <span class="n">item</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">train_data</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
+
+    <span class="n">split_data_all</span> <span class="o">=</span> <span class="p">[</span><span class="n">train_data</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">test_data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="c1"># print(f&quot;Non_train_data {i} size before filtering: {len(test_data)}&quot;)</span>
+        <span class="n">out_of_bounds_row_indices</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;item&quot;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="n">col</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">val</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">unique_values</span><span class="p">[</span><span class="n">col</span><span class="p">]:</span>
+                    <span class="n">out_of_bounds_row_indices</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">))</span>
+        <span class="n">test_data_clean</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span>
+            <span class="n">mask</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">out_of_bounds_row_indices</span><span class="p">))]</span>
+        <span class="n">split_data_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test_data_clean</span><span class="p">)</span>
+        <span class="c1"># print(f&quot;Non_train_data {i} size after filtering: &quot;</span>
+        <span class="c1">#      f&quot;{len(test_data_clean)}&quot;)</span>
+    <span class="k">return</span> <span class="n">split_data_all</span>
+
+
+<span class="k">def</span> <span class="nf">_pad_unknown_user_item</span><span class="p">(</span><span class="n">data_list</span><span class="p">):</span>
+    <span class="n">train_data</span><span class="p">,</span> <span class="n">test_data</span> <span class="o">=</span> <span class="n">data_list</span>
+    <span class="n">n_users</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+    <span class="n">n_items</span> <span class="o">=</span> <span class="n">train_data</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+    <span class="n">unique_users</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">train_data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+    <span class="n">unique_items</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">train_data</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+
+    <span class="n">split_data_all</span> <span class="o">=</span> <span class="p">[</span><span class="n">train_data</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">test_data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">data_list</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">test_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">test_data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">unique_users</span><span class="p">),</span> <span class="s2">&quot;user&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_users</span>
+        <span class="n">test_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">test_data</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">unique_items</span><span class="p">),</span> <span class="s2">&quot;item&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_items</span>
+        <span class="n">split_data_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">split_data_all</span>
+
+
+<span class="k">def</span> <span class="nf">_groupby_user</span><span class="p">(</span><span class="n">user_indices</span><span class="p">,</span> <span class="n">order</span><span class="p">):</span>
+    <span class="n">sort_kind</span> <span class="o">=</span> <span class="s2">&quot;mergesort&quot;</span> <span class="k">if</span> <span class="n">order</span> <span class="k">else</span> <span class="s2">&quot;quicksort&quot;</span>
+    <span class="n">users</span><span class="p">,</span> <span class="n">user_position</span><span class="p">,</span> <span class="n">user_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">user_indices</span><span class="p">,</span>
+                                                  <span class="n">return_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                                  <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">user_split_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">user_position</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">sort_kind</span><span class="p">),</span>
+                                  <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">user_counts</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">user_split_indices</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">random_split</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">multi_ratios</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">filter_unknown</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pad_unknown</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+    <span class="n">ratios</span><span class="p">,</span> <span class="n">n_splits</span> <span class="o">=</span> <span class="n">_check_and_convert_ratio</span><span class="p">(</span><span class="n">test_size</span><span class="p">,</span> <span class="n">multi_ratios</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ratios</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">ratios</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ratios</span><span class="p">)</span>
+
+    <span class="c1"># if we want to split data in multiple folds,</span>
+    <span class="c1"># then iteratively split data based on modified ratios</span>
+    <span class="n">train_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">split_data_all</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_splits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">ratios</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">ratios</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">fsum</span><span class="p">(</span><span class="n">ratios</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ratios</span><span class="p">]</span>
+        <span class="n">train_data</span><span class="p">,</span> <span class="n">split_data</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span>
+                                                  <span class="n">test_size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span>
+                                                  <span class="n">shuffle</span><span class="o">=</span><span class="n">shuffle</span><span class="p">,</span>
+                                                  <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+        <span class="n">split_data_all</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">split_data</span><span class="p">)</span>
+    <span class="n">split_data_all</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">train_data</span><span class="p">)</span>  <span class="c1"># insert final fold of data</span>
+
+    <span class="k">if</span> <span class="n">filter_unknown</span><span class="p">:</span>
+        <span class="n">split_data_all</span> <span class="o">=</span> <span class="n">_filter_unknown_user_item</span><span class="p">(</span><span class="n">split_data_all</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">pad_unknown</span><span class="p">:</span>
+        <span class="n">split_data_all</span> <span class="o">=</span> <span class="n">_pad_unknown_user_item</span><span class="p">(</span><span class="n">split_data_all</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">split_data_all</span>
+
+
+<span class="k">def</span> <span class="nf">split_by_ratio</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                   <span class="n">multi_ratios</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filter_unknown</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pad_unknown</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="s2">&quot;user&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="s2">&quot;data must contains user column&quot;</span>
+    <span class="n">ratios</span><span class="p">,</span> <span class="n">n_splits</span> <span class="o">=</span> <span class="n">_check_and_convert_ratio</span><span class="p">(</span><span class="n">test_size</span><span class="p">,</span> <span class="n">multi_ratios</span><span class="p">)</span>
+
+    <span class="n">n_users</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+    <span class="n">user_indices</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">user_split_indices</span> <span class="o">=</span> <span class="n">_groupby_user</span><span class="p">(</span><span class="n">user_indices</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+
+    <span class="n">cum_ratios</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">ratios</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">split_indices_all</span> <span class="o">=</span> <span class="p">[[]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_splits</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_users</span><span class="p">):</span>
+        <span class="n">u_data</span> <span class="o">=</span> <span class="n">user_split_indices</span><span class="p">[</span><span class="n">u</span><span class="p">]</span>
+        <span class="n">u_data_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">u_data_len</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">:</span>   <span class="c1"># keep items of rare users in trainset</span>
+            <span class="n">split_indices_all</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">u_data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">u_split_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">u_data</span><span class="p">,</span> <span class="p">[</span>
+                <span class="nb">round</span><span class="p">(</span><span class="n">cum</span> <span class="o">*</span> <span class="n">u_data_len</span><span class="p">)</span> <span class="k">for</span> <span class="n">cum</span> <span class="ow">in</span> <span class="n">cum_ratios</span>
+            <span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_splits</span><span class="p">):</span>
+                <span class="n">split_indices_all</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">u_split_data</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
+        <span class="n">split_data_all</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">split_indices_all</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">split_data_all</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">split_indices_all</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">filter_unknown</span><span class="p">:</span>
+        <span class="n">split_data_all</span> <span class="o">=</span> <span class="n">_filter_unknown_user_item</span><span class="p">(</span><span class="n">split_data_all</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">pad_unknown</span><span class="p">:</span>
+        <span class="n">split_data_all</span> <span class="o">=</span> <span class="n">_pad_unknown_user_item</span><span class="p">(</span><span class="n">split_data_all</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">split_data_all</span>
+
+
+<span class="k">def</span> <span class="nf">split_by_num</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">filter_unknown</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pad_unknown</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="p">(</span><span class="s2">&quot;user&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">),</span> <span class="s2">&quot;data must contains user column&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">test_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span> <span class="s2">&quot;test_size must be int value&quot;</span>
+    <span class="k">assert</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">test_size</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="s2">&quot;test_size must be in (0, len(data))&quot;</span>
+
+    <span class="n">n_users</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span>
+    <span class="n">user_indices</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="n">user_split_indices</span> <span class="o">=</span> <span class="n">_groupby_user</span><span class="p">(</span><span class="n">user_indices</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
+
+    <span class="n">train_indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">test_indices</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_users</span><span class="p">):</span>
+        <span class="n">u_data</span> <span class="o">=</span> <span class="n">user_split_indices</span><span class="p">[</span><span class="n">u</span><span class="p">]</span>
+        <span class="n">u_data_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">u_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">u_data_len</span> <span class="o">&lt;=</span> <span class="mi">3</span><span class="p">:</span>   <span class="c1"># keep items of rare users in trainset</span>
+            <span class="n">train_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">u_data</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">u_data_len</span> <span class="o">&lt;=</span> <span class="n">test_size</span><span class="p">:</span>
+            <span class="n">train_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">u_data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">test_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">u_data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">test_size</span>
+            <span class="n">train_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">u_data</span><span class="p">[:(</span><span class="n">u_data_len</span><span class="o">-</span><span class="n">k</span><span class="p">)])</span>
+            <span class="n">test_indices</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">u_data</span><span class="p">[</span><span class="o">-</span><span class="n">k</span><span class="p">:])</span>
+
+    <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
+        <span class="n">train_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">train_indices</span><span class="p">)</span>
+        <span class="n">test_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">test_indices</span><span class="p">)</span>
+
+    <span class="n">split_data_all</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">train_indices</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">test_indices</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">filter_unknown</span><span class="p">:</span>
+        <span class="n">split_data_all</span> <span class="o">=</span> <span class="n">_filter_unknown_user_item</span><span class="p">(</span><span class="n">split_data_all</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">pad_unknown</span><span class="p">:</span>
+        <span class="n">split_data_all</span> <span class="o">=</span> <span class="n">_pad_unknown_user_item</span><span class="p">(</span><span class="n">split_data_all</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">split_data_all</span>
+
+
+<span class="k">def</span> <span class="nf">split_by_ratio_chrono</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                          <span class="n">multi_ratios</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span>
+        <span class="s2">&quot;user&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span>
+        <span class="s2">&quot;time&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+    <span class="p">]),</span> <span class="s2">&quot;data must contains user and time column&quot;</span>
+
+    <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">split_by_ratio</span><span class="p">(</span><span class="o">**</span><span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">def</span> <span class="nf">split_by_num_chrono</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="nb">all</span><span class="p">([</span>
+        <span class="s2">&quot;user&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span>
+        <span class="s2">&quot;time&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span>
+    <span class="p">]),</span> <span class="s2">&quot;data must contains user and time column&quot;</span>
+
+    <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;time&quot;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">split_by_num</span><span class="p">(</span><span class="o">**</span><span class="nb">locals</span><span class="p">())</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;sample_movielens_merged.csv&#39;</span><span class="p">)</span>
+<span class="n">data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user</th>
+      <th>item</th>
+      <th>label</th>
+      <th>time</th>
+      <th>sex</th>
+      <th>age</th>
+      <th>occupation</th>
+      <th>genre1</th>
+      <th>genre2</th>
+      <th>genre3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>4617</td>
+      <td>260</td>
+      <td>3</td>
+      <td>964137835</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>action</td>
+      <td>adventure</td>
+      <td>fantasy</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>4617</td>
+      <td>2468</td>
+      <td>4</td>
+      <td>964137948</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>action</td>
+      <td>comedy</td>
+      <td>romance</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>4617</td>
+      <td>593</td>
+      <td>5</td>
+      <td>964138086</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>drama</td>
+      <td>thriller</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4617</td>
+      <td>296</td>
+      <td>2</td>
+      <td>964138229</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>crime</td>
+      <td>drama</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>4617</td>
+      <td>608</td>
+      <td>2</td>
+      <td>964138310</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>crime</td>
+      <td>drama</td>
+      <td>thriller</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>4617</td>
+      <td>780</td>
+      <td>3</td>
+      <td>964138459</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>war</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>4617</td>
+      <td>1643</td>
+      <td>3</td>
+      <td>964138734</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>drama</td>
+      <td>romance</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>4617</td>
+      <td>440</td>
+      <td>3</td>
+      <td>964138734</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>comedy</td>
+      <td>romance</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>4617</td>
+      <td>1569</td>
+      <td>4</td>
+      <td>964138754</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>comedy</td>
+      <td>romance</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>4617</td>
+      <td>1732</td>
+      <td>1</td>
+      <td>964138882</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>comedy</td>
+      <td>crime</td>
+      <td>mystery</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>3706</td>
+      <td>436</td>
+      <td>2</td>
+      <td>966279993</td>
+      <td>M</td>
+      <td>25</td>
+      <td>12</td>
+      <td>drama</td>
+      <td>thriller</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>3706</td>
+      <td>1772</td>
+      <td>2</td>
+      <td>966280154</td>
+      <td>M</td>
+      <td>25</td>
+      <td>12</td>
+      <td>action</td>
+      <td>comedy</td>
+      <td>musical</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>3706</td>
+      <td>3334</td>
+      <td>3</td>
+      <td>966280523</td>
+      <td>M</td>
+      <td>25</td>
+      <td>12</td>
+      <td>crime</td>
+      <td>drama</td>
+      <td>film-noir</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>3706</td>
+      <td>1136</td>
+      <td>5</td>
+      <td>966376465</td>
+      <td>M</td>
+      <td>25</td>
+      <td>12</td>
+      <td>comedy</td>
+      <td>missing</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>3706</td>
+      <td>1394</td>
+      <td>4</td>
+      <td>966376516</td>
+      <td>M</td>
+      <td>25</td>
+      <td>12</td>
+      <td>comedy</td>
+      <td>missing</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>2137</td>
+      <td>3948</td>
+      <td>5</td>
+      <td>974639801</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>comedy</td>
+      <td>missing</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>16</th>
+      <td>2137</td>
+      <td>1215</td>
+      <td>3</td>
+      <td>974640099</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>action</td>
+      <td>adventure</td>
+      <td>comedy</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>2137</td>
+      <td>1356</td>
+      <td>4</td>
+      <td>974640343</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>action</td>
+      <td>adventure</td>
+      <td>sci-fi</td>
+    </tr>
+    <tr>
+      <th>18</th>
+      <td>2137</td>
+      <td>2021</td>
+      <td>1</td>
+      <td>974640436</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>fantasy</td>
+      <td>sci-fi</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>19</th>
+      <td>2137</td>
+      <td>780</td>
+      <td>5</td>
+      <td>974640455</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>war</td>
+    </tr>
+    <tr>
+      <th>20</th>
+      <td>2137</td>
+      <td>2012</td>
+      <td>4</td>
+      <td>974640506</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>comedy</td>
+      <td>sci-fi</td>
+      <td>western</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>2137</td>
+      <td>1037</td>
+      <td>5</td>
+      <td>974640534</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>thriller</td>
+    </tr>
+    <tr>
+      <th>22</th>
+      <td>2137</td>
+      <td>2701</td>
+      <td>3</td>
+      <td>974640720</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>western</td>
+    </tr>
+    <tr>
+      <th>23</th>
+      <td>2137</td>
+      <td>34</td>
+      <td>4</td>
+      <td>974641074</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>children's</td>
+      <td>comedy</td>
+      <td>drama</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>2137</td>
+      <td>748</td>
+      <td>4</td>
+      <td>974641742</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>thriller</td>
+    </tr>
+    <tr>
+      <th>25</th>
+      <td>2137</td>
+      <td>3745</td>
+      <td>5</td>
+      <td>974641844</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>adventure</td>
+      <td>animation</td>
+      <td>sci-fi</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>2137</td>
+      <td>3793</td>
+      <td>5</td>
+      <td>974641844</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>missing</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">data</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;class &#39;pandas.core.frame.DataFrame&#39;&gt;
+RangeIndex: 27 entries, 0 to 26
+Data columns (total 10 columns):
+ #   Column      Non-Null Count  Dtype 
+---  ------      --------------  ----- 
+ 0   user        27 non-null     int64 
+ 1   item        27 non-null     int64 
+ 2   label       27 non-null     int64 
+ 3   time        27 non-null     int64 
+ 4   sex         27 non-null     object
+ 5   age         27 non-null     int64 
+ 6   occupation  27 non-null     int64 
+ 7   genre1      27 non-null     object
+ 8   genre2      27 non-null     object
+ 9   genre3      27 non-null     object
+dtypes: int64(6), object(4)
+memory usage: 2.2+ KB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">eval_data</span><span class="p">,</span> <span class="n">test_data</span> <span class="o">=</span> <span class="n">random_split</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">multi_ratios</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+                                                <span class="n">filter_unknown</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">train_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">eval_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">test_data</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>((19, 10), (4, 10), (4, 10))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">test_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user</th>
+      <th>item</th>
+      <th>label</th>
+      <th>time</th>
+      <th>sex</th>
+      <th>age</th>
+      <th>occupation</th>
+      <th>genre1</th>
+      <th>genre2</th>
+      <th>genre3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>8</th>
+      <td>4617</td>
+      <td>1569</td>
+      <td>4</td>
+      <td>964138754</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>comedy</td>
+      <td>romance</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>3706</td>
+      <td>1136</td>
+      <td>5</td>
+      <td>966376465</td>
+      <td>M</td>
+      <td>25</td>
+      <td>12</td>
+      <td>comedy</td>
+      <td>missing</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>4617</td>
+      <td>1732</td>
+      <td>1</td>
+      <td>964138882</td>
+      <td>F</td>
+      <td>25</td>
+      <td>6</td>
+      <td>comedy</td>
+      <td>crime</td>
+      <td>mystery</td>
+    </tr>
+    <tr>
+      <th>21</th>
+      <td>2137</td>
+      <td>1037</td>
+      <td>5</td>
+      <td>974640534</td>
+      <td>F</td>
+      <td>1</td>
+      <td>10</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>thriller</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">eval_data</span><span class="p">,</span> <span class="n">test_data</span> <span class="o">=</span> <span class="n">random_split</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>
+                                                <span class="n">multi_ratios</span><span class="o">=</span><span class="p">[</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">],</span>
+                                                <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+                                                <span class="n">filter_unknown</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                                                <span class="n">pad_unknown</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="n">train_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">eval_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">test_data</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>((21, 10), (0, 10), (0, 10))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">eval_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user</th>
+      <th>item</th>
+      <th>label</th>
+      <th>time</th>
+      <th>sex</th>
+      <th>age</th>
+      <th>occupation</th>
+      <th>genre1</th>
+      <th>genre2</th>
+      <th>genre3</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">eval_data</span> <span class="o">=</span> <span class="n">split_by_ratio</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+<span class="n">train_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">eval_data</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>((80490, 10), (19473, 10))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">eval_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user</th>
+      <th>item</th>
+      <th>label</th>
+      <th>time</th>
+      <th>sex</th>
+      <th>age</th>
+      <th>occupation</th>
+      <th>genre1</th>
+      <th>genre2</th>
+      <th>genre3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>90449</th>
+      <td>2</td>
+      <td>1544</td>
+      <td>4</td>
+      <td>978300174</td>
+      <td>M</td>
+      <td>56</td>
+      <td>16</td>
+      <td>action</td>
+      <td>adventure</td>
+      <td>sci-fi</td>
+    </tr>
+    <tr>
+      <th>90418</th>
+      <td>3</td>
+      <td>2355</td>
+      <td>5</td>
+      <td>978298430</td>
+      <td>M</td>
+      <td>25</td>
+      <td>15</td>
+      <td>animation</td>
+      <td>children's</td>
+      <td>comedy</td>
+    </tr>
+    <tr>
+      <th>90382</th>
+      <td>5</td>
+      <td>3079</td>
+      <td>2</td>
+      <td>978246162</td>
+      <td>M</td>
+      <td>25</td>
+      <td>20</td>
+      <td>drama</td>
+      <td>missing</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>90344</th>
+      <td>6</td>
+      <td>3717</td>
+      <td>4</td>
+      <td>978238371</td>
+      <td>F</td>
+      <td>50</td>
+      <td>9</td>
+      <td>action</td>
+      <td>crime</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>90335</th>
+      <td>7</td>
+      <td>1573</td>
+      <td>4</td>
+      <td>978234874</td>
+      <td>M</td>
+      <td>35</td>
+      <td>1</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>thriller</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">eval_data</span> <span class="o">=</span> <span class="n">split_by_num</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">train_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">eval_data</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>((95128, 10), (4882, 10))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">eval_data</span> <span class="o">=</span> <span class="n">split_by_ratio_chrono</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+<span class="n">train_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">eval_data</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>((80490, 10), (19392, 10))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">eval_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user</th>
+      <th>item</th>
+      <th>label</th>
+      <th>time</th>
+      <th>sex</th>
+      <th>age</th>
+      <th>occupation</th>
+      <th>genre1</th>
+      <th>genre2</th>
+      <th>genre3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>90449</th>
+      <td>2</td>
+      <td>1544</td>
+      <td>4</td>
+      <td>978300174</td>
+      <td>M</td>
+      <td>56</td>
+      <td>16</td>
+      <td>action</td>
+      <td>adventure</td>
+      <td>sci-fi</td>
+    </tr>
+    <tr>
+      <th>90418</th>
+      <td>3</td>
+      <td>2355</td>
+      <td>5</td>
+      <td>978298430</td>
+      <td>M</td>
+      <td>25</td>
+      <td>15</td>
+      <td>animation</td>
+      <td>children's</td>
+      <td>comedy</td>
+    </tr>
+    <tr>
+      <th>90382</th>
+      <td>5</td>
+      <td>3079</td>
+      <td>2</td>
+      <td>978246162</td>
+      <td>M</td>
+      <td>25</td>
+      <td>20</td>
+      <td>drama</td>
+      <td>missing</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>90344</th>
+      <td>6</td>
+      <td>3717</td>
+      <td>4</td>
+      <td>978238371</td>
+      <td>F</td>
+      <td>50</td>
+      <td>9</td>
+      <td>action</td>
+      <td>crime</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>90335</th>
+      <td>7</td>
+      <td>1573</td>
+      <td>4</td>
+      <td>978234874</td>
+      <td>M</td>
+      <td>35</td>
+      <td>1</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>thriller</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">eval_data</span> <span class="o">=</span> <span class="n">split_by_num_chrono</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">train_data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">eval_data</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>((95128, 10), (4880, 10))</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">eval_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>user</th>
+      <th>item</th>
+      <th>label</th>
+      <th>time</th>
+      <th>sex</th>
+      <th>age</th>
+      <th>occupation</th>
+      <th>genre1</th>
+      <th>genre2</th>
+      <th>genre3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>90449</th>
+      <td>2</td>
+      <td>1544</td>
+      <td>4</td>
+      <td>978300174</td>
+      <td>M</td>
+      <td>56</td>
+      <td>16</td>
+      <td>action</td>
+      <td>adventure</td>
+      <td>sci-fi</td>
+    </tr>
+    <tr>
+      <th>90418</th>
+      <td>3</td>
+      <td>2355</td>
+      <td>5</td>
+      <td>978298430</td>
+      <td>M</td>
+      <td>25</td>
+      <td>15</td>
+      <td>animation</td>
+      <td>children's</td>
+      <td>comedy</td>
+    </tr>
+    <tr>
+      <th>90382</th>
+      <td>5</td>
+      <td>3079</td>
+      <td>2</td>
+      <td>978246162</td>
+      <td>M</td>
+      <td>25</td>
+      <td>20</td>
+      <td>drama</td>
+      <td>missing</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>90344</th>
+      <td>6</td>
+      <td>3717</td>
+      <td>4</td>
+      <td>978238371</td>
+      <td>F</td>
+      <td>50</td>
+      <td>9</td>
+      <td>action</td>
+      <td>crime</td>
+      <td>missing</td>
+    </tr>
+    <tr>
+      <th>90335</th>
+      <td>7</td>
+      <td>1573</td>
+      <td>4</td>
+      <td>978234874</td>
+      <td>M</td>
+      <td>35</td>
+      <td>1</td>
+      <td>action</td>
+      <td>sci-fi</td>
+      <td>thriller</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/24/movielens-data-split.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

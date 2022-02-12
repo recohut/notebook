@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Setup Kafka in Colab | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Setup Kafka in Colab" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/25/kafka-colab.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/25/kafka-colab.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-25T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Setup Kafka in Colab" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-25T00:00:00-06:00","datePublished":"2022-01-25T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Setup Kafka in Colab","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/25/kafka-colab.html"},"url":"https://nb.recohut.com/2022/01/25/kafka-colab.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Setup Kafka in Colab</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-25T00:00:00-06:00" itemprop="datePublished">
+        Jan 25, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      3 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-25-kafka-colab.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-25-kafka-colab.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-25-kafka-colab.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-25-kafka-colab.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-25-kafka-colab.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Download and setup Kafka and Zookeeper instances</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">curl</span> <span class="o">-</span><span class="n">sSOL</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">downloads</span><span class="o">.</span><span class="n">apache</span><span class="o">.</span><span class="n">org</span><span class="o">/</span><span class="n">kafka</span><span class="o">/</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mf">0.</span><span class="n">tgz</span>
+<span class="err">!</span><span class="n">tar</span> <span class="o">-</span><span class="n">xzf</span> <span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mf">0.</span><span class="n">tgz</span>
+<span class="err">!</span><span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">zookeeper</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">start</span><span class="o">.</span><span class="n">sh</span> <span class="o">-</span><span class="n">daemon</span> <span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">zookeeper</span><span class="o">.</span><span class="n">properties</span>
+<span class="err">!</span><span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">kafka</span><span class="o">-</span><span class="n">server</span><span class="o">-</span><span class="n">start</span><span class="o">.</span><span class="n">sh</span> <span class="o">-</span><span class="n">daemon</span> <span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">server</span><span class="o">.</span><span class="n">properties</span>
+<span class="err">!</span><span class="n">echo</span> <span class="s2">&quot;Waiting for 10 secs until kafka and zookeeper services are up and running&quot;</span>
+<span class="err">!</span><span class="n">sleep</span> <span class="mi">10</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Waiting for 10 secs until kafka and zookeeper services are up and running
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">ls</span> <span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>connect-distributed.sh	      kafka-preferred-replica-election.sh
+connect-mirror-maker.sh       kafka-producer-perf-test.sh
+connect-standalone.sh	      kafka-reassign-partitions.sh
+kafka-acls.sh		      kafka-replica-verification.sh
+kafka-broker-api-versions.sh  kafka-run-class.sh
+kafka-configs.sh	      kafka-server-start.sh
+kafka-console-consumer.sh     kafka-server-stop.sh
+kafka-console-producer.sh     kafka-streams-application-reset.sh
+kafka-consumer-groups.sh      kafka-topics.sh
+kafka-consumer-perf-test.sh   kafka-verifiable-consumer.sh
+kafka-delegation-tokens.sh    kafka-verifiable-producer.sh
+kafka-delete-records.sh       trogdor.sh
+kafka-dump-log.sh	      windows
+kafka-features.sh	      zookeeper-security-migration.sh
+kafka-leader-election.sh      zookeeper-server-start.sh
+kafka-log-dirs.sh	      zookeeper-server-stop.sh
+kafka-mirror-maker.sh	      zookeeper-shell.sh
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="n">kafka</span><span class="o">-</span><span class="n">python</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">kafka</span> <span class="kn">import</span> <span class="n">KafkaProducer</span>
+<span class="kn">from</span> <span class="nn">kafka.errors</span> <span class="kn">import</span> <span class="n">KafkaError</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Create-a-Kafka-Topic">Create a Kafka Topic<a class="anchor-link" href="#Create-a-Kafka-Topic"> </a></h3><p>Before we start developing our Kafka Streams application, we should pre-create any topics we expect it to interact with. For example, to create a Kafka topic named tweets, we can run the following command:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">kafka</span><span class="o">-</span><span class="n">topics</span><span class="o">.</span><span class="n">sh</span> <span class="o">--</span><span class="n">create</span> <span class="o">--</span><span class="n">bootstrap</span><span class="o">-</span><span class="n">server</span> <span class="mf">127.0</span><span class="o">.</span><span class="mf">0.1</span><span class="p">:</span><span class="mi">9092</span> <span class="o">--</span><span class="n">replication</span><span class="o">-</span><span class="n">factor</span> <span class="mi">1</span> <span class="o">--</span><span class="n">partitions</span> <span class="mi">1</span> <span class="o">--</span><span class="n">topic</span> <span class="n">tweets</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Created topic tweets.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="List-Kafka-Topics">List Kafka Topics<a class="anchor-link" href="#List-Kafka-Topics"> </a></h3><p>Another common task is to list the available Kafka topics in your local cluster. You can do this by passing the --list flag to the kafka-topics script. The full command is shown below:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">kafka</span><span class="o">-</span><span class="n">topics</span><span class="o">.</span><span class="n">sh</span> <span class="o">--</span><span class="n">bootstrap</span><span class="o">-</span><span class="n">server</span> <span class="mf">127.0</span><span class="o">.</span><span class="mf">0.1</span><span class="p">:</span><span class="mi">9092</span> <span class="o">--</span><span class="nb">list</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>tweets
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Producing-Test-Data">Producing Test Data<a class="anchor-link" href="#Producing-Test-Data"> </a></h3><p>We often need to produce test data to our local Kafka topics to observe our code in action. Some common methods for doing this are described next. The simplest method for producing data to a Kafka topic is to use the kafka-console-producer script. If you run the following command, you will be dropped into a prompt where you can type each message that you want to produce to the tweets topic.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">kafka</span><span class="o">-</span><span class="n">console</span><span class="o">-</span><span class="n">producer</span><span class="o">.</span><span class="n">sh</span> \
+    <span class="o">--</span><span class="n">bootstrap</span><span class="o">-</span><span class="n">server</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">9092</span> \
+    <span class="o">--</span><span class="n">topic</span> <span class="n">tweets</span> \
+    <span class="o">--</span><span class="nb">property</span> <span class="s1">&#39;key.separator=|&#39;</span> \
+    <span class="o">--</span><span class="nb">property</span> <span class="s1">&#39;parse.key=true&#39;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&gt;1|{&#34;id&#34;: 1, &#34;name&#34;: &#34;Elyse&#34;}
+&gt;2|{&#34;id&#34;: 2, &#34;name&#34;: &#34;Mitch&#34;}
+&gt;</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The --bootstrap-server and --topic flags tell the script to which Kafka cluster and topic we intend to produce data. The last two flags are optional, but they are useful when we want to specify a message key in addition to a message value. In this case, we will be producing both a message key and a message value, and the message key will appear before the | (our key separator).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Verifying">Verifying<a class="anchor-link" href="#Verifying"> </a></h3><p>You can verify that the data was produced to your Kafka topic by reading the data back out using a Kafka consumer. The kafka-console-consumer script can be used for this purpose. Click the following command to see an example usage:</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">kafka</span><span class="o">-</span><span class="n">console</span><span class="o">-</span><span class="n">consumer</span><span class="o">.</span><span class="n">sh</span> \
+    <span class="o">--</span><span class="n">bootstrap</span><span class="o">-</span><span class="n">server</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">9092</span> \
+    <span class="o">--</span><span class="n">topic</span> <span class="n">tweets</span> \
+    <span class="o">--</span><span class="n">from</span><span class="o">-</span><span class="n">beginning</span> \
+    <span class="o">--</span><span class="nb">property</span> <span class="nb">print</span><span class="o">.</span><span class="n">key</span><span class="o">=</span><span class="n">true</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>1	{&#34;id&#34;: 1, &#34;name&#34;: &#34;Elyse&#34;} 2|{&#34;id&#34;: 2, &#34;name&#34;: &#34;Mitch&#34;}
+1	{&#34;id&#34;: 1, &#34;name&#34;: &#34;Elyse&#34;}
+2	{&#34;id&#34;: 2, &#34;name&#34;: &#34;Mitch&#34;}
+Processed a total of 3 messages
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Producing-Test-Data-From-a-File">Producing Test Data From a File<a class="anchor-link" href="#Producing-Test-Data-From-a-File"> </a></h3><p>In the previous step, we manually typed in each of our topic inputs using a prompt. However, this can be time-consuming and repetitive if we need to do it on a regular basis.</p>
+<p>Another option is to save all of your inputs to a file, and use the kafka-console-producer script to produce all of the messages in the file to the topic of your choice. The benefit of this approach is you can save a file with test data alongside your application code, and repopulate your application's source topic deterministically.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">writefile</span> <span class="n">inputs</span><span class="o">.</span><span class="n">txt</span>
+<span class="mi">3</span><span class="o">|</span><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Isabelle&quot;</span><span class="p">}</span>
+<span class="mi">4</span><span class="o">|</span><span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Chloe&quot;</span><span class="p">}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Writing inputs.txt
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="o">%%</span><span class="n">writefile</span> <span class="n">inputs2</span><span class="o">.</span><span class="n">txt</span>
+<span class="mi">1</span><span class="o">|</span><span class="p">{</span><span class="s2">&quot;CreatedAt&quot;</span><span class="p">:</span><span class="mi">1577933872630</span><span class="p">,</span><span class="s2">&quot;Id&quot;</span><span class="p">:</span><span class="mi">10005</span><span class="p">,</span><span class="s2">&quot;Text&quot;</span><span class="p">:</span><span class="s2">&quot;Bitcoin has a lot of promise. I&#39;m not too sure about #ethereum&quot;</span><span class="p">,</span><span class="s2">&quot;Lang&quot;</span><span class="p">:</span><span class="s2">&quot;en&quot;</span><span class="p">,</span><span class="s2">&quot;Retweet&quot;</span><span class="p">:</span><span class="n">false</span><span class="p">,</span><span class="s2">&quot;Source&quot;</span><span class="p">:</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;User&quot;</span><span class="p">:{</span><span class="s2">&quot;Id&quot;</span><span class="p">:</span><span class="s2">&quot;14377870&quot;</span><span class="p">,</span><span class="s2">&quot;Name&quot;</span><span class="p">:</span><span class="s2">&quot;MagicalPipelines&quot;</span><span class="p">,</span><span class="s2">&quot;Description&quot;</span><span class="p">:</span><span class="s2">&quot;Learn something magical today.&quot;</span><span class="p">,</span><span class="s2">&quot;ScreenName&quot;</span><span class="p">:</span><span class="s2">&quot;MagicalPipelines&quot;</span><span class="p">,</span><span class="s2">&quot;URL&quot;</span><span class="p">:</span><span class="s2">&quot;http://www.magicalpipelines.com&quot;</span><span class="p">,</span><span class="s2">&quot;FollowersCount&quot;</span><span class="p">:</span><span class="s2">&quot;248247&quot;</span><span class="p">,</span><span class="s2">&quot;FriendsCount&quot;</span><span class="p">:</span><span class="s2">&quot;16417&quot;</span><span class="p">}}</span>
+<span class="mi">2</span><span class="o">|</span><span class="p">{</span><span class="s2">&quot;CreatedAt&quot;</span><span class="p">:</span><span class="mi">1577933871912</span><span class="p">,</span><span class="s2">&quot;Id&quot;</span><span class="p">:</span><span class="mi">10006</span><span class="p">,</span><span class="s2">&quot;Text&quot;</span><span class="p">:</span><span class="s2">&quot;RT Bitcoin has a lot of promise. I&#39;m not too sure about #ethereum&quot;</span><span class="p">,</span><span class="s2">&quot;Lang&quot;</span><span class="p">:</span><span class="s2">&quot;en&quot;</span><span class="p">,</span><span class="s2">&quot;Retweet&quot;</span><span class="p">:</span><span class="n">true</span><span class="p">,</span><span class="s2">&quot;Source&quot;</span><span class="p">:</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;User&quot;</span><span class="p">:{</span><span class="s2">&quot;Id&quot;</span><span class="p">:</span><span class="s2">&quot;14377871&quot;</span><span class="p">,</span><span class="s2">&quot;Name&quot;</span><span class="p">:</span><span class="s2">&quot;MagicalPipelines&quot;</span><span class="p">,</span><span class="s2">&quot;Description&quot;</span><span class="p">:</span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="s2">&quot;ScreenName&quot;</span><span class="p">:</span><span class="s2">&quot;Mitch&quot;</span><span class="p">,</span><span class="s2">&quot;URL&quot;</span><span class="p">:</span><span class="s2">&quot;http://blog.mitchseymour.com/&quot;</span><span class="p">,</span><span class="s2">&quot;FollowersCount&quot;</span><span class="p">:</span><span class="s2">&quot;120&quot;</span><span class="p">,</span><span class="s2">&quot;FriendsCount&quot;</span><span class="p">:</span><span class="s2">&quot;120&quot;</span><span class="p">}}</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">kafka</span><span class="o">-</span><span class="n">console</span><span class="o">-</span><span class="n">producer</span><span class="o">.</span><span class="n">sh</span> \
+  <span class="o">--</span><span class="n">bootstrap</span><span class="o">-</span><span class="n">server</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">9092</span> \
+  <span class="o">--</span><span class="n">topic</span> <span class="n">tweets</span> \
+  <span class="o">--</span><span class="nb">property</span> <span class="s1">&#39;parse.key=true&#39;</span> \
+  <span class="o">--</span><span class="nb">property</span> <span class="s1">&#39;key.separator=|&#39;</span> <span class="o">&lt;</span> <span class="n">inputs</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&gt;&gt;&gt;</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Verifying">Verifying<a class="anchor-link" href="#Verifying"> </a></h3><p>Once again, you can verify using the kafka-console-consumer script. Click the following command to verify that the messages in our file were produced to the tweets topic.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="o">./</span><span class="n">kafka_2</span><span class="o">.</span><span class="mi">13</span><span class="o">-</span><span class="mf">2.7</span><span class="o">.</span><span class="mi">0</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">kafka</span><span class="o">-</span><span class="n">console</span><span class="o">-</span><span class="n">consumer</span><span class="o">.</span><span class="n">sh</span> \
+    <span class="o">--</span><span class="n">bootstrap</span><span class="o">-</span><span class="n">server</span> <span class="n">localhost</span><span class="p">:</span><span class="mi">9092</span> \
+    <span class="o">--</span><span class="n">topic</span> <span class="n">tweets</span> \
+    <span class="o">--</span><span class="n">from</span><span class="o">-</span><span class="n">beginning</span> \
+    <span class="o">--</span><span class="nb">property</span> <span class="nb">print</span><span class="o">.</span><span class="n">key</span><span class="o">=</span><span class="n">true</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>1	{&#34;id&#34;: 1, &#34;name&#34;: &#34;Elyse&#34;} 2|{&#34;id&#34;: 2, &#34;name&#34;: &#34;Mitch&#34;}
+1	{&#34;id&#34;: 1, &#34;name&#34;: &#34;Elyse&#34;}
+2	{&#34;id&#34;: 2, &#34;name&#34;: &#34;Mitch&#34;}
+3	{&#34;id&#34;: 3, &#34;name&#34;: &#34;Isabelle&#34;}
+3	{&#34;id&#34;: 4, &#34;name&#34;: &#34;Chloe&#34;}
+Processed a total of 5 messages
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/25/kafka-colab.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

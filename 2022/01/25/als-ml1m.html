@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ALS on ML-1m | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="ALS on ML-1m" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/25/als-ml1m.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/25/als-ml1m.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-25T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ALS on ML-1m" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-25T00:00:00-06:00","datePublished":"2022-01-25T00:00:00-06:00","description":"Jupyter notebook database.","headline":"ALS on ML-1m","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/25/als-ml1m.html"},"url":"https://nb.recohut.com/2022/01/25/als-ml1m.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">ALS on ML-1m</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-25T00:00:00-06:00" itemprop="datePublished">
+        Jan 25, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      3 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-25-als-ml1m.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-25-als-ml1m.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-25-als-ml1m.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-25-als-ml1m.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-25-als-ml1m.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span> <span class="nn">tqdm.notebook</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span><span class="o">,</span> <span class="nn">random</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">wget</span> <span class="o">-</span><span class="n">q</span> <span class="o">--</span><span class="n">show</span><span class="o">-</span><span class="n">progress</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">sparsh</span><span class="o">-</span><span class="n">ai</span><span class="o">/</span><span class="n">stanza</span><span class="o">/</span><span class="n">raw</span><span class="o">/</span><span class="n">S629908</span><span class="o">/</span><span class="n">rec</span><span class="o">/</span><span class="n">CDL</span><span class="o">/</span><span class="n">data</span><span class="o">/</span><span class="n">ml_100k_train</span><span class="o">.</span><span class="n">npy</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;ml_100k_train.npy&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(943, 1682)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">train</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">Config</span><span class="p">:</span>
+    <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.01</span>
+    <span class="n">weight_decay</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="n">early_stopping_round</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">epochs</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">seed</span> <span class="o">=</span> <span class="mi">1995</span>
+    <span class="n">dim_f</span> <span class="o">=</span> <span class="mi">30</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="mi">100</span>
+    
+<span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">item_per_user_dict</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">item_per_user</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">user_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">data</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">item_pos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">data</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="k">for</span> <span class="n">u</span><span class="p">,</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">user_pos</span><span class="p">,</span> <span class="n">item_pos</span><span class="p">):</span>
+        <span class="n">item_per_user</span><span class="p">[</span><span class="n">u</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">item_per_user</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">class</span> <span class="nc">ALS</span><span class="p">():</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">dim_f</span><span class="p">,</span> <span class="n">seed</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dim_f</span> <span class="o">=</span> <span class="n">dim_f</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_num</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">item_num</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">R_tr</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_tr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">R_tst</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">P_tst</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">R_tr</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">alpha</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">item_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_num</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">user_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_num</span><span class="p">))</span>
+            
+        <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">user_num</span><span class="p">,</span> <span class="n">dim_f</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">standard_normal</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">item_num</span><span class="p">,</span> <span class="n">dim_f</span><span class="p">))</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_tr</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_tst</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">epochs</span><span class="p">):</span>
+            <span class="n">start_epoch</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+            <span class="c1"># stochastic</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_num</span><span class="p">):</span>
+                <span class="n">yty</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_user_vector</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">yty</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">item_num</span><span class="p">):</span>
+                <span class="n">xtx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_item_vector</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">xtx</span><span class="p">)</span>
+            
+            <span class="n">phat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">()</span>
+            <span class="n">train_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">train_eval</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">test_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">train_eval</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_tr</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span> <span class="o">=</span> <span class="n">train_loss</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_tst</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_loss</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;EPOCH </span><span class="si">{</span><span class="n">epoch</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1"> : TRAINING RANK </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_tr</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">, VALID RANK </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_tst</span><span class="p">[</span><span class="n">epoch</span><span class="p">]</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Time per one epoch </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_epoch</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Training takes time </span><span class="si">{</span><span class="n">end</span><span class="o">-</span><span class="n">start</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        
+    <span class="k">def</span> <span class="nf">scoring</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">update_user_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">yty</span><span class="p">):</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C_u</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span><span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="p">:]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">comp1</span> <span class="o">=</span> <span class="n">yty</span>
+        <span class="n">comp2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_u</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="p">)</span>
+        <span class="n">comp3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">dim_f</span><span class="p">)</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">weight_decay</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">comp1</span> <span class="o">+</span> <span class="n">comp2</span> <span class="o">+</span> <span class="n">comp3</span><span class="p">)</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Y</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C_u</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_tr</span><span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="p">:])</span>
+
+    <span class="k">def</span> <span class="nf">update_item_vector</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">xtx</span><span class="p">):</span> 
+        <span class="n">np</span><span class="o">.</span><span class="n">fill_diagonal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C_i</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">comp1</span> <span class="o">=</span> <span class="n">xtx</span>
+        <span class="n">comp2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_i</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">comp3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">dim_f</span><span class="p">)</span> <span class="o">*</span> <span class="n">config</span><span class="o">.</span><span class="n">weight_decay</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">comp1</span> <span class="o">+</span> <span class="n">comp2</span> <span class="o">+</span> <span class="n">comp3</span><span class="p">)</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">C_i</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">comp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">P_tr</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+    
+
+    <span class="k">def</span> <span class="nf">evaluate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_eval</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">train_eval</span><span class="p">:</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">R_tr</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">R</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">R_tst</span>
+
+        <span class="n">phat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scoring</span><span class="p">()</span>
+        <span class="n">rank_mat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">phat</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">user_num</span><span class="p">):</span>
+            <span class="n">pred_u</span> <span class="o">=</span> <span class="n">phat</span><span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="p">:]</span> <span class="o">*</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">pred_u</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">rank</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">item_num</span>
+            <span class="n">rank_mat</span><span class="p">[</span><span class="n">u</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">rank</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">R</span> <span class="o">*</span> <span class="n">rank_mat</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">plot_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_tr</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_tr</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;train&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_tst</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_tst</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span> <span class="o">=</span> <span class="n">ALS</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">dim_f</span><span class="p">,</span> <span class="n">config</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>EPOCH 1 : TRAINING RANK 0.08541, VALID RANK 0.08541
+Time per one epoch 0:00:45.321448
+EPOCH 2 : TRAINING RANK 0.06400, VALID RANK 0.06400
+Time per one epoch 0:00:45.154675
+EPOCH 3 : TRAINING RANK 0.05949, VALID RANK 0.05949
+Time per one epoch 0:00:45.063276
+EPOCH 4 : TRAINING RANK 0.05730, VALID RANK 0.05730
+Time per one epoch 0:00:45.302241
+EPOCH 5 : TRAINING RANK 0.05587, VALID RANK 0.05587
+Time per one epoch 0:00:45.246231
+EPOCH 6 : TRAINING RANK 0.05488, VALID RANK 0.05488
+Time per one epoch 0:00:44.953287
+EPOCH 7 : TRAINING RANK 0.05412, VALID RANK 0.05412
+Time per one epoch 0:00:45.053129
+EPOCH 8 : TRAINING RANK 0.05355, VALID RANK 0.05355
+Time per one epoch 0:00:44.974932
+EPOCH 9 : TRAINING RANK 0.05310, VALID RANK 0.05310
+Time per one epoch 0:00:44.750841
+EPOCH 10 : TRAINING RANK 0.05268, VALID RANK 0.05268
+Time per one epoch 0:00:44.756880
+Training takes time 0:07:30.579122
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">model</span><span class="o">.</span><span class="n">plot_loss</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+
+<div class="output_png output_subarea ">
+<img src="data:image/png;base64,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
+" />
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">reload_ext</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">watermark</span> <span class="o">-</span><span class="n">a</span> <span class="s2">&quot;Sparsh A.&quot;</span> <span class="o">-</span><span class="n">m</span> <span class="o">-</span><span class="n">iv</span> <span class="o">-</span><span class="n">u</span> <span class="o">-</span><span class="n">t</span> <span class="o">-</span><span class="n">d</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Author: Sparsh A.
+
+Last updated: 2021-11-28 15:57:49
+
+Compiler    : GCC 7.5.0
+OS          : Linux
+Release     : 5.4.104+
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 2
+Architecture: 64bit
+
+IPython   : 5.5.0
+numpy     : 1.19.5
+pandas    : 1.1.5
+matplotlib: 3.2.2
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>END</strong></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/25/als-ml1m.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
