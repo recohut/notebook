@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Preprocessing of Music Sequential Dataset | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Preprocessing of Music Sequential Dataset" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/26/music-seq-data.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/26/music-seq-data.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-26T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Preprocessing of Music Sequential Dataset" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-26T00:00:00-06:00","datePublished":"2022-01-26T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Preprocessing of Music Sequential Dataset","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/26/music-seq-data.html"},"url":"https://nb.recohut.com/2022/01/26/music-seq-data.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Preprocessing of Music Sequential Dataset</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-26T00:00:00-06:00" itemprop="datePublished">
+        Jan 26, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      5 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-26-music-seq-data.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-26-music-seq-data.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-26-music-seq-data.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-26-music-seq-data.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-26-music-seq-data.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Imports">Imports<a class="anchor-link" href="#Imports"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">calendar</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Utils">Utils<a class="anchor-link" href="#Utils"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">get_test_sequences</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">given_k</span><span class="p">):</span>
+    <span class="c1"># we can run evaluation only over sequences longer than abs(LAST_K)</span>
+    <span class="n">test_sequences</span> <span class="o">=</span> <span class="n">test_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;sequence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">given_k</span><span class="p">),</span> <span class="s1">&#39;sequence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">return</span> <span class="n">test_sequences</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">get_test_sequences_and_users</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">given_k</span><span class="p">,</span> <span class="n">train_users</span><span class="p">):</span>
+    <span class="c1"># we can run evaluation only over sequences longer than abs(LAST_K)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;sequence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">given_k</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">&amp;=</span> <span class="n">test_data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">train_users</span><span class="p">)</span>
+    <span class="n">test_sequences</span> <span class="o">=</span> <span class="n">test_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;sequence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="n">test_users</span> <span class="o">=</span> <span class="n">test_data</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">return</span> <span class="n">test_sequences</span><span class="p">,</span> <span class="n">test_users</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Data">Data<a class="anchor-link" href="#Data"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
+<span class="kn">from</span> <span class="nn">urllib.request</span> <span class="kn">import</span> <span class="n">urlopen</span>
+<span class="kn">from</span> <span class="nn">zipfile</span> <span class="kn">import</span> <span class="n">ZipFile</span>
+<span class="n">zipurl</span> <span class="o">=</span> <span class="s1">&#39;https://github.com/RecoHut-Datasets/30music/raw/v2/sessions.zip&#39;</span>
+<span class="k">with</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">zipurl</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipresp</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">ZipFile</span><span class="p">(</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">zipresp</span><span class="o">.</span><span class="n">read</span><span class="p">()))</span> <span class="k">as</span> <span class="n">zfile</span><span class="p">:</span>
+        <span class="n">zfile</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="s1">&#39;datasets&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">dataset_path</span> <span class="o">=</span> <span class="s1">&#39;datasets/sessions.csv&#39;</span>
+<span class="c1"># load this sample if you experience a severe slowdown with the previous dataset</span>
+<span class="n">dataset_path</span> <span class="o">=</span> <span class="s1">&#39;datasets/sessions_sample_10.csv&#39;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">load_and_adapt</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">last_months</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">file_ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">path</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">file_ext</span> <span class="o">==</span> <span class="s1">&#39;.csv&#39;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">file_ext</span> <span class="o">==</span> <span class="s1">&#39;.hdf&#39;</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_hdf</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unsupported file </span><span class="si">{}</span><span class="s1"> having extension </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">file_ext</span><span class="p">))</span>
+
+    <span class="n">col_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;session_id&#39;</span><span class="p">,</span> <span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="s1">&#39;item_id&#39;</span><span class="p">,</span> <span class="s1">&#39;ts&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()[</span><span class="mi">4</span><span class="p">:]</span>
+    <span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">col_names</span>
+
+    <span class="k">if</span> <span class="n">last_months</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">add_months</span><span class="p">(</span><span class="n">sourcedate</span><span class="p">,</span> <span class="n">months</span><span class="p">):</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="n">sourcedate</span><span class="o">.</span><span class="n">month</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">months</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sourcedate</span><span class="o">.</span><span class="n">year</span> <span class="o">+</span> <span class="n">month</span> <span class="o">/</span> <span class="mi">12</span><span class="p">)</span>
+            <span class="n">month</span> <span class="o">=</span> <span class="n">month</span> <span class="o">%</span> <span class="mi">12</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">day</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">sourcedate</span><span class="o">.</span><span class="n">day</span><span class="p">,</span> <span class="n">calendar</span><span class="o">.</span><span class="n">monthrange</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">)</span>
+
+        <span class="n">lastdate</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">ts</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">firstdate</span> <span class="o">=</span> <span class="n">add_months</span><span class="p">(</span><span class="n">lastdate</span><span class="p">,</span> <span class="o">-</span><span class="n">last_months</span><span class="p">)</span>
+        <span class="n">initial_unix</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">mktime</span><span class="p">(</span><span class="n">firstdate</span><span class="o">.</span><span class="n">timetuple</span><span class="p">())</span>
+
+        <span class="c1"># filter out older interactions</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">initial_unix</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">data</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">create_seq_db_filter_top_k</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">topk</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">last_months</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">file</span> <span class="o">=</span> <span class="n">load_and_adapt</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">last_months</span><span class="o">=</span><span class="n">last_months</span><span class="p">)</span>
+
+    <span class="n">c</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">file</span><span class="p">[</span><span class="s1">&#39;item_id&#39;</span><span class="p">]))</span>
+
+    <span class="k">if</span> <span class="n">topk</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">keeper</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="n">topk</span><span class="p">)])</span>
+        <span class="n">file</span> <span class="o">=</span> <span class="n">file</span><span class="p">[</span><span class="n">file</span><span class="p">[</span><span class="s1">&#39;item_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">keeper</span><span class="p">)]</span>
+
+    <span class="c1"># group by session id and concat song_id</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;session_id&#39;</span><span class="p">)</span>
+
+    <span class="c1"># convert item ids to string, then aggregate them to lists</span>
+    <span class="n">aggregated</span> <span class="o">=</span> <span class="n">groups</span><span class="p">[</span><span class="s1">&#39;item_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">agg</span><span class="p">(</span><span class="n">sequence</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">x</span><span class="p">)))</span>
+    <span class="n">init_ts</span> <span class="o">=</span> <span class="n">groups</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="n">groups</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>  <span class="c1"># it&#39;s just fast, min doesn&#39;t actually make sense</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">aggregated</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">init_ts</span><span class="p">)</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">users</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">create_seq_db_filter_top_k</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">dataset_path</span><span class="p">,</span> <span class="n">topk</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">last_months</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">dataset</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>session_id</th>
+      <th>sequence</th>
+      <th>ts</th>
+      <th>user_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>357</td>
+      <td>[793, 3489]</td>
+      <td>1421003874</td>
+      <td>4296</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>359</td>
+      <td>[1762]</td>
+      <td>1421018535</td>
+      <td>4296</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>394</td>
+      <td>[1256]</td>
+      <td>1421007470</td>
+      <td>30980</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4127</td>
+      <td>[1948, 1364, 2060, 1115, 6488, 2060]</td>
+      <td>1421416896</td>
+      <td>28117</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>6400</td>
+      <td>[687, 1394]</td>
+      <td>1420807778</td>
+      <td>35247</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Statistics">Statistics<a class="anchor-link" href="#Statistics"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">cnt</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">sequence</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">cnt</span><span class="o">.</span><span class="n">update</span><span class="p">);</span>
+
+<span class="n">sequence_length</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sequence</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+<span class="n">n_sessions_per_user</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;user_id&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number of items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cnt</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number of users: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">user_id</span><span class="o">.</span><span class="n">nunique</span><span class="p">()))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Number of sessions: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span> <span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Session length:</span><span class="se">\n\t</span><span class="s1">Average: </span><span class="si">{:.2f}</span><span class="se">\n\t</span><span class="s1">Median: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Min: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Max: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+    <span class="n">sequence_length</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> 
+    <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">sequence_length</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> 
+    <span class="n">sequence_length</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> 
+    <span class="n">sequence_length</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Sessions per user:</span><span class="se">\n\t</span><span class="s1">Average: </span><span class="si">{:.2f}</span><span class="se">\n\t</span><span class="s1">Median: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Min: </span><span class="si">{}</span><span class="se">\n\t</span><span class="s1">Max: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+    <span class="n">n_sessions_per_user</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> 
+    <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">n_sessions_per_user</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> 
+    <span class="n">n_sessions_per_user</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> 
+    <span class="n">n_sessions_per_user</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Most popular items: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cnt</span><span class="o">.</span><span class="n">most_common</span><span class="p">(</span><span class="mi">5</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Number of items: 1000
+Number of users: 4165
+Number of sessions: 6765
+
+Session length:
+	Average: 4.29
+	Median: 3.0
+	Min: 1
+	Max: 148
+Sessions per user:
+	Average: 1.62
+	Median: 1.0
+	Min: 1
+	Max: 13
+Most popular items: [(&#39;443&#39;, 207), (&#39;1065&#39;, 155), (&#39;67&#39;, 146), (&#39;2308&#39;, 138), (&#39;658&#39;, 131)]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Splitting">Splitting<a class="anchor-link" href="#Splitting"> </a></h3>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">random_holdout</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">perc</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split sequence dataset randomly</span>
+<span class="sd">    :param dataset: the sequence dataset</span>
+<span class="sd">    :param perc: the training percentange</span>
+<span class="sd">    :param seed: the random seed</span>
+<span class="sd">    :return: the training and test splits</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">nseqs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="n">train_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nseqs</span> <span class="o">*</span> <span class="n">perc</span><span class="p">)</span>
+    <span class="c1"># split data according to the shuffled index and the holdout size</span>
+    <span class="n">train_split</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[:</span><span class="n">train_size</span><span class="p">]</span>
+    <span class="n">test_split</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">[</span><span class="n">train_size</span><span class="p">:]</span>
+
+    <span class="k">return</span> <span class="n">train_split</span><span class="p">,</span> <span class="n">test_split</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">temporal_holdout</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">ts_threshold</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split sequence dataset using timestamps</span>
+<span class="sd">    :param dataset: the sequence dataset</span>
+<span class="sd">    :param ts_threshold: the timestamp from which test sequences will start</span>
+<span class="sd">    :return: the training and test splits</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">train</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">ts_threshold</span><span class="p">]</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;ts&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">ts_threshold</span><span class="p">]</span>
+    <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">clean_split</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">test</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">last_session_out_split</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>
+                           <span class="n">user_key</span><span class="o">=</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span>
+                           <span class="n">session_key</span><span class="o">=</span><span class="s1">&#39;session_id&#39;</span><span class="p">,</span>
+                           <span class="n">time_key</span><span class="o">=</span><span class="s1">&#39;ts&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assign the last session of every user to the test set and the remaining ones to the training set</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sessions</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="n">user_key</span><span class="p">,</span> <span class="n">time_key</span><span class="p">])</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">user_key</span><span class="p">)[</span><span class="n">session_key</span><span class="p">]</span>
+    <span class="n">last_session</span> <span class="o">=</span> <span class="n">sessions</span><span class="o">.</span><span class="n">last</span><span class="p">()</span>
+    <span class="n">train</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="o">~</span><span class="n">data</span><span class="o">.</span><span class="n">session_id</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">last_session</span><span class="o">.</span><span class="n">values</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">session_id</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">last_session</span><span class="o">.</span><span class="n">values</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">clean_split</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">test</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">clean_split</span><span class="p">(</span><span class="n">train</span><span class="p">,</span> <span class="n">test</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove new items from the test set.</span>
+<span class="sd">    :param train: The training set.</span>
+<span class="sd">    :param test: The test set.</span>
+<span class="sd">    :return: The cleaned training and test sets.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">train_items</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">train</span><span class="p">[</span><span class="s1">&#39;sequence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">seq</span><span class="p">:</span> <span class="n">train_items</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">seq</span><span class="p">)))</span>
+    <span class="n">test</span><span class="p">[</span><span class="s1">&#39;sequence&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test</span><span class="p">[</span><span class="s1">&#39;sequence&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">seq</span><span class="p">:</span> <span class="p">[</span><span class="n">it</span> <span class="k">for</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">seq</span> <span class="k">if</span> <span class="n">it</span> <span class="ow">in</span> <span class="n">train_items</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="k">def</span> <span class="nf">balance_dataset</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">number_of_elements</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">nnz</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">find</span><span class="p">(</span><span class="n">y</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">zero</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">number_of_elements</span><span class="p">))</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">nnz</span><span class="p">)</span>
+
+    <span class="n">max_samples</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">zero</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">nnz</span><span class="p">))</span>
+
+    <span class="n">nnz_indices</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">nnz</span><span class="p">,</span> <span class="n">max_samples</span><span class="p">)</span>
+    <span class="n">zero_indeces</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">zero</span><span class="p">,</span> <span class="n">max_samples</span><span class="p">)</span>
+    <span class="n">indeces</span> <span class="o">=</span> <span class="n">nnz_indices</span> <span class="o">+</span> <span class="n">zero_indeces</span>
+
+    <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="n">indeces</span><span class="p">,</span> <span class="p">:],</span> <span class="n">y</span><span class="p">[</span><span class="n">indeces</span><span class="p">,</span> <span class="p">:]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>For simplicity, let's split the dataset by assigning the last session of every user to the test set, and all the previous ones to the training set.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="p">,</span> <span class="n">test_data</span> <span class="o">=</span> <span class="n">last_session_out_split</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Train sessions: </span><span class="si">{}</span><span class="s2"> - Test sessions: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Train sessions: 2600 - Test sessions: 4165
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>session_id</th>
+      <th>sequence</th>
+      <th>ts</th>
+      <th>user_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>357</td>
+      <td>[793, 3489]</td>
+      <td>1421003874</td>
+      <td>4296</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>9795</td>
+      <td>[1719]</td>
+      <td>1420700645</td>
+      <td>5612</td>
+    </tr>
+    <tr>
+      <th>10</th>
+      <td>9796</td>
+      <td>[1065, 3812, 4012]</td>
+      <td>1420713509</td>
+      <td>5612</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>9797</td>
+      <td>[532, 93]</td>
+      <td>1420724661</td>
+      <td>5612</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>9798</td>
+      <td>[6932, 3437, 1829, 335]</td>
+      <td>1420728275</td>
+      <td>5612</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">train_data</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;class &#39;pandas.core.frame.DataFrame&#39;&gt;
+Int64Index: 2600 entries, 0 to 6747
+Data columns (total 4 columns):
+ #   Column      Non-Null Count  Dtype 
+---  ------      --------------  ----- 
+ 0   session_id  2600 non-null   int64 
+ 1   sequence    2600 non-null   object
+ 2   ts          2600 non-null   int64 
+ 3   user_id     2600 non-null   int64 
+dtypes: int64(3), object(1)
+memory usage: 101.6+ KB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">test_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>session_id</th>
+      <th>sequence</th>
+      <th>ts</th>
+      <th>user_id</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>359</td>
+      <td>[1762]</td>
+      <td>1421018535</td>
+      <td>4296</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>394</td>
+      <td>[1256]</td>
+      <td>1421007470</td>
+      <td>30980</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>4127</td>
+      <td>[1948, 1364, 2060, 1115, 6488, 2060]</td>
+      <td>1421416896</td>
+      <td>28117</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>6400</td>
+      <td>[687, 1394]</td>
+      <td>1420807778</td>
+      <td>35247</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>6930</td>
+      <td>[630, 631, 632, 633, 634, 635]</td>
+      <td>1420538498</td>
+      <td>950</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="n">test_data</span><span class="o">.</span><span class="n">info</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>&lt;class &#39;pandas.core.frame.DataFrame&#39;&gt;
+Int64Index: 4165 entries, 1 to 6764
+Data columns (total 4 columns):
+ #   Column      Non-Null Count  Dtype 
+---  ------      --------------  ----- 
+ 0   session_id  4165 non-null   int64 
+ 1   sequence    4165 non-null   object
+ 2   ts          4165 non-null   int64 
+ 3   user_id     4165 non-null   int64 
+dtypes: int64(3), object(1)
+memory usage: 162.7+ KB
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-python"><pre><span></span><span class="err">!</span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">q</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">reload_ext</span> <span class="n">watermark</span>
+<span class="o">%</span><span class="n">watermark</span> <span class="o">-</span><span class="n">a</span> <span class="s2">&quot;Sparsh A.&quot;</span> <span class="o">-</span><span class="n">m</span> <span class="o">-</span><span class="n">iv</span> <span class="o">-</span><span class="n">u</span> <span class="o">-</span><span class="n">t</span> <span class="o">-</span><span class="n">d</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Author: Sparsh A.
+
+Last updated: 2021-12-05 05:13:49
+
+Compiler    : GCC 7.5.0
+OS          : Linux
+Release     : 5.4.104+
+Machine     : x86_64
+Processor   : x86_64
+CPU cores   : 2
+Architecture: 64bit
+
+IPython: 5.5.0
+numpy  : 1.19.5
+pandas : 1.1.5
+
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<hr />
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p><strong>END</strong></p>
+
+</div>
+</div>
+</div>
+</div>
+
+
+
+  </div><a class="u-url" href="/2022/01/26/music-seq-data.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

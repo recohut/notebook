@@ -1,0 +1,1949 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="twitter:card" content="summary_large_image" /><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Transformers4Rec XLNet on Synthetic data | reconb</title>
+<meta name="generator" content="Jekyll v4.1.1" />
+<meta property="og:title" content="Transformers4Rec XLNet on Synthetic data" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Jupyter notebook database." />
+<meta property="og:description" content="Jupyter notebook database." />
+<link rel="canonical" href="https://nb.recohut.com/2022/01/26/transformer4rec-xlnet.html" />
+<meta property="og:url" content="https://nb.recohut.com/2022/01/26/transformer4rec-xlnet.html" />
+<meta property="og:site_name" content="reconb" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-01-26T00:00:00-06:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Transformers4Rec XLNet on Synthetic data" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-01-26T00:00:00-06:00","datePublished":"2022-01-26T00:00:00-06:00","description":"Jupyter notebook database.","headline":"Transformers4Rec XLNet on Synthetic data","mainEntityOfPage":{"@type":"WebPage","@id":"https://nb.recohut.com/2022/01/26/transformer4rec-xlnet.html"},"url":"https://nb.recohut.com/2022/01/26/transformer4rec-xlnet.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/css/style.css"><link type="application/atom+xml" rel="alternate" href="https://nb.recohut.com/feed.xml" title="reconb" /><link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Primer/15.2.0/primer.css" integrity="sha512-xTz2ys4coGAOz8vuV1NcQBkgVmKhsSEtjbqyMJbBHRplFuvKIUo6xhLHpAyPt9mfR6twHJgn9OgVLuqOvjeBhg==" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" integrity="sha512-1PKOgIY59xJ8Co8+NE6FZ+LOAZKjy+KY8iq0G4B3CyeY6wYHN3yt9PW0XpSriVlkMXe40PTKnXrLnZ9+fkDaog==" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.css" integrity="sha512-h7nl+xz8wgDlNM4NqKEM4F1NkIRS17M9+uJwIGwuo8vGqIl4BhuCKdxjWEINm+xyrUjNCnK5dCrhM0sj+wTIXw==" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/katex.min.js" integrity="sha512-/CMIhXiDA3m2c9kzRyd97MTb3MC6OVnx4TElQ7fkkoRghwDf6gi41gaT1PwF270W6+J60uTmwgeRpNpJdRV6sg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.12.0/contrib/auto-render.min.js" integrity="sha512-Do7uJAaHZm5OLrIv/yN4w0iG1dbu01kzdMNnFfu/mAqgUk6Nniv2JYHcwH+cNwjqgLcqcuBBk+JRvprLVI8azg==" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha512-0doc9hKxR3PYwso42RD1p5ySZpzzuDiOwMrdCEh2WdJZCjcmFKc/wEnL+z8fBQrnHoiNWbo+3fiGkOYXBdQp4A==" crossorigin="anonymous"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        renderMathInElement( document.body, {
+        delimiters: [
+            {left: "$$", right: "$$", display: true},
+            {left: "[%", right: "%]", display: true},
+            {left: "$", right: "$", display: false}
+        ]}
+        );
+    });
+    </script>
+
+
+<script>
+function wrap_img(fn) {
+    if (document.attachEvent ? document.readyState === "complete" : document.readyState !== "loading") {
+        var elements = document.querySelectorAll(".post img");
+        Array.prototype.forEach.call(elements, function(el, i) {
+            if (el.getAttribute("title") && (el.className != "emoji")) {
+                const caption = document.createElement('figcaption');
+                var node = document.createTextNode(el.getAttribute("title"));
+                caption.appendChild(node);
+                const wrapper = document.createElement('figure');
+                wrapper.className = 'image';
+                el.parentNode.insertBefore(wrapper, el);
+                el.parentNode.removeChild(el);
+                wrapper.appendChild(el);
+                wrapper.appendChild(caption);
+            }
+        });
+    } else { document.addEventListener('DOMContentLoaded', fn); }
+}
+window.onload = wrap_img;
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+    // add link icon to anchor tags
+    var elem = document.querySelectorAll(".anchor-link")
+    elem.forEach(e => (e.innerHTML = '<i class="fas fa-link fa-xs"></i>'));
+    });
+</script>
+</head>
+<body><header class="site-header">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">reconb</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About Me</a><a class="page-link" href="/search/">Search</a><a class="page-link" href="/categories/">Tags</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Transformers4Rec XLNet on Synthetic data</h1><p class="post-meta post-meta-title"><time class="dt-published" datetime="2022-01-26T00:00:00-06:00" itemprop="datePublished">
+        Jan 26, 2022
+      </time>
+       • <span class="read-time" title="Estimated read time">
+    
+    
+      17 min read
+    
+</span></p>
+
+    
+
+    
+      
+        <div class="pb-5 d-flex flex-justify-center">
+          <div class="px-2">
+
+    <a href="https://github.com/recohut/notebook/tree/master/_notebooks/2022-01-26-transformer4rec-xlnet.ipynb" role="button" target="_blank">
+<img class="notebook-badge-image" src="/assets/badges/github.svg" alt="View On GitHub">
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://mybinder.org/v2/gh/recohut/notebook/master?filepath=_notebooks%2F2022-01-26-transformer4rec-xlnet.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/binder.svg" alt="Open In Binder"/>
+    </a>
+</div>
+
+          <div class="px-2">
+    <a href="https://colab.research.google.com/github/recohut/notebook/blob/master/_notebooks/2022-01-26-transformer4rec-xlnet.ipynb" target="_blank">
+        <img class="notebook-badge-image" src="/assets/badges/colab.svg" alt="Open In Colab"/>
+    </a>
+</div>
+          <div class="px-2">
+  <a href="https://deepnote.com/launch?url=https%3A%2F%2Fgithub.com%2Frecohut%2Fnotebook%2Fblob%2Fmaster%2F_notebooks%2F2022-01-26-transformer4rec-xlnet.ipynb" target="_blank">
+      <img class="notebook-badge-image" src="/assets/badges/deepnote.svg" alt="Launch in Deepnote"/>
+  </a>
+</div>
+
+        </div>
+      </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <!--
+#################################################
+### THIS FILE WAS AUTOGENERATED! DO NOT EDIT! ###
+#################################################
+# file to edit: _notebooks/2022-01-26-transformer4rec-xlnet.ipynb
+-->
+
+<div class="container" id="notebook-container">
+        
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In this tutorial we introduce the <a href="https://github.com/NVIDIA-Merlin/Transformers4Rec">Transformers4Rec</a> library for sequential and session-based recommendation. This tutorial uses the PyTorch API, but a TensorFlow API is also available. Transformers4Rec integrates with the popular <a href="https://github.com/huggingface/transformers">HuggingFace’s Transformers</a> and make it possible to experiment with cutting-edge implementation of the latest NLP Transformer architectures.</p>
+<p>We demonstrate how to build a session-based recommendation model with the <a href="https://arxiv.org/abs/1906.08237">XLNET</a> Transformer architecture. The XLNet architecture was designed to leverage the best of both auto-regressive language modeling and auto-encoding with its Permutation Language Modeling training method. In this example we will use XLNET with masked language modeling (MLM) training method, which showed very promising results.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>First, we are going to generate synthetic data and then create sequential features with <a href="https://github.com/NVIDIA-Merlin/NVTabular">NVTabular</a>. Such data will be used to train a session-based recommendation model.</p>
+<p>NVTabular is a feature engineering and preprocessing library for tabular data designed to quickly and easily manipulate terabyte scale datasets used to train deep learning based recommender systems. It provides a high level abstraction to simplify code and accelerates computation on the GPU using the RAPIDS cuDF library.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Import-required-libraries">Import required libraries<a class="anchor-link" href="#Import-required-libraries"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+
+<span class="kn">import</span> <span class="nn">torch</span> 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">import</span> <span class="nn">cudf</span>
+<span class="kn">import</span> <span class="nn">cupy</span> <span class="k">as</span> <span class="nn">cp</span>
+<span class="kn">import</span> <span class="nn">nvtabular</span> <span class="k">as</span> <span class="nn">nvt</span>
+
+<span class="kn">from</span> <span class="nn">transformers4rec</span> <span class="kn">import</span> <span class="n">torch</span> <span class="k">as</span> <span class="n">tr</span>
+<span class="kn">from</span> <span class="nn">transformers4rec.torch.ranking_metric</span> <span class="kn">import</span> <span class="n">NDCGAt</span><span class="p">,</span> <span class="n">AvgPrecisionAt</span><span class="p">,</span> <span class="n">RecallAt</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Define-Input/Output-Path">Define Input/Output Path<a class="anchor-link" href="#Define-Input/Output-Path"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">INPUT_DATA_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;INPUT_DATA_DIR&quot;</span><span class="p">,</span> <span class="s2">&quot;/workspace/data/&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Create-a-Synthetic-Input-Data">Create a Synthetic Input Data<a class="anchor-link" href="#Create-a-Synthetic-Input-Data"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">NUM_ROWS</span> <span class="o">=</span> <span class="mi">100000</span>
+<span class="n">long_tailed_item_distribution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">lognormal</span><span class="p">(</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="n">NUM_ROWS</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">50000</span><span class="p">)</span>
+
+<span class="c1"># generate random item interaction features </span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">70000</span><span class="p">,</span> <span class="mi">80000</span><span class="p">,</span> <span class="n">NUM_ROWS</span><span class="p">),</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;session_id&#39;</span><span class="p">])</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;item_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">long_tailed_item_distribution</span>
+
+<span class="c1"># generate category mapping for each item-id</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;category&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;item_id&#39;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="mi">334</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">335</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;timestamp/age_days&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">NUM_ROWS</span><span class="p">)</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;timestamp/weekday/sin&#39;</span><span class="p">]</span><span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">NUM_ROWS</span><span class="p">)</span>
+
+<span class="c1"># generate day mapping for each session </span>
+<span class="n">map_day</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">session_id</span><span class="o">.</span><span class="n">unique</span><span class="p">(),</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">session_id</span><span class="o">.</span><span class="n">nunique</span><span class="p">()))))</span>
+<span class="n">df</span><span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="n">df</span><span class="o">.</span><span class="n">session_id</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">map_day</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li>Visualize couple of rows of the synthetic dataset</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>session_id</th>
+      <th>item_id</th>
+      <th>category</th>
+      <th>timestamp/age_days</th>
+      <th>timestamp/weekday/sin</th>
+      <th>day</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>72794</td>
+      <td>25</td>
+      <td>8</td>
+      <td>0.425057</td>
+      <td>0.796974</td>
+      <td>9</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>72989</td>
+      <td>57</td>
+      <td>18</td>
+      <td>0.729572</td>
+      <td>0.924252</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>78236</td>
+      <td>2</td>
+      <td>1</td>
+      <td>0.922154</td>
+      <td>0.532076</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>72766</td>
+      <td>9</td>
+      <td>3</td>
+      <td>0.956614</td>
+      <td>0.567720</td>
+      <td>3</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>76730</td>
+      <td>9</td>
+      <td>3</td>
+      <td>0.361798</td>
+      <td>0.611959</td>
+      <td>4</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Feature-Engineering-with-NVTabular">Feature Engineering with NVTabular<a class="anchor-link" href="#Feature-Engineering-with-NVTabular"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Deep Learning models require dense input features. Categorical features are sparse, and need to be represented by dense embeddings in the model. To allow for that, categorical features need first to be encoded as contiguous integers <code>(0, ..., |C|)</code>, where <code>|C|</code> is the feature cardinality (number of unique values), so that their embeddings can be efficiently stored in embedding layers.  We will use NVTabular to preprocess the categorical features, so that all categorical columns are encoded as contiguous integers.  Note that in the <code>Categorify</code> op we set <code>start_index=1</code>, the reason for that we want the encoded null values to start from <code>1</code> instead of <code>0</code> because we reserve <code>0</code> for padding the sequence features.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here our goal is to create sequential features.  In this cell, we are creating temporal features and grouping them together at the session level, sorting the interactions by time. Note that we also trim each feature sequence in a  session to a certain length. Here, we use the NVTabular library so that we can easily preprocess and create features on GPU with a few lines.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">categ_feats</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;session_id&#39;</span><span class="p">,</span> <span class="s1">&#39;item_id&#39;</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">]</span> <span class="o">&gt;&gt;</span> <span class="n">nvt</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">Categorify</span><span class="p">(</span><span class="n">start_index</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Define Groupby Workflow</span>
+<span class="n">groupby_feats</span> <span class="o">=</span> <span class="n">categ_feats</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;day&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp/age_days&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp/weekday/sin&#39;</span><span class="p">]</span>
+
+<span class="c1"># Groups interaction features by session and sorted by timestamp</span>
+<span class="n">groupby_features</span> <span class="o">=</span> <span class="n">groupby_feats</span> <span class="o">&gt;&gt;</span> <span class="n">nvt</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">Groupby</span><span class="p">(</span>
+    <span class="n">groupby_cols</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;session_id&quot;</span><span class="p">],</span> 
+    <span class="n">aggs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;item_id&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">,</span> <span class="s2">&quot;count&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;category&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">],</span>     
+        <span class="s2">&quot;day&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;first&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;timestamp/age_days&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">],</span>
+        <span class="s1">&#39;timestamp/weekday/sin&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="n">name_sep</span><span class="o">=</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+
+<span class="c1"># Select and truncate the sequential features</span>
+<span class="n">sequence_features_truncated</span> <span class="o">=</span> <span class="p">(</span><span class="n">groupby_features</span><span class="p">[</span><span class="s1">&#39;category-list&#39;</span><span class="p">,</span> <span class="s1">&#39;item_id-list&#39;</span><span class="p">,</span> 
+                                          <span class="s1">&#39;timestamp/age_days-list&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp/weekday/sin-list&#39;</span><span class="p">])</span> <span class="o">&gt;&gt;</span> \
+                            <span class="n">nvt</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">ListSlice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">20</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="n">nvt</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">Rename</span><span class="p">(</span><span class="n">postfix</span> <span class="o">=</span> <span class="s1">&#39;_trim&#39;</span><span class="p">)</span>
+
+<span class="c1"># Filter out sessions with length 1 (not valid for next-item prediction training and evaluation)</span>
+<span class="n">MINIMUM_SESSION_LENGTH</span> <span class="o">=</span> <span class="mi">2</span>
+<span class="n">selected_features</span> <span class="o">=</span> <span class="n">groupby_features</span><span class="p">[</span><span class="s1">&#39;item_id-count&#39;</span><span class="p">,</span> <span class="s1">&#39;day-first&#39;</span><span class="p">,</span> <span class="s1">&#39;session_id&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">sequence_features_truncated</span>
+<span class="n">filtered_sessions</span> <span class="o">=</span> <span class="n">selected_features</span> <span class="o">&gt;&gt;</span> <span class="n">nvt</span><span class="o">.</span><span class="n">ops</span><span class="o">.</span><span class="n">Filter</span><span class="p">(</span><span class="n">f</span><span class="o">=</span><span class="k">lambda</span> <span class="n">df</span><span class="p">:</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;item_id-count&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">MINIMUM_SESSION_LENGTH</span><span class="p">)</span>
+
+
+<span class="n">workflow</span> <span class="o">=</span> <span class="n">nvt</span><span class="o">.</span><span class="n">Workflow</span><span class="p">(</span><span class="n">filtered_sessions</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">nvt</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">cpu</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="c1"># Generating statistics for the features</span>
+<span class="n">workflow</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+<span class="c1"># Applying the preprocessing and returning an NVTabular dataset</span>
+<span class="n">sessions_ds</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+<span class="c1"># Converting the NVTabular dataset to a Dask cuDF dataframe (`to_ddf()`) and then to cuDF dataframe (`.compute()`)</span>
+<span class="n">sessions_gdf</span> <span class="o">=</span> <span class="n">sessions_ds</span><span class="o">.</span><span class="n">to_ddf</span><span class="p">()</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">sessions_gdf</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>item_id-count</th>
+      <th>day-first</th>
+      <th>session_id</th>
+      <th>category-list_trim</th>
+      <th>item_id-list_trim</th>
+      <th>timestamp/age_days-list_trim</th>
+      <th>timestamp/weekday/sin-list_trim</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>25</td>
+      <td>3</td>
+      <td>2</td>
+      <td>[24, 12, 6, 3, 3, 6, 9, 2, 8, 15, 9, 5, 6, 8, ...</td>
+      <td>[79, 36, 13, 5, 8, 12, 27, 4, 21, 42, 28, 10, ...</td>
+      <td>[0.4751982727759114, 0.055393015414691105, 0.2...</td>
+      <td>[0.8122129009074556, 0.5284590396837701, 0.041...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>24</td>
+      <td>6</td>
+      <td>3</td>
+      <td>[3, 12, 16, 14, 13, 10, 13, 9, 24, 19, 32, 68,...</td>
+      <td>[2, 33, 55, 40, 39, 23, 38, 27, 78, 57, 109, 1...</td>
+      <td>[0.5303167840438227, 0.800766191594587, 0.3993...</td>
+      <td>[0.0484016923364502, 0.9895741720728333, 0.020...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>23</td>
+      <td>7</td>
+      <td>4</td>
+      <td>[2, 11, 3, 11, 6, 9, 2, 29, 21, 3, 5, 3, 5, 12...</td>
+      <td>[4, 32, 5, 30, 13, 26, 3, 87, 62, 2, 22, 5, 14...</td>
+      <td>[0.40259610248511546, 0.7994956663950287, 0.11...</td>
+      <td>[0.13638022767099878, 0.5088356162643055, 0.06...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>It is possible to save the preprocessing workflow. That is useful to apply the same preprocessing to other data (with the same schema) and also to deploy the session-based recommendation pipeline to Triton Inference Server.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">workflow</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;workflow_etl&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Export-pre-processed-data-by-day">Export pre-processed data by day<a class="anchor-link" href="#Export-pre-processed-data-by-day"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In this example we are going to split the preprocessed parquet files by days, to allow for temporal training and evaluation. There will be a folder for each day and three parquet files within each day folder: train.parquet, validation.parquet and test.parquet</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">OUTPUT_FOLDER</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;OUTPUT_FOLDER&quot;</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">INPUT_DATA_DIR</span><span class="p">,</span> <span class="s2">&quot;sessions_by_day&quot;</span><span class="p">))</span>
+<span class="o">!</span>mkdir -p <span class="nv">$OUTPUT_FOLDER</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">transformers4rec.data.preprocessing</span> <span class="kn">import</span> <span class="n">save_time_based_splits</span>
+<span class="n">save_time_based_splits</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">nvt</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="n">sessions_gdf</span><span class="p">),</span>
+                       <span class="n">output_dir</span><span class="o">=</span> <span class="n">OUTPUT_FOLDER</span><span class="p">,</span>
+                       <span class="n">partition_col</span><span class="o">=</span><span class="s1">&#39;day-first&#39;</span><span class="p">,</span>
+                       <span class="n">timestamp_col</span><span class="o">=</span><span class="s1">&#39;session_id&#39;</span><span class="p">,</span> 
+                      <span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Creating time-based splits: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 9/9 [00:00&lt;00:00, 10.96it/s]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Checking-the-preprocessed-outputs">Checking the preprocessed outputs<a class="anchor-link" href="#Checking-the-preprocessed-outputs"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">TRAIN_PATHS</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OUTPUT_FOLDER</span><span class="p">,</span> <span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;train.parquet&quot;</span><span class="p">)))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">gdf</span> <span class="o">=</span> <span class="n">cudf</span><span class="o">.</span><span class="n">read_parquet</span><span class="p">(</span><span class="n">TRAIN_PATHS</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">gdf</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>item_id-count</th>
+      <th>session_id</th>
+      <th>category-list_trim</th>
+      <th>item_id-list_trim</th>
+      <th>timestamp/age_days-list_trim</th>
+      <th>timestamp/weekday/sin-list_trim</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>22</td>
+      <td>7</td>
+      <td>[6, 9, 5, 2, 7, 8, 5, 2, 6, 16, 2, 10, 35, 5, ...</td>
+      <td>[15, 27, 10, 3, 17, 19, 10, 3, 13, 53, 3, 25, ...</td>
+      <td>[0.05018395805258469, 0.3675245026471312, 0.45...</td>
+      <td>[0.4569657788661693, 0.3016987134228405, 0.444...</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>20</td>
+      <td>17</td>
+      <td>[3, 3, 3, 2, 29, 3, 4, 3, 17, 2, 21, 16, 8, 4,...</td>
+      <td>[5, 8, 8, 4, 92, 5, 7, 5, 47, 3, 62, 52, 20, 1...</td>
+      <td>[0.6514417831915809, 0.4076816703281344, 0.632...</td>
+      <td>[0.14429839204039463, 0.9164664830523597, 0.28...</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>19</td>
+      <td>45</td>
+      <td>[4, 34, 9, 3, 4, 11, 3, 7, 7, 6, 3, 5, 20, 8, ...</td>
+      <td>[7, 95, 26, 2, 7, 32, 5, 17, 17, 15, 5, 10, 59...</td>
+      <td>[0.8375365213796201, 0.5405179079133022, 0.779...</td>
+      <td>[0.7202554739875682, 0.22750431643945657, 0.22...</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>19</td>
+      <td>62</td>
+      <td>[10, 7, 8, 4, 26, 27, 5, 13, 6, 2, 9, 8, 3, 11...</td>
+      <td>[25, 17, 19, 7, 75, 81, 10, 37, 12, 3, 29, 19,...</td>
+      <td>[0.4649937741449487, 0.5034045853366875, 0.566...</td>
+      <td>[0.05637671244260656, 0.26188954412734744, 0.1...</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>19</td>
+      <td>63</td>
+      <td>[30, 14, 6, 3, 5, 6, 5, 2, 11, 9, 9, 45, 5, 9,...</td>
+      <td>[96, 43, 12, 5, 22, 13, 22, 3, 31, 29, 26, 134...</td>
+      <td>[0.17334992894139045, 0.883403092448823, 0.933...</td>
+      <td>[0.2423479210589905, 0.7296242799474274, 0.335...</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We have created session-level features to train a session-based recommendation model using NVTabular. Now we will train a session-based recommendation model using <a href="https://arxiv.org/abs/1906.08237">XLNet</a>, one of the state-of-the-art NLP model.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Next, we will learn:</p>
+<ul>
+<li>Accelerating data loading of parquet files with multiple features on PyTorch using NVTabular library</li>
+<li>Training and evaluating a Transformer-based (XLNET-MLM) session-based recommendation model with multiple features</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Transformers4Rec library relies on a schema object to automatically build all necessary layers to represent, normalize and aggregate input features. As you can see below, <code>schema.pb</code> is a protobuf file that contains metadata including statistics about features such as cardinality, min and max values and also tags features based on their characteristics and dtypes (e.g., categorical, continuous, list, integer).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Manually-set-the-schema">Manually set the schema<a class="anchor-link" href="#Manually-set-the-schema"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">merlin_standard_lib</span> <span class="kn">import</span> <span class="n">Schema</span>
+<span class="n">SCHEMA_PATH</span> <span class="o">=</span> <span class="s2">&quot;schema.pb&quot;</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="n">Schema</span><span class="p">()</span><span class="o">.</span><span class="n">from_proto_text</span><span class="p">(</span><span class="n">SCHEMA_PATH</span><span class="p">)</span>
+<span class="o">!</span>cat <span class="nv">$SCHEMA_PATH</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>feature {
+  name: &#34;session_id&#34;
+  type: INT
+  int_domain {
+    name: &#34;session_id&#34;
+    min: 1
+    max: 100001
+    is_categorical: false
+  }
+  annotation {
+    tag: &#34;groupby_col&#34;
+  }
+}
+feature {
+  name: &#34;category-list_trim&#34;
+  value_count {
+    min: 2
+    max: 20
+  }
+  type: INT
+  int_domain {
+    name: &#34;category-list_trim&#34;
+    min: 1
+    max: 400
+    is_categorical: true
+  }
+  annotation {
+    tag: &#34;list&#34;
+    tag: &#34;categorical&#34;
+    tag: &#34;item&#34;
+  }
+}
+feature {
+  name: &#34;item_id-list_trim&#34;
+  value_count {
+    min: 2
+    max: 20
+  }
+  type: INT
+  int_domain {
+    name: &#34;item_id/list&#34;
+    min: 1
+    max: 50005
+    is_categorical: true
+  }
+  annotation {
+    tag: &#34;item_id&#34;
+    tag: &#34;list&#34;
+    tag: &#34;categorical&#34;
+    tag: &#34;item&#34;
+  }
+}
+feature {
+  name: &#34;timestamp/age_days-list_trim&#34;
+  value_count {
+    min: 2
+    max: 20
+  }
+  type: FLOAT
+  float_domain {
+    name: &#34;timestamp/age_days-list_trim&#34;
+    min: 0.0000003
+    max: 0.9999999
+  }
+  annotation {
+    tag: &#34;continuous&#34;
+    tag: &#34;list&#34;
+  }
+}
+feature {
+  name: &#34;timestamp/weekday/sin-list_trim&#34;
+  value_count {
+    min: 2
+    max: 20
+  }
+  type: FLOAT
+  float_domain {
+    name: &#34;timestamp/weekday-sin_trim&#34;
+    min: 0.0000003
+    max: 0.9999999
+  }
+  annotation {
+    tag: &#34;time&#34;
+    tag: &#34;list&#34;
+  }
+}</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">select_by_name</span><span class="p">([</span><span class="s1">&#39;item_id-list_trim&#39;</span><span class="p">,</span> 
+                                <span class="s1">&#39;category-list_trim&#39;</span><span class="p">,</span> 
+                                <span class="s1">&#39;timestamp/weekday/sin-list_trim&#39;</span><span class="p">,</span>
+                                <span class="s1">&#39;timestamp/age_days-list_trim&#39;</span><span class="p">])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Define-the-sequential-input-module">Define the sequential input module<a class="anchor-link" href="#Define-the-sequential-input-module"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Below we define our <code>input</code> block using the <code>TabularSequenceFeatures</code> <a href="https://github.com/NVIDIA-Merlin/Transformers4Rec/blob/main/transformers4rec/torch/features/sequence.py#L91">class</a>. The <code>from_schema()</code> method processes the schema and creates the necessary layers to represent features and aggregate them. It keeps only features tagged as <code>categorical</code> and <code>continuous</code> and supports data aggregation methods like <code>concat</code> and <code>elementwise-sum</code> techniques. It also support data augmentation techniques like stochastic swap noise. It outputs an interaction representation after combining all features and also the input mask according to the training task (more on this later).</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The <code>max_sequence_length</code> argument defines the maximum sequence length of our sequential input, and if <code>continuous_projection</code> argument is set, all numerical features are concatenated and projected by an MLP block so that continuous features are represented by a vector of size defined by user, which is <code>64</code> in this example.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">inputs</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">TabularSequenceFeatures</span><span class="o">.</span><span class="n">from_schema</span><span class="p">(</span>
+        <span class="n">schema</span><span class="p">,</span>
+        <span class="n">max_sequence_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+        <span class="n">continuous_projection</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+        <span class="n">d_output</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">masking</span><span class="o">=</span><span class="s2">&quot;mlm&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The output of the <code>TabularSequenceFeatures</code> module is the sequence of interactions embeddings vectors defined in the following steps:</p>
+<ul>
+<li><ol>
+<li>Create sequence inputs: If the schema contains non sequential features, expand each feature to a sequence by repeating the value as many as the <code>max_sequence_length</code> value.  </li>
+</ol>
+</li>
+<li><ol>
+<li>Get a representation vector of categorical features: Project each sequential categorical feature using the related embedding table. The resulting tensor is of shape (bs, max_sequence_length, embed_dim).</li>
+</ol>
+</li>
+<li><ol>
+<li>Project scalar values if <code>continuous_projection</code> is set : Apply an MLP layer with hidden size equal to <code>continuous_projection</code> vector size value. The resulting tensor is of shape (batch_size, max_sequence_length, continuous_projection).</li>
+</ol>
+</li>
+<li><ol>
+<li>Aggregate the list of features vectors to represent each interaction in the sequence with one vector: For example, <code>concat</code> will concat all vectors based on the last dimension <code>-1</code> and the resulting tensor will be of shape (batch_size, max_sequence_length, D) where D is the sum over all embedding dimensions and the value of continuous_projection. </li>
+</ol>
+</li>
+<li><ol>
+<li>If masking schema is set (needed only for the NextItemPredictionTask training), the masked labels are derived from the sequence of raw item-ids and the sequence of interactions embeddings are processed to mask information about the masked positions.</li>
+</ol>
+</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Define-the-Transformer-Block">Define the Transformer Block<a class="anchor-link" href="#Define-the-Transformer-Block"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In the next cell, the whole model is build with a few lines of code. 
+Here is a brief explanation of the main classes:</p>
+<ul>
+<li><a href="https://github.com/NVIDIA-Merlin/Transformers4Rec/blob/main/transformers4rec/config/transformer.py#L261">XLNetConfig</a> - We have injected in the HF transformers config classes like <code>XLNetConfig</code>the <code>build()</code> method, that provides default configuration to Transformer architectures for session-based recommendation. Here we use it to instantiate and configure an XLNET architecture.  </li>
+<li><a href="https://github.com/NVIDIA-Merlin/Transformers4Rec/blob/main/transformers4rec/torch/block/transformer.py#L37">TransformerBlock</a> class integrates with HF Transformers, which are made available as a sequence processing module for session-based and sequential-based recommendation models.  </li>
+<li><a href="https://github.com/NVIDIA-Merlin/Transformers4Rec/blob/main/transformers4rec/torch/model/head.py#L238">NextItemPredictionTask</a> supports the next-item prediction task. We also support other predictions <a href="https://github.com/NVIDIA-Merlin/Transformers4Rec/blob/main/transformers4rec/torch/model/head.py">tasks</a>, like classification and regression for the whole sequence. </li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">transformer_config</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">XLNetConfig</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+    <span class="n">d_model</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">n_head</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_layer</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">total_seq_length</span><span class="o">=</span><span class="mi">20</span>
+<span class="p">)</span>
+<span class="c1"># Define the model block including: inputs, masking, projection and transformer block.</span>
+<span class="n">body</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">SequentialBlock</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">,</span> <span class="n">tr</span><span class="o">.</span><span class="n">MLPBlock</span><span class="p">([</span><span class="mi">64</span><span class="p">]),</span> <span class="n">tr</span><span class="o">.</span><span class="n">TransformerBlock</span><span class="p">(</span><span class="n">transformer_config</span><span class="p">,</span> <span class="n">masking</span><span class="o">=</span><span class="n">inputs</span><span class="o">.</span><span class="n">masking</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Defines the evaluation top-N metrics and the cut-offs</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="p">[</span><span class="n">NDCGAt</span><span class="p">(</span><span class="n">top_ks</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">],</span> <span class="n">labels_onehot</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>  
+           <span class="n">RecallAt</span><span class="p">(</span><span class="n">top_ks</span><span class="o">=</span><span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">40</span><span class="p">],</span> <span class="n">labels_onehot</span><span class="o">=</span><span class="kc">True</span><span class="p">)]</span>
+
+<span class="c1"># Define a head related to next item prediction task </span>
+<span class="n">head</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">Head</span><span class="p">(</span>
+    <span class="n">body</span><span class="p">,</span>
+    <span class="n">tr</span><span class="o">.</span><span class="n">NextItemPredictionTask</span><span class="p">(</span><span class="n">weight_tying</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">hf_format</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
+                              <span class="n">metrics</span><span class="o">=</span><span class="n">metrics</span><span class="p">),</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Get the end-to-end Model class </span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">tr</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">head</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Note that we can easily define an RNN-based model inside the <code>SequentialBlock</code> instead of a Transformer-based model. You can explore this <a href="https://github.com/NVIDIA-Merlin/Transformers4Rec/tree/main/examples/tutorial">tutorial</a> for a GRU-based model example.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Train-the-model">Train the model<a class="anchor-link" href="#Train-the-model"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We use the NVTabular PyTorch Dataloader for optimized loading of multiple features from input parquet files. You can learn more about this data loader <a href="https://nvidia-merlin.github.io/NVTabular/main/training/pytorch.html">here</a>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Set-Training-arguments">Set Training arguments<a class="anchor-link" href="#Set-Training-arguments"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">transformers4rec.config.trainer</span> <span class="kn">import</span> <span class="n">T4RecTrainingArguments</span>
+<span class="kn">from</span> <span class="nn">transformers4rec.torch</span> <span class="kn">import</span> <span class="n">Trainer</span>
+<span class="c1"># Set hyperparameters for training </span>
+<span class="n">train_args</span> <span class="o">=</span> <span class="n">T4RecTrainingArguments</span><span class="p">(</span><span class="n">data_loader_engine</span><span class="o">=</span><span class="s1">&#39;nvtabular&#39;</span><span class="p">,</span> 
+                                    <span class="n">dataloader_drop_last</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+                                    <span class="n">report_to</span> <span class="o">=</span> <span class="p">[],</span> 
+                                    <span class="n">gradient_accumulation_steps</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+                                    <span class="n">per_device_train_batch_size</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span> 
+                                    <span class="n">per_device_eval_batch_size</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+                                    <span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;./tmp&quot;</span><span class="p">,</span> 
+                                    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.0005</span><span class="p">,</span>
+                                    <span class="n">lr_scheduler_type</span><span class="o">=</span><span class="s1">&#39;cosine&#39;</span><span class="p">,</span> 
+                                    <span class="n">learning_rate_num_cosine_cycles_by_epoch</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+                                    <span class="n">num_train_epochs</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                                    <span class="n">max_sequence_length</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> 
+                                    <span class="n">no_cuda</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Note that we add an argument <code>data_loader_engine='nvtabular'</code> to automatically load the features needed for training using the schema. The default value is nvtabular for optimized GPU-based data-loading. Optionally a PyarrowDataLoader (pyarrow) can also be used as a basic option, but it is slower and works only for small datasets, as the full data is loaded to CPU memory.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Daily-Fine-Tuning:-Training-over-a-time-window">Daily Fine-Tuning: Training over a time window<a class="anchor-link" href="#Daily-Fine-Tuning:-Training-over-a-time-window"> </a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Here we do daily fine-tuning meaning that we use the first day to train and second day to evaluate, then we use the second day data to train the model by resuming from the first step, and evaluate on the third day, so on so forth.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We have extended the HuggingFace transformers <code>Trainer</code> class (PyTorch only) to support evaluation of RecSys metrics. In this example, the evaluation of the session-based recommendation model is performed using traditional Top-N ranking metrics such as Normalized Discounted Cumulative Gain (NDCG@20) and Hit Rate (HR@20). NDCG accounts for rank of the relevant item in the recommendation list and is a more fine-grained metric than HR, which only verifies whether the relevant item is among the top-n items. HR@n is equivalent to Recall@n when there is only one relevant item in the recommendation list.</p>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">trainer</span> <span class="o">=</span> <span class="n">Trainer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">args</span><span class="o">=</span><span class="n">train_args</span><span class="p">,</span>
+    <span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">,</span>
+    <span class="n">compute_metrics</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<ul>
+<li>Define the output folder of the processed parquet files</li>
+</ul>
+
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">OUTPUT_DIR</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;OUTPUT_DIR&quot;</span><span class="p">,</span> <span class="s2">&quot;/workspace/data/sessions_by_day&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">start_time_window_index</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">final_time_window_index</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="c1">#Iterating over days of one week</span>
+<span class="k">for</span> <span class="n">time_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">start_time_window_index</span><span class="p">,</span> <span class="n">final_time_window_index</span><span class="p">):</span>
+    <span class="c1"># Set data </span>
+    <span class="n">time_index_train</span> <span class="o">=</span> <span class="n">time_index</span>
+    <span class="n">time_index_eval</span> <span class="o">=</span> <span class="n">time_index</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">train_paths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time_index_train</span><span class="si">}</span><span class="s2">/train.parquet&quot;</span><span class="p">))</span>
+    <span class="n">eval_paths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time_index_eval</span><span class="si">}</span><span class="s2">/valid.parquet&quot;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">train_paths</span><span class="p">)</span>
+    
+    <span class="c1"># Train on day related to time_index </span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="o">*</span><span class="mi">20</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Launch training for day </span><span class="si">%s</span><span class="s2"> are:&quot;</span> <span class="o">%</span><span class="k">time_index</span>)
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="o">*</span><span class="mi">20</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">train_dataset_or_path</span> <span class="o">=</span> <span class="n">train_paths</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">reset_lr_scheduler</span><span class="p">()</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">global_step</span> <span class="o">+=</span><span class="mi">1</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;finished&#39;</span><span class="p">)</span>
+    
+    <span class="c1"># Evaluate on the following day</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">eval_dataset_or_path</span> <span class="o">=</span> <span class="n">eval_paths</span>
+    <span class="n">train_metrics</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">metric_key_prefix</span><span class="o">=</span><span class="s1">&#39;eval&#39;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="o">*</span><span class="mi">20</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Eval results for day </span><span class="si">%s</span><span class="s2"> are:</span><span class="se">\t</span><span class="s2">&quot;</span> <span class="o">%</span><span class="k">time_index_eval</span>)
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span><span class="o">*</span><span class="mi">20</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">train_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">train_metrics</span><span class="p">[</span><span class="n">key</span><span class="p">])))</span> 
+    <span class="n">trainer</span><span class="o">.</span><span class="n">wipe_memory</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[&#39;/workspace/data/sessions_by_day/1/train.parquet&#39;]
+********************
+Launch training for day 1 are:
+********************
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>***** Running training *****
+  Num examples = 768
+  Num Epochs = 5
+  Instantaneous batch size per device = 256
+  Total train batch size (w. parallel, distributed &amp; accumulation) = 1024
+  Gradient Accumulation steps = 1
+  Total optimization steps = 15
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+      
+      <progress value="15" max="15" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      [15/15 00:00, Epoch 5/5]
+    </div>
+    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Step</th>
+      <th>Training Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table><p>
+&lt;/div&gt;
+
+&lt;/div&gt;
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>finished
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+      
+      <progress value="21" max="3" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      [3/3 00:05]
+    </div>
+    
+</div>
+
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>********************
+Eval results for day 2 are:	
+
+********************
+
+ epoch = 5.0
+ eval/loss = 10.33902645111084
+ eval/next-item/ndcg_at_20 = 0.0209574606269598
+ eval/next-item/ndcg_at_40 = 0.02929079346358776
+ eval/next-item/recall_at_20 = 0.0520833358168602
+ eval/next-item/recall_at_40 = 0.09375
+ eval_runtime = 0.0882
+ eval_samples_per_second = 1088.723
+ eval_steps_per_second = 11.341
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>***** Running training *****
+  Num examples = 768
+  Num Epochs = 5
+  Instantaneous batch size per device = 256
+  Total train batch size (w. parallel, distributed &amp; accumulation) = 1024
+  Gradient Accumulation steps = 1
+  Total optimization steps = 15
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[&#39;/workspace/data/sessions_by_day/2/train.parquet&#39;]
+********************
+Launch training for day 2 are:
+********************
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+      
+      <progress value="15" max="15" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      [15/15 00:00, Epoch 5/5]
+    </div>
+    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Step</th>
+      <th>Training Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table><p>
+&lt;/div&gt;
+
+&lt;/div&gt;
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>finished
+********************
+Eval results for day 3 are:	
+
+********************
+
+ epoch = 5.0
+ eval/loss = 9.9208345413208
+ eval/next-item/ndcg_at_20 = 0.053623538464307785
+ eval/next-item/ndcg_at_40 = 0.08480535447597504
+ eval/next-item/recall_at_20 = 0.1354166716337204
+ eval/next-item/recall_at_40 = 0.28125
+ eval_runtime = 0.0886
+ eval_samples_per_second = 1083.283
+ eval_steps_per_second = 11.284
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>***** Running training *****
+  Num examples = 768
+  Num Epochs = 5
+  Instantaneous batch size per device = 256
+  Total train batch size (w. parallel, distributed &amp; accumulation) = 1024
+  Gradient Accumulation steps = 1
+  Total optimization steps = 15
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[&#39;/workspace/data/sessions_by_day/3/train.parquet&#39;]
+********************
+Launch training for day 3 are:
+********************
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+      
+      <progress value="15" max="15" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      [15/15 00:00, Epoch 5/5]
+    </div>
+    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Step</th>
+      <th>Training Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table><p>
+&lt;/div&gt;
+
+&lt;/div&gt;
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>finished
+********************
+Eval results for day 4 are:	
+
+********************
+
+ epoch = 5.0
+ eval/loss = 9.478459358215332
+ eval/next-item/ndcg_at_20 = 0.08707290887832642
+ eval/next-item/ndcg_at_40 = 0.11134807765483856
+ eval/next-item/recall_at_20 = 0.2291666716337204
+ eval/next-item/recall_at_40 = 0.34375
+ eval_runtime = 0.0888
+ eval_samples_per_second = 1080.702
+ eval_steps_per_second = 11.257
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>***** Running training *****
+  Num examples = 768
+  Num Epochs = 5
+  Instantaneous batch size per device = 256
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[&#39;/workspace/data/sessions_by_day/4/train.parquet&#39;]
+********************
+Launch training for day 4 are:
+********************
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>  Total train batch size (w. parallel, distributed &amp; accumulation) = 1024
+  Gradient Accumulation steps = 1
+  Total optimization steps = 15
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+      
+      <progress value="15" max="15" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      [15/15 00:00, Epoch 5/5]
+    </div>
+    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Step</th>
+      <th>Training Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table><p>
+&lt;/div&gt;
+
+&lt;/div&gt;
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>finished
+********************
+Eval results for day 5 are:	
+
+********************
+
+ epoch = 5.0
+ eval/loss = 8.747222900390625
+ eval/next-item/ndcg_at_20 = 0.13623034954071045
+ eval/next-item/ndcg_at_40 = 0.179062157869339
+ eval/next-item/recall_at_20 = 0.34375
+ eval/next-item/recall_at_40 = 0.5520833730697632
+ eval_runtime = 0.0947
+ eval_samples_per_second = 1013.663
+ eval_steps_per_second = 10.559
+[&#39;/workspace/data/sessions_by_day/5/train.parquet&#39;]
+********************
+Launch training for day 5 are:
+********************
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>***** Running training *****
+  Num examples = 768
+  Num Epochs = 5
+  Instantaneous batch size per device = 256
+  Total train batch size (w. parallel, distributed &amp; accumulation) = 1024
+  Gradient Accumulation steps = 1
+  Total optimization steps = 15
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+      
+      <progress value="15" max="15" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      [15/15 00:00, Epoch 5/5]
+    </div>
+    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Step</th>
+      <th>Training Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table><p>
+&lt;/div&gt;
+
+&lt;/div&gt;
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>finished
+********************
+Eval results for day 6 are:	
+
+********************
+
+ epoch = 5.0
+ eval/loss = 8.153544425964355
+ eval/next-item/ndcg_at_20 = 0.13773086667060852
+ eval/next-item/ndcg_at_40 = 0.18069738149642944
+ eval/next-item/recall_at_20 = 0.3541666865348816
+ eval/next-item/recall_at_40 = 0.5625
+ eval_runtime = 0.0944
+ eval_samples_per_second = 1017.132
+ eval_steps_per_second = 10.595
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>***** Running training *****
+  Num examples = 768
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[&#39;/workspace/data/sessions_by_day/6/train.parquet&#39;]
+********************
+Launch training for day 6 are:
+********************
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>  Num Epochs = 5
+  Instantaneous batch size per device = 256
+  Total train batch size (w. parallel, distributed &amp; accumulation) = 1024
+  Gradient Accumulation steps = 1
+  Total optimization steps = 15
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+
+<div class="output_html rendered_html output_subarea ">
+
+    <div>
+      
+      <progress value="15" max="15" style="width:300px; height:20px; vertical-align: middle;"></progress>
+      [15/15 00:00, Epoch 5/5]
+    </div>
+    <table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: left;">
+      <th>Step</th>
+      <th>Training Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table><p>
+&lt;/div&gt;
+
+&lt;/div&gt;
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>
+
+Training completed. Do not forget to share your model on huggingface.co/models =)
+
+
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>finished
+********************
+Eval results for day 7 are:	
+
+********************
+
+ epoch = 5.0
+ eval/loss = 7.682921886444092
+ eval/next-item/ndcg_at_20 = 0.16451486945152283
+ eval/next-item/ndcg_at_40 = 0.19865691661834717
+ eval/next-item/recall_at_20 = 0.3958333432674408
+ eval/next-item/recall_at_40 = 0.5625
+ eval_runtime = 0.091
+ eval_samples_per_second = 1055.176
+ eval_steps_per_second = 10.991
+</pre>
+</div>
+</div>
+
+&lt;/div&gt;
+&lt;/div&gt;
+
+&lt;/div&gt;
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Saves-the-model">Saves the model<a class="anchor-link" href="#Saves-the-model"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">trainer</span><span class="o">.</span><span class="n">_save_model_and_checkpoint</span><span class="p">(</span><span class="n">save_model_class</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>Saving model checkpoint to ./tmp/checkpoint-16
+Trainer.model is not a `PreTrainedModel`, only saving its state dict.
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Reloads-the-model">Reloads the model<a class="anchor-link" href="#Reloads-the-model"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">trainer</span><span class="o">.</span><span class="n">load_model_trainer_states_from_checkpoint</span><span class="p">(</span><span class="s1">&#39;./tmp/checkpoint-</span><span class="si">%s</span><span class="s1">&#39;</span><span class="o">%</span><span class="k">trainer</span>.state.global_step)
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Re-compute-eval-metrics-of-validation-data">Re-compute eval metrics of validation data<a class="anchor-link" href="#Re-compute-eval-metrics-of-validation-data"> </a></h2>
+</div>
+</div>
+</div>
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">eval_data_paths</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">OUTPUT_DIR</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">time_index_eval</span><span class="si">}</span><span class="s2">/valid.parquet&quot;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+    
+
+    
+    
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">eval_metrics</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">eval_dataset</span><span class="o">=</span><span class="n">eval_data_paths</span><span class="p">,</span> <span class="n">metric_key_prefix</span><span class="o">=</span><span class="s1">&#39;eval&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">eval_metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  </span><span class="si">%s</span><span class="s2"> = </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">eval_metrics</span><span class="p">[</span><span class="n">key</span><span class="p">])))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+<div class="output_area">
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>  epoch = 5.0
+  eval/loss = 7.682921886444092
+  eval/next-item/ndcg_at_20 = 0.16451486945152283
+  eval/next-item/ndcg_at_40 = 0.19865691661834717
+  eval/next-item/recall_at_20 = 0.3958333432674408
+  eval/next-item/recall_at_40 = 0.5625
+  eval_runtime = 0.1
+  eval_samples_per_second = 960.363
+  eval_steps_per_second = 10.004
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+    
+
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>That's it!<br />
+You have just trained your session-based recommendation model using Transformers4Rec.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Tip: We can easily log and visualize model training and evaluation on <a href="https://wandb.ai/home">Weights &amp; Biases (W&amp;B)</a>, <a href="https://www.tensorflow.org/tensorboard">Tensorboard</a> and <a href="https://github.com/NVIDIA/dllogger">NVIDIA DLLogger</a>. By default, the HuggingFace transformers <code>Trainer</code> (which we extend) uses Weights &amp; Biases (W&amp;B) to log training and evaluation metrics, which provides nice results visualization and comparison between different runs.</p>
+
+</div>
+</div>
+</div>
+&lt;/div&gt;
+ 
+
+</p></div></div></p></div></div></p></div></div></p></div></div></p></div></div></p></div></div></div></div></div></div>
+
+
+  </div><a class="u-url" href="/2022/01/26/transformer4rec-xlnet.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col">
+        <p class="feed-subscribe">
+          <a href="/feed.xml">
+            <svg class="svg-icon orange">
+              <use xlink:href="/assets/minima-social-icons.svg#rss"></use>
+            </svg><span>Subscribe</span>
+          </a>
+        </p>
+      </div>
+      <div class="footer-col">
+        <p>Jupyter notebook database.</p>
+      </div>
+    </div>
+
+    <div class="social-links"><ul class="social-media-list"><li><a rel="me" href="https://github.com/recohut" target="_blank" title="recohut"><svg class="svg-icon grey"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg></a></li></ul>
+</div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
